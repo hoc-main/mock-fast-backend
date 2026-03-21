@@ -42,6 +42,7 @@ def main():
     parser.add_argument("--dataset", default=DEFAULT_DATASET)
     parser.add_argument("--output", default=DEFAULT_OUTPUT)
     parser.add_argument("--module-id", type=int, help="Train for a specific module from DB")
+    parser.add_argument("--no-cv", action="store_true")
     parser.add_argument("--val-split", type=float, default=0.2)
 
     args = parser.parse_args()

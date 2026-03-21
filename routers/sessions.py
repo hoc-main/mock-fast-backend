@@ -47,14 +47,20 @@ async def _ensure_questions_loaded(module: Module, db: AsyncSession) -> None:
         data = json.load(f)
 
     questions = []
-    for index, item in enumerate(data):
+    seen_texts = set()
+    for item in data:
         q_data = item.get("question_data", item)
+        text = q_data.get("question", q_data.get("Interview Question", "")).strip()
+        if not text or text in seen_texts:
+            continue
+        seen_texts.add(text)
+        
         questions.append(Question(
             module_id=module.id,
             topic=q_data.get("topic"),
-            question_text=q_data.get("question", q_data.get("Interview Question", "")),
+            question_text=text,
             expected_answer=q_data.get("answer", q_data.get("Answer", "")),
-            order=index,
+            order=len(questions),
         ))
 
     db.add_all(questions)
