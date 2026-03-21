@@ -16,6 +16,10 @@ class EvaluationOut(BaseModel):
     score: float
     semantic_score: float
     keyword_score: float
+    question_relevance: float
+    lexical_diversity: float
+    discourse_score: float
+    penalty: float
     feedback: str
     tip: str
     missing_keywords: List[str]
@@ -85,6 +89,10 @@ class AnswerResult(BaseModel):
     final_score: float
     semantic_score: float
     keyword_score: float
+    question_relevance: float = 0.0
+    lexical_diversity: float = 0.0
+    discourse_score: float = 0.0
+    penalty: float = 0.0
     feedback: str
     tip: str
     missing_keywords: List[Any]

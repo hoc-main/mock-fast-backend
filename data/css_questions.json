@@ -1,0 +1,194 @@
+[
+    {
+        "candidate": "CSS is used to style web pages like colors and layout",
+        "question_data": {
+            "question": "What is CSS and why is it used?",
+            "answer": "CSS stands for Cascading Style Sheets. It is used to style and layout web pages, for example to change colors, fonts, spacing, and positioning."
+        },
+        "score": 0.85
+    },
+    {
+        "candidate": "CSS is a programming language",
+        "question_data": {
+            "question": "What is CSS and why is it used?",
+            "answer": "CSS stands for Cascading Style Sheets. It is used to style and layout web pages, for example to change colors, fonts, spacing, and positioning."
+        },
+        "score": 0.2
+    },
+    {
+        "candidate": "Box model includes margin padding border and content",
+        "question_data": {
+            "question": "What is the CSS Box Model?",
+            "answer": "The CSS Box Model consists of content, padding, border, and margin. It defines the layout and spacing of elements."
+        },
+        "score": 0.95
+    },
+    {
+        "candidate": "Box model is about layout",
+        "question_data": {
+            "question": "What is the CSS Box Model?",
+            "answer": "The CSS Box Model consists of content, padding, border, and margin. It defines the layout and spacing of elements."
+        },
+        "score": 0.5
+    },
+    {
+        "candidate": "Specificity decides which CSS rule is applied using id class and element priority",
+        "question_data": {
+            "question": "What is specificity in CSS?",
+            "answer": "Specificity determines which CSS rule is applied when multiple rules target the same element. It is calculated based on inline styles, IDs, classes, and elements."
+        },
+        "score": 0.9
+    },
+    {
+        "candidate": "Specificity is random",
+        "question_data": {
+            "question": "What is specificity in CSS?",
+            "answer": "Specificity determines which CSS rule is applied when multiple rules target the same element. It is calculated based on inline styles, IDs, classes, and elements."
+        },
+        "score": 0.1
+    },
+    {
+        "candidate": "Flexbox is used for layout and alignment of elements",
+        "question_data": {
+            "question": "What is flexbox?",
+            "answer": "Flexbox is a layout model that allows items to align and distribute space efficiently in a container, even when their size is unknown."
+        },
+        "score": 0.9
+    },
+    {
+        "candidate": "Flexbox is used for colors",
+        "question_data": {
+            "question": "What is flexbox?",
+            "answer": "Flexbox is a layout model that allows items to align and distribute space efficiently in a container, even when their size is unknown."
+        },
+        "score": 0.2
+    },
+    {
+        "candidate": "Grid is a two dimensional layout system with rows and columns",
+        "question_data": {
+            "question": "What is CSS Grid?",
+            "answer": "CSS Grid is a two-dimensional layout system used for designing complex layouts using rows and columns."
+        },
+        "score": 0.95
+    },
+    {
+        "candidate": "Grid is similar to flexbox but more complex",
+        "question_data": {
+            "question": "What is CSS Grid?",
+            "answer": "CSS Grid is a two-dimensional layout system used for designing complex layouts using rows and columns."
+        },
+        "score": 0.6
+    },
+    {
+        "candidate": "Position property defines how elements are placed like absolute relative fixed",
+        "question_data": {
+            "question": "What is position property in CSS?",
+            "answer": "The position property defines how an element is positioned. Values include static, relative, absolute, fixed, and sticky."
+        },
+        "score": 0.9
+    },
+    {
+        "candidate": "Position is used to move elements",
+        "question_data": {
+            "question": "What is position property in CSS?",
+            "answer": "The position property defines how an element is positioned. Values include static, relative, absolute, fixed, and sticky."
+        },
+        "score": 0.5
+    },
+    {
+        "candidate": "z index controls stacking order of elements",
+        "question_data": {
+            "question": "What is z-index?",
+            "answer": "z-index controls the vertical stacking order of positioned elements. Higher values appear on top."
+        },
+        "score": 0.9
+    },
+    {
+        "candidate": "z index is used for alignment",
+        "question_data": {
+            "question": "What is z-index?",
+            "answer": "z-index controls the vertical stacking order of positioned elements. Higher values appear on top."
+        },
+        "score": 0.2
+    },
+    {
+        "candidate": "Margin is outer space and padding is inner space",
+        "question_data": {
+            "question": "What is margin vs padding?",
+            "answer": "Margin controls space outside the element, while padding controls space inside the element between content and border."
+        },
+        "score": 0.95
+    },
+    {
+        "candidate": "Margin and padding are same",
+        "question_data": {
+            "question": "What is margin vs padding?",
+            "answer": "Margin controls space outside the element, while padding controls space inside the element between content and border."
+        },
+        "score": 0.1
+    },
+    {
+        "candidate": "Media queries are used for responsive design based on screen size",
+        "question_data": {
+            "question": "What are media queries?",
+            "answer": "Media queries are used to apply CSS styles based on device characteristics like width, height, or resolution."
+        },
+        "score": 0.9
+    },
+    {
+        "candidate": "Media queries are used for animations",
+        "question_data": {
+            "question": "What are media queries?",
+            "answer": "Media queries are used to apply CSS styles based on device characteristics like width, height, or resolution."
+        },
+        "score": 0.2
+    },
+    {
+        "candidate": "Display block takes full width inline takes only needed width",
+        "question_data": {
+            "question": "What is display property in CSS?",
+            "answer": "The display property specifies how an element is displayed. Common values include block, inline, inline-block, and none."
+        },
+        "score": 0.85
+    },
+    {
+        "candidate": "Display is used to hide elements",
+        "question_data": {
+            "question": "What is display property in CSS?",
+            "answer": "The display property specifies how an element is displayed. Common values include block, inline, inline-block, and none."
+        },
+        "score": 0.3
+    },
+    {
+        "candidate": "Opacity controls transparency from 0 to 1",
+        "question_data": {
+            "question": "What is opacity?",
+            "answer": "Opacity controls the transparency level of an element from 0 to 1."
+        },
+        "score": 0.95
+    },
+    {
+        "candidate": "Opacity changes color",
+        "question_data": {
+            "question": "What is opacity?",
+            "answer": "Opacity controls the transparency level of an element from 0 to 1."
+        },
+        "score": 0.2
+    },
+    {
+        "candidate": "Box sizing border box includes padding and border in width",
+        "question_data": {
+            "question": "What is box-sizing?",
+            "answer": "box-sizing defines how width and height are calculated. border-box includes padding and border in total size."
+        },
+        "score": 0.9
+    },
+    {
+        "candidate": "Box sizing changes font",
+        "question_data": {
+            "question": "What is box-sizing?",
+            "answer": "box-sizing defines how width and height are calculated. border-box includes padding and border in total size."
+        },
+        "score": 0.1
+    }
+]

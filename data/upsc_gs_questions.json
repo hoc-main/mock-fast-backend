@@ -1,0 +1,1402 @@
+[
+  {
+    "id": 1,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "If you had to explain to a school student what the Constitution actually does, how would you put it?",
+    "answer": "The Constitution is the supreme law of the land that defines the structure of government, distributes powers, and protects the rights of citizens."
+  },
+  {
+    "id": 2,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "When people say India follows constitutional supremacy, what exactly are they referring to?",
+    "answer": "Constitutional supremacy means that the Constitution is the highest law in India and all laws, institutions, and government actions must conform to it."
+  },
+  {
+    "id": 3,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "Why do you think the Preamble is often called the soul or philosophy of the Constitution?",
+    "answer": "The Preamble expresses the core ideals of the Constitution such as justice, liberty, equality, and fraternity, and reflects the vision of the Indian state."
+  },
+  {
+    "id": 4,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "If someone asks you what sovereign means in the Preamble, how would you explain it?",
+    "answer": "Sovereign means that India is independent in its internal and external affairs and is not under the control of any external power."
+  },
+  {
+    "id": 5,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "How would you distinguish between a republic and a monarchy in the Indian context?",
+    "answer": "A republic is a system in which the head of state is elected directly or indirectly for a fixed term, unlike a monarchy where the position is hereditary."
+  },
+  {
+    "id": 6,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "What does secularism mean in India, and how is it different from a strict separation model?",
+    "answer": "Indian secularism means equal respect for all religions and state neutrality among them, rather than a complete exclusion of religion from public life."
+  },
+  {
+    "id": 7,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "Suppose someone confuses equality with uniformity. How would you explain the constitutional idea of equality?",
+    "answer": "Constitutional equality means equal protection of the laws and equal treatment in similar circumstances, not identical treatment regardless of relevant differences."
+  },
+  {
+    "id": 8,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "Why were Fundamental Rights made justiciable, in your view?",
+    "answer": "Fundamental Rights were made justiciable so that citizens could legally enforce essential civil and political freedoms against state action."
+  },
+  {
+    "id": 9,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "How would you explain the difference between Fundamental Rights and Directive Principles in a simple way?",
+    "answer": "Fundamental Rights are enforceable rights available through courts, whereas Directive Principles are non-justiciable guidelines for the state to promote welfare and social justice."
+  },
+  {
+    "id": 10,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "Why did the Constitution makers include Directive Principles even though courts cannot enforce them?",
+    "answer": "Directive Principles were included to guide the state in building a just social and economic order and to shape public policy toward welfare goals."
+  },
+  {
+    "id": 11,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "What is the significance of Article 32, and why did Ambedkar call it the heart and soul of the Constitution?",
+    "answer": "Article 32 gives citizens the right to move the Supreme Court for enforcement of Fundamental Rights, making constitutional remedies directly available."
+  },
+  {
+    "id": 12,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "Can you explain what a writ is and why writ jurisdiction matters in protecting liberty?",
+    "answer": "A writ is a formal order issued by a court to enforce rights or ensure lawful authority, and writ jurisdiction helps protect liberty and legality."
+  },
+  {
+    "id": 13,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "What is the difference between habeas corpus and mandamus?",
+    "answer": "Habeas corpus is used to secure release from unlawful detention, while mandamus commands a public authority to perform a legal duty."
+  },
+  {
+    "id": 14,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "If Parliament can amend the Constitution, why was the basic structure doctrine considered necessary?",
+    "answer": "The basic structure doctrine was developed to prevent Parliament from destroying the essential features of the Constitution through amendments."
+  },
+  {
+    "id": 15,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "What do we mean by the basic structure of the Constitution?",
+    "answer": "The basic structure refers to foundational constitutional features such as constitutional supremacy, rule of law, judicial review, and democracy that cannot be altered in their essence."
+  },
+  {
+    "id": 16,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "How would you explain the idea of separation of powers in the Indian system, which is not rigidly separated?",
+    "answer": "In India, separation of powers means that the legislature, executive, and judiciary have distinct functions, though there is limited overlap for checks and coordination."
+  },
+  {
+    "id": 17,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "Why did India adopt a parliamentary form of government instead of a presidential one?",
+    "answer": "India adopted the parliamentary system because it ensures executive accountability to the legislature and suits a plural, representative political structure."
+  },
+  {
+    "id": 18,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "When we say the Council of Ministers is collectively responsible to the Lok Sabha, what does that really mean?",
+    "answer": "Collective responsibility means the Council of Ministers stands or falls together and must retain the confidence of the Lok Sabha."
+  },
+  {
+    "id": 19,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "How is the Prime Minister more powerful in practice than many other constitutional offices?",
+    "answer": "The Prime Minister leads the Council of Ministers, directs government policy, coordinates ministries, and is the central link between the President and the cabinet."
+  },
+  {
+    "id": 20,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "If the President is the constitutional head, where does real executive power lie?",
+    "answer": "Real executive power lies with the Council of Ministers headed by the Prime Minister, which advises the President."
+  },
+  {
+    "id": 21,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "Can you explain the difference between the nominal executive and the real executive?",
+    "answer": "The nominal executive formally holds executive authority under the Constitution, while the real executive actually exercises that authority in practice."
+  },
+  {
+    "id": 22,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "Why is India described as a Union of States and not a federation formed by agreement?",
+    "answer": "India is called a Union of States because the federation is indestructible and states do not have a right to secede or withdraw from the Union."
+  },
+  {
+    "id": 23,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "When people say India has a federal system with a unitary bias, what do they mean?",
+    "answer": "It means that powers are constitutionally divided between the Union and the states, but the Union enjoys greater authority in several important areas."
+  },
+  {
+    "id": 24,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "How does the Seventh Schedule help organize Centre–State relations?",
+    "answer": "The Seventh Schedule distributes legislative subjects between the Union List, State List, and Concurrent List to define lawmaking powers."
+  },
+  {
+    "id": 25,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "What happens when there is a conflict between Union and State law on a Concurrent List subject?",
+    "answer": "In case of repugnancy on a Concurrent List subject, Union law generally prevails over State law to the extent of inconsistency."
+  },
+  {
+    "id": 26,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "What is the significance of the office of the Governor in the states?",
+    "answer": "The Governor is the constitutional head of the state, acts on ministerial advice in most matters, and also performs certain discretionary and federal functions."
+  },
+  {
+    "id": 27,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "Why is the Governor's discretionary power often politically debated?",
+    "answer": "The Governor's discretionary power is debated because its use in government formation, floor tests, or bill reservation can affect federal balance and democratic legitimacy."
+  },
+  {
+    "id": 28,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "How would you explain the difference between money bills and ordinary bills?",
+    "answer": "A money bill deals exclusively with matters listed in Article 110 such as taxation and public expenditure, whereas an ordinary bill covers general legislative matters."
+  },
+  {
+    "id": 29,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "Why is the Rajya Sabha important even though the Lok Sabha is more powerful in many matters?",
+    "answer": "The Rajya Sabha provides federal representation to states, acts as a revising chamber, and adds continuity and deliberation to the legislative process."
+  },
+  {
+    "id": 30,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "What is the special role of the Rajya Sabha under Article 249?",
+    "answer": "Under Article 249, the Rajya Sabha can authorize Parliament to legislate on a State List subject in the national interest."
+  },
+  {
+    "id": 31,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "Why is judicial review considered central to Indian democracy?",
+    "answer": "Judicial review allows courts to examine laws and executive actions and invalidate them if they violate the Constitution."
+  },
+  {
+    "id": 32,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "How is judicial activism different from judicial overreach?",
+    "answer": "Judicial activism refers to proactive judicial intervention to protect rights and constitutional values, while judicial overreach implies courts exceeding their proper institutional limits."
+  },
+  {
+    "id": 33,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "What is Public Interest Litigation, and why did it become important in India?",
+    "answer": "Public Interest Litigation allows courts to hear matters affecting public rights and disadvantaged groups with relaxed rules of locus standi."
+  },
+  {
+    "id": 34,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "Why do we need an independent judiciary?",
+    "answer": "An independent judiciary is necessary to uphold the Constitution, protect rights, resolve disputes impartially, and check abuse of power."
+  },
+  {
+    "id": 35,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "How would you explain the doctrine of rule of law in a democratic polity?",
+    "answer": "Rule of law means that all persons and authorities are subject to law, government power must be exercised legally, and arbitrariness is not permitted."
+  },
+  {
+    "id": 36,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "What is constitutional morality, and why is it increasingly discussed today?",
+    "answer": "Constitutional morality means adherence to the values, procedures, and spirit of the Constitution, especially in public decision-making and institutional conduct."
+  },
+  {
+    "id": 37,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "Why are elections considered more than just a periodic voting exercise?",
+    "answer": "Elections are a means of representation, accountability, peaceful transfer of power, and public participation in democratic governance."
+  },
+  {
+    "id": 38,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "What does the Election Commission do beyond simply conducting polls?",
+    "answer": "The Election Commission supervises electoral rolls, schedules elections, enforces the Model Code of Conduct, monitors compliance, and ensures free and fair elections."
+  },
+  {
+    "id": 39,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "How would you explain anti-defection law and its objective?",
+    "answer": "The anti-defection law seeks to prevent political defections driven by office or gain by disqualifying legislators who defect under specified conditions."
+  },
+  {
+    "id": 40,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "Why is there continuing debate over the anti-defection law despite its stated purpose?",
+    "answer": "The law is debated because while it curbs opportunistic defections, it can also reduce legislative debate and strengthen party high command control."
+  },
+  {
+    "id": 41,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "What is the significance of the 73rd Constitutional Amendment?",
+    "answer": "The 73rd Amendment gave constitutional status to Panchayati Raj Institutions and strengthened rural local self-government."
+  },
+  {
+    "id": 42,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "How would you explain the role of Gram Sabha in local democracy?",
+    "answer": "The Gram Sabha is the assembly of registered voters in a village and serves as a forum for participation, accountability, and local oversight."
+  },
+  {
+    "id": 43,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "Why is devolution considered incomplete in many states despite constitutional amendments?",
+    "answer": "Devolution remains incomplete because many states have not fully transferred functions, finances, and functionaries to local bodies."
+  },
+  {
+    "id": 44,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "What is the difference between decentralization and deconcentration?",
+    "answer": "Decentralization transfers decision-making authority to local elected bodies, whereas deconcentration only redistributes administrative responsibilities within higher government structures."
+  },
+  {
+    "id": 45,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "Why is transparency important in public administration?",
+    "answer": "Transparency enables citizens to access information, scrutinize public action, reduce corruption, and improve trust in institutions."
+  },
+  {
+    "id": 46,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "How did the Right to Information Act change the relationship between citizen and state?",
+    "answer": "The RTI Act empowered citizens to demand official information, thereby strengthening accountability, transparency, and participatory governance."
+  },
+  {
+    "id": 47,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "What is the purpose of the Comptroller and Auditor General in a parliamentary democracy?",
+    "answer": "The CAG audits public expenditure and financial administration to ensure accountability in the use of public funds."
+  },
+  {
+    "id": 48,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "How does the Finance Commission contribute to cooperative federalism?",
+    "answer": "The Finance Commission recommends distribution of tax revenues between the Union and states and supports fiscal balance in the federation."
+  },
+  {
+    "id": 49,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "What is the significance of the Inter-State Council?",
+    "answer": "The Inter-State Council promotes coordination, consultation, and resolution of issues between the Union and the states."
+  },
+  {
+    "id": 50,
+    "module": "upsc_gs",
+    "topic": "polity",
+    "question": "If you had to define governance in one line for an interview board, what would you say?",
+    "answer": "Governance is the process by which public authority is exercised to make decisions, implement policies, and deliver services in a lawful and accountable manner."
+  },
+  {
+    "id": 51,
+    "module": "upsc_gs",
+    "topic": "economy",
+    "question": "If someone asks you the difference between economic growth and economic development, how would you answer?",
+    "answer": "Economic growth refers to an increase in output or income, while economic development includes broader improvements in health, education, equity, and living standards."
+  },
+  {
+    "id": 52,
+    "module": "upsc_gs",
+    "topic": "economy",
+    "question": "Why is GDP widely used even though economists keep pointing out its limitations?",
+    "answer": "GDP is widely used because it measures aggregate output in a standardized way, though it does not capture inequality, unpaid work, or environmental costs."
+  },
+  {
+    "id": 53,
+    "module": "upsc_gs",
+    "topic": "economy",
+    "question": "How would you explain inflation to an ordinary household that only sees prices rising?",
+    "answer": "Inflation is a sustained increase in the general price level that reduces the purchasing power of money over time."
+  },
+  {
+    "id": 54,
+    "module": "upsc_gs",
+    "topic": "economy",
+    "question": "What is the practical difference between headline inflation and core inflation?",
+    "answer": "Headline inflation includes all price changes, while core inflation excludes volatile food and fuel items to show underlying inflation trends."
+  },
+  {
+    "id": 55,
+    "module": "upsc_gs",
+    "topic": "economy",
+    "question": "Why is moderate inflation often tolerated but high inflation considered harmful?",
+    "answer": "Moderate inflation can accompany growth, but high inflation distorts savings, investment, planning, and hurts fixed-income households."
+  },
+  {
+    "id": 56,
+    "module": "upsc_gs",
+    "topic": "economy",
+    "question": "What role does the Reserve Bank of India play in controlling inflation?",
+    "answer": "The RBI uses monetary policy tools such as policy rates, liquidity management, and communication to regulate inflation and maintain price stability."
+  },
+  {
+    "id": 57,
+    "module": "upsc_gs",
+    "topic": "economy",
+    "question": "Can you explain repo rate in a way that links it to everyday borrowing costs?",
+    "answer": "The repo rate is the rate at which the RBI lends to commercial banks, and changes in it influence lending and borrowing costs across the economy."
+  },
+  {
+    "id": 58,
+    "module": "upsc_gs",
+    "topic": "economy",
+    "question": "What is the difference between fiscal policy and monetary policy?",
+    "answer": "Fiscal policy involves government decisions on taxation and expenditure, while monetary policy involves central bank actions on money supply, interest rates, and liquidity."
+  },
+  {
+    "id": 59,
+    "module": "upsc_gs",
+    "topic": "economy",
+    "question": "Why do governments run fiscal deficits, and when does that become a concern?",
+    "answer": "Governments run fiscal deficits to finance expenditure beyond revenue, but persistent high deficits can increase debt, crowd out investment, and fuel macroeconomic risks."
+  },
+  {
+    "id": 60,
+    "module": "upsc_gs",
+    "topic": "economy",
+    "question": "How would you explain public debt to someone who thinks all debt is automatically bad?",
+    "answer": "Public debt is government borrowing used to finance expenditure, and it can support development if managed sustainably and productively."
+  },
+  {
+    "id": 61,
+    "module": "upsc_gs",
+    "topic": "economy",
+    "question": "What does inclusive growth mean in policy discussions?",
+    "answer": "Inclusive growth means economic growth that creates opportunities widely and ensures benefits are shared across regions, sectors, and social groups."
+  },
+  {
+    "id": 62,
+    "module": "upsc_gs",
+    "topic": "economy",
+    "question": "Why is unemployment not just about lack of jobs but also about the nature of jobs?",
+    "answer": "Unemployment and employment quality are linked because underemployment, informal work, and low productivity jobs may not provide secure livelihoods."
+  },
+  {
+    "id": 63,
+    "module": "upsc_gs",
+    "topic": "economy",
+    "question": "What is disguised unemployment, and why is it often associated with agriculture?",
+    "answer": "Disguised unemployment exists when more people are engaged in an activity than are actually needed, so some workers add little or no extra output."
+  },
+  {
+    "id": 64,
+    "module": "upsc_gs",
+    "topic": "economy",
+    "question": "How would you explain the importance of productivity in an economy?",
+    "answer": "Productivity measures output per unit of input and is crucial because higher productivity supports growth, incomes, competitiveness, and living standards."
+  },
+  {
+    "id": 65,
+    "module": "upsc_gs",
+    "topic": "economy",
+    "question": "What is the difference between capital expenditure and revenue expenditure?",
+    "answer": "Capital expenditure creates assets or reduces liabilities, while revenue expenditure covers routine operational expenses and current consumption."
+  },
+  {
+    "id": 66,
+    "module": "upsc_gs",
+    "topic": "economy",
+    "question": "Why is capital expenditure often seen as more growth-enhancing?",
+    "answer": "Capital expenditure is considered more growth-enhancing because it builds infrastructure and productive capacity that support future output."
+  },
+  {
+    "id": 67,
+    "module": "upsc_gs",
+    "topic": "economy",
+    "question": "What do economists mean by the multiplier effect of public spending?",
+    "answer": "The multiplier effect refers to the increase in overall income and output resulting from an initial increase in spending."
+  },
+  {
+    "id": 68,
+    "module": "upsc_gs",
+    "topic": "economy",
+    "question": "How would you describe the role of taxation in a welfare state?",
+    "answer": "Taxation raises resources for public goods and redistribution and helps the state finance social services and development."
+  },
+  {
+    "id": 69,
+    "module": "upsc_gs",
+    "topic": "economy",
+    "question": "Why is progressive taxation considered important from an equity perspective?",
+    "answer": "Progressive taxation imposes higher tax rates on higher incomes, helping reduce inequality and improve fairness in the tax system."
+  },
+  {
+    "id": 70,
+    "module": "upsc_gs",
+    "topic": "economy",
+    "question": "What is GST, and why was it considered a major tax reform?",
+    "answer": "GST is a destination-based indirect tax that subsumed multiple indirect taxes into a unified system to reduce cascading and improve efficiency."
+  },
+  {
+    "id": 71,
+    "module": "upsc_gs",
+    "topic": "economy",
+    "question": "What is the difference between direct tax and indirect tax?",
+    "answer": "Direct taxes are paid directly by the person on whom they are imposed, while indirect taxes are levied on goods and services and can be shifted to consumers."
+  },
+  {
+    "id": 72,
+    "module": "upsc_gs",
+    "topic": "economy",
+    "question": "Why do current account deficits attract so much attention in macroeconomic debates?",
+    "answer": "A current account deficit indicates that a country imports more goods, services, and transfers than it exports, making external financing important."
+  },
+  {
+    "id": 73,
+    "module": "upsc_gs",
+    "topic": "economy",
+    "question": "How would you explain exchange rate depreciation and its possible effects?",
+    "answer": "Exchange rate depreciation means the domestic currency loses value relative to foreign currencies, making exports more competitive but imports costlier."
+  },
+  {
+    "id": 74,
+    "module": "upsc_gs",
+    "topic": "economy",
+    "question": "Why are foreign exchange reserves important for a country like India?",
+    "answer": "Foreign exchange reserves help manage external shocks, support exchange rate stability, and reassure markets about a country's ability to meet external obligations."
+  },
+  {
+    "id": 75,
+    "module": "upsc_gs",
+    "topic": "economy",
+    "question": "What does monetary transmission mean, and why is it often incomplete?",
+    "answer": "Monetary transmission is the process by which central bank policy changes affect market interest rates, credit, and demand, but it may be incomplete due to banking and market frictions."
+  },
+  {
+    "id": 76,
+    "module": "upsc_gs",
+    "topic": "economy",
+    "question": "What is financial inclusion, and why is it important for development?",
+    "answer": "Financial inclusion means ensuring affordable access to useful financial services such as banking, credit, insurance, and payments for all sections of society."
+  },
+  {
+    "id": 77,
+    "module": "upsc_gs",
+    "topic": "economy",
+    "question": "Why is the informal sector so central to discussions on the Indian economy?",
+    "answer": "The informal sector employs a large share of the workforce, but often lacks social security, formal contracts, and productivity-enhancing support."
+  },
+  {
+    "id": 78,
+    "module": "upsc_gs",
+    "topic": "economy",
+    "question": "How would you explain the difference between poverty line estimation and multidimensional poverty?",
+    "answer": "Poverty line estimation usually focuses on income or consumption thresholds, while multidimensional poverty includes deprivations in health, education, and living standards."
+  },
+  {
+    "id": 79,
+    "module": "upsc_gs",
+    "topic": "economy",
+    "question": "Why is human capital considered as important as physical capital?",
+    "answer": "Human capital consists of education, skills, and health, and it raises productivity, innovation, and long-term growth potential."
+  },
+  {
+    "id": 80,
+    "module": "upsc_gs",
+    "topic": "economy",
+    "question": "What is demographic dividend, and under what conditions can it be realized?",
+    "answer": "Demographic dividend is the growth potential arising from a larger working-age population, which can be realized through education, jobs, health, and skills."
+  },
+  {
+    "id": 81,
+    "module": "upsc_gs",
+    "topic": "economy",
+    "question": "How do self-help groups contribute to rural development?",
+    "answer": "Self-help groups mobilize savings, provide credit access, strengthen social capital, and support women’s empowerment and local livelihoods."
+  },
+  {
+    "id": 82,
+    "module": "upsc_gs",
+    "topic": "economy",
+    "question": "What is the difference between economic liberalization and privatization?",
+    "answer": "Liberalization reduces state controls and market restrictions, while privatization transfers ownership or management from the public to the private sector."
+  },
+  {
+    "id": 83,
+    "module": "upsc_gs",
+    "topic": "economy",
+    "question": "Why are small and medium enterprises considered important in India’s economy?",
+    "answer": "MSMEs are important because they generate employment, support exports, foster entrepreneurship, and contribute to balanced regional development."
+  },
+  {
+    "id": 84,
+    "module": "upsc_gs",
+    "topic": "economy",
+    "question": "How would you explain food security from an economic and welfare perspective?",
+    "answer": "Food security means that all people have physical, social, and economic access to sufficient, safe, and nutritious food at all times."
+  },
+  {
+    "id": 85,
+    "module": "upsc_gs",
+    "topic": "economy",
+    "question": "Why is agricultural marketing reform such a contested subject?",
+    "answer": "Agricultural marketing reform is contested because it involves price discovery, market access, state support, farmer bargaining power, and livelihood security."
+  },
+  {
+    "id": 86,
+    "module": "upsc_gs",
+    "topic": "economy",
+    "question": "What is minimum support price, and what purpose does it serve?",
+    "answer": "Minimum Support Price is a pre-announced price at which the government procures certain crops to protect farmers from sharp price declines."
+  },
+  {
+    "id": 87,
+    "module": "upsc_gs",
+    "topic": "economy",
+    "question": "How would you explain the importance of infrastructure in development economics?",
+    "answer": "Infrastructure such as transport, power, irrigation, and digital networks reduces transaction costs and supports productivity and growth."
+  },
+  {
+    "id": 88,
+    "module": "upsc_gs",
+    "topic": "economy",
+    "question": "What is the difference between sustainable development and mere expansion of production?",
+    "answer": "Sustainable development meets present needs without compromising the ability of future generations to meet theirs, unlike growth that ignores ecological limits."
+  },
+  {
+    "id": 89,
+    "module": "upsc_gs",
+    "topic": "economy",
+    "question": "Why does inequality matter even when an economy is growing fast?",
+    "answer": "Inequality matters because uneven distribution of gains can limit social mobility, weaken demand, create exclusion, and undermine social cohesion."
+  },
+  {
+    "id": 90,
+    "module": "upsc_gs",
+    "topic": "economy",
+    "question": "If asked to define welfare economics in one simple line, what would you say?",
+    "answer": "Welfare economics studies how economic policies and resource allocation affect social well-being and overall welfare."
+  },
+  {
+    "id": 91,
+    "module": "upsc_gs",
+    "topic": "history",
+    "question": "If you had to explain why history matters for public policy, what would you say?",
+    "answer": "History matters for public policy because it helps us understand institutions, social change, conflict, and the long-term consequences of decisions."
+  },
+  {
+    "id": 92,
+    "module": "upsc_gs",
+    "topic": "history",
+    "question": "How would you distinguish between ancient, medieval, and modern history in the Indian context?",
+    "answer": "Ancient, medieval, and modern history are broad periodizations used to study changes in polity, society, economy, culture, and external influences over time."
+  },
+  {
+    "id": 93,
+    "module": "upsc_gs",
+    "topic": "history",
+    "question": "Why was the Indus Valley Civilization considered significant in the study of early urbanization?",
+    "answer": "The Indus Valley Civilization is significant because it showed planned cities, craft specialization, trade networks, and advanced urban features in early South Asia."
+  },
+  {
+    "id": 94,
+    "module": "upsc_gs",
+    "topic": "history",
+    "question": "What do Ashoka's inscriptions tell us beyond just the history of one ruler?",
+    "answer": "Ashoka's inscriptions reveal ideas of governance, dhamma, moral statecraft, administration, and communication across a large empire."
+  },
+  {
+    "id": 95,
+    "module": "upsc_gs",
+    "topic": "history",
+    "question": "Why is the Gupta period often referred to as a classical age, and do you think that term needs caution?",
+    "answer": "The Gupta period is called a classical age due to achievements in literature, science, and art, but the term should be used cautiously because developments were uneven and region-specific."
+  },
+  {
+    "id": 96,
+    "module": "upsc_gs",
+    "topic": "history",
+    "question": "How would you explain the importance of the Bhakti movement in social history?",
+    "answer": "The Bhakti movement emphasized personal devotion, challenged rigid ritualism in many contexts, and influenced vernacular culture and social change."
+  },
+  {
+    "id": 97,
+    "module": "upsc_gs",
+    "topic": "history",
+    "question": "What makes the Sufi tradition important in understanding Indian society?",
+    "answer": "The Sufi tradition is important because it promoted spiritual devotion, social inclusiveness in many settings, and contributed to cultural synthesis."
+  },
+  {
+    "id": 98,
+    "module": "upsc_gs",
+    "topic": "history",
+    "question": "If someone asks whether medieval India was only about dynasties and wars, how would you respond?",
+    "answer": "Medieval India was not only about dynasties and wars; it also involved changes in agrarian systems, trade, culture, architecture, religion, and social relations."
+  },
+  {
+    "id": 99,
+    "module": "upsc_gs",
+    "topic": "history",
+    "question": "Why is the Mughal administrative system studied so closely in Indian history?",
+    "answer": "The Mughal administrative system is studied for its centralized imperial structure, revenue arrangements, mansabdari system, and long-lasting institutional influence."
+  },
+  {
+    "id": 100,
+    "module": "upsc_gs",
+    "topic": "history",
+    "question": "What was the significance of Akbar's policy of sulh-i-kul?",
+    "answer": "Sulh-i-kul meant universal peace or tolerance and reflected Akbar's effort to promote harmony and pragmatic governance across religious communities."
+  },
+  {
+    "id": 101,
+    "module": "upsc_gs",
+    "topic": "history",
+    "question": "How did European trading companies move from commerce to political control in India?",
+    "answer": "European trading companies gradually used military power, diplomacy, revenue interests, and political alliances to transform commercial influence into territorial control."
+  },
+  {
+    "id": 102,
+    "module": "upsc_gs",
+    "topic": "history",
+    "question": "Why was the Battle of Plassey a turning point in Indian history?",
+    "answer": "The Battle of Plassey was a turning point because it enabled the East India Company to gain decisive political influence in Bengal and expand further."
+  },
+  {
+    "id": 103,
+    "module": "upsc_gs",
+    "topic": "history",
+    "question": "How would you explain the impact of colonial land revenue systems on Indian society?",
+    "answer": "Colonial land revenue systems altered agrarian relations, increased peasant burdens in many areas, strengthened intermediaries in some regions, and tied agriculture more closely to revenue extraction."
+  },
+  {
+    "id": 104,
+    "module": "upsc_gs",
+    "topic": "history",
+    "question": "What changes did British rule bring to the Indian economy?",
+    "answer": "British rule integrated India into the global colonial economy, expanded commercial crops and transport networks, and also contributed to deindustrialization and resource drain."
+  },
+  {
+    "id": 105,
+    "module": "upsc_gs",
+    "topic": "history",
+    "question": "Why do historians speak of the drain of wealth under colonialism?",
+    "answer": "The drain of wealth refers to the transfer of Indian resources and revenues to Britain without adequate economic return to India."
+  },
+  {
+    "id": 106,
+    "module": "upsc_gs",
+    "topic": "history",
+    "question": "How would you explain the Revolt of 1857 in a balanced way?",
+    "answer": "The Revolt of 1857 was a major anti-colonial uprising driven by military grievances, political annexations, economic discontent, and cultural anxieties, though it varied regionally."
+  },
+  {
+    "id": 107,
+    "module": "upsc_gs",
+    "topic": "history",
+    "question": "Why is 1857 described differently as a sepoy mutiny, revolt, or first war of independence?",
+    "answer": "Different labels reflect differing interpretations of its scale, leadership, motives, and nationalist significance."
+  },
+  {
+    "id": 108,
+    "module": "upsc_gs",
+    "topic": "history",
+    "question": "What role did social and religious reform movements play in modern India?",
+    "answer": "Social and religious reform movements challenged regressive practices, promoted education and social reform, and contributed to modern public consciousness."
+  },
+  {
+    "id": 109,
+    "module": "upsc_gs",
+    "topic": "history",
+    "question": "Why is Raja Ram Mohan Roy considered a major reformer?",
+    "answer": "Raja Ram Mohan Roy advocated social reform, women's rights, rationalism, and modern education, and campaigned against practices like sati."
+  },
+  {
+    "id": 110,
+    "module": "upsc_gs",
+    "topic": "history",
+    "question": "How did the rise of print culture influence nationalism in India?",
+    "answer": "Print culture spread ideas, fostered public debate, connected reform and political movements, and helped create a wider national consciousness."
+  },
+  {
+    "id": 111,
+    "module": "upsc_gs",
+    "topic": "history",
+    "question": "What made the Indian National Congress an important platform in the freedom struggle?",
+    "answer": "The Indian National Congress became a central platform for articulating political demands, mobilizing public opinion, and broadening the anti-colonial struggle."
+  },
+  {
+    "id": 112,
+    "module": "upsc_gs",
+    "topic": "history",
+    "question": "How would you explain the difference between moderate and extremist phases of nationalism?",
+    "answer": "Moderates relied more on petitions, constitutional methods, and gradual reform, while extremists emphasized assertive nationalism, boycott, and mass mobilization."
+  },
+  {
+    "id": 113,
+    "module": "upsc_gs",
+    "topic": "history",
+    "question": "Why was the Swadeshi movement significant beyond economic boycott?",
+    "answer": "The Swadeshi movement was significant because it combined boycott with national education, self-reliance, political mobilization, and cultural nationalism."
+  },
+  {
+    "id": 114,
+    "module": "upsc_gs",
+    "topic": "history",
+    "question": "What changed in the freedom struggle after Gandhi's entry into Indian politics?",
+    "answer": "Gandhi transformed the struggle by introducing mass participation, non-violent resistance, moral politics, and movements rooted in everyday grievances."
+  },
+  {
+    "id": 115,
+    "module": "upsc_gs",
+    "topic": "history",
+    "question": "How would you explain satyagraha as more than just passive resistance?",
+    "answer": "Satyagraha was a method of non-violent resistance based on truth, moral force, civil disobedience, and willingness to suffer rather than inflict harm."
+  },
+  {
+    "id": 116,
+    "module": "upsc_gs",
+    "topic": "history",
+    "question": "Why was the Non-Cooperation Movement a major milestone?",
+    "answer": "The Non-Cooperation Movement was a major milestone because it brought large sections of society into organized anti-colonial politics under a common national program."
+  },
+  {
+    "id": 117,
+    "module": "upsc_gs",
+    "topic": "history",
+    "question": "What was the significance of the Civil Disobedience Movement?",
+    "answer": "The Civil Disobedience Movement challenged colonial authority more directly through deliberate law-breaking and broadened mass participation in the struggle."
+  },
+  {
+    "id": 118,
+    "module": "upsc_gs",
+    "topic": "history",
+    "question": "Why did the Salt March become such a powerful political symbol?",
+    "answer": "The Salt March turned a basic commodity into a symbol of colonial injustice and demonstrated the power of non-violent mass action."
+  },
+  {
+    "id": 119,
+    "module": "upsc_gs",
+    "topic": "history",
+    "question": "How would you explain the role of revolutionaries in the national movement without oversimplifying it?",
+    "answer": "Revolutionaries contributed by inspiring anti-colonial resistance, challenging colonial legitimacy, and mobilizing youth, though their methods differed from mainstream mass politics."
+  },
+  {
+    "id": 120,
+    "module": "upsc_gs",
+    "topic": "history",
+    "question": "Why is the Quit India Movement remembered as a watershed moment?",
+    "answer": "The Quit India Movement marked a decisive mass rejection of colonial rule and showed that British authority faced deep and widespread resistance."
+  },
+  {
+    "id": 121,
+    "module": "upsc_gs",
+    "topic": "history",
+    "question": "How should one understand the role of Subhas Chandra Bose in the freedom struggle?",
+    "answer": "Subhas Chandra Bose represented militant nationalism, sought international support against British rule, and led the INA as an alternative anti-colonial strategy."
+  },
+  {
+    "id": 122,
+    "module": "upsc_gs",
+    "topic": "history",
+    "question": "What were the major factors behind Partition?",
+    "answer": "Partition resulted from political deadlock, communal polarization, competing national visions, colonial policies, and failures of power-sharing arrangements."
+  },
+  {
+    "id": 123,
+    "module": "upsc_gs",
+    "topic": "history",
+    "question": "Why is the making of the Indian Constitution also part of the freedom struggle's legacy?",
+    "answer": "The Constitution carried forward the freedom struggle's aspirations by institutionalizing democracy, rights, equality, and social transformation."
+  },
+  {
+    "id": 124,
+    "module": "upsc_gs",
+    "topic": "history",
+    "question": "How would you explain the significance of post-independence integration of princely states?",
+    "answer": "The integration of princely states was significant because it consolidated territorial unity and enabled the formation of a coherent Indian Union."
+  },
+  {
+    "id": 125,
+    "module": "upsc_gs",
+    "topic": "history",
+    "question": "If asked what the biggest lesson of India's freedom movement is, what would you say?",
+    "answer": "A major lesson of India's freedom movement is that broad-based political mobilization, moral legitimacy, and institutional vision can transform a society."
+  },
+  {
+    "id": 126,
+    "module": "upsc_gs",
+    "topic": "geography",
+    "question": "If someone asks what geography really studies beyond maps, how would you answer?",
+    "answer": "Geography studies the spatial distribution of physical and human phenomena and the interaction between people and their environment."
+  },
+  {
+    "id": 127,
+    "module": "upsc_gs",
+    "topic": "geography",
+    "question": "Why is India's location considered strategically significant?",
+    "answer": "India's location is strategically significant because it sits at the crossroads of South Asia and the Indian Ocean, linking major maritime routes and regional regions."
+  },
+  {
+    "id": 128,
+    "module": "upsc_gs",
+    "topic": "geography",
+    "question": "How would you explain the difference between weather and climate in a simple way?",
+    "answer": "Weather refers to short-term atmospheric conditions, while climate is the long-term average pattern of weather over a place."
+  },
+  {
+    "id": 129,
+    "module": "upsc_gs",
+    "topic": "geography",
+    "question": "Why does India experience such strong seasonal variation in rainfall?",
+    "answer": "India experiences strong seasonal rainfall variation mainly because of the monsoon system, pressure changes, and the influence of land-sea temperature contrasts."
+  },
+  {
+    "id": 130,
+    "module": "upsc_gs",
+    "topic": "geography",
+    "question": "What is the monsoon, and why is it so central to Indian life?",
+    "answer": "The monsoon is a seasonal reversal of winds associated with rainfall, and it is central because agriculture, water resources, and livelihoods depend heavily on it."
+  },
+  {
+    "id": 131,
+    "module": "upsc_gs",
+    "topic": "geography",
+    "question": "How would you explain the mechanism of the southwest monsoon?",
+    "answer": "The southwest monsoon develops due to differential heating of land and sea, formation of low pressure over the subcontinent, and moisture-laden winds from the oceans."
+  },
+  {
+    "id": 132,
+    "module": "upsc_gs",
+    "topic": "geography",
+    "question": "Why do some parts of India get heavy rainfall while others remain arid?",
+    "answer": "Rainfall varies because of monsoon pathways, relief barriers, distance from the sea, wind direction, and local climatic conditions."
+  },
+  {
+    "id": 133,
+    "module": "upsc_gs",
+    "topic": "geography",
+    "question": "What role do the Himalayas play in India's climate and geography?",
+    "answer": "The Himalayas influence India's climate by blocking cold continental winds, forcing monsoon uplift, feeding rivers, and shaping ecological zones."
+  },
+  {
+    "id": 134,
+    "module": "upsc_gs",
+    "topic": "geography",
+    "question": "How would you explain the importance of the Indo-Gangetic plain?",
+    "answer": "The Indo-Gangetic plain is important because of its fertile alluvial soils, dense population, agricultural productivity, transport links, and urban development."
+  },
+  {
+    "id": 135,
+    "module": "upsc_gs",
+    "topic": "geography",
+    "question": "Why are rivers considered both a resource and a hazard?",
+    "answer": "Rivers provide water, irrigation, transport, power, and fertile soils, but they can also cause floods, erosion, and displacement."
+  },
+  {
+    "id": 136,
+    "module": "upsc_gs",
+    "topic": "geography",
+    "question": "What is the difference between Himalayan rivers and Peninsular rivers?",
+    "answer": "Himalayan rivers are generally perennial and glacier- and rain-fed, while Peninsular rivers are mostly rain-fed and flow over older, more stable terrain."
+  },
+  {
+    "id": 137,
+    "module": "upsc_gs",
+    "topic": "geography",
+    "question": "How would you explain watershed management to a village audience?",
+    "answer": "Watershed management means conserving and managing land and water within a drainage area to improve water availability, soil health, and livelihoods."
+  },
+  {
+    "id": 138,
+    "module": "upsc_gs",
+    "topic": "geography",
+    "question": "Why is groundwater depletion becoming a serious geographical concern in India?",
+    "answer": "Groundwater depletion is serious because over-extraction, inefficient irrigation, and recharge imbalance threaten water security and agriculture."
+  },
+  {
+    "id": 139,
+    "module": "upsc_gs",
+    "topic": "geography",
+    "question": "What causes soil erosion, and why should administrators care about it?",
+    "answer": "Soil erosion is caused by water, wind, deforestation, and improper land use, and it matters because it reduces fertility, productivity, and ecological stability."
+  },
+  {
+    "id": 140,
+    "module": "upsc_gs",
+    "topic": "geography",
+    "question": "How would you differentiate between renewable and non-renewable natural resources?",
+    "answer": "Renewable resources can replenish naturally over time if managed well, whereas non-renewable resources are finite and form over geological periods."
+  },
+  {
+    "id": 141,
+    "module": "upsc_gs",
+    "topic": "geography",
+    "question": "Why is land degradation a broader concept than just soil erosion?",
+    "answer": "Land degradation includes soil erosion as well as salinization, waterlogging, desertification, nutrient depletion, and loss of vegetation productivity."
+  },
+  {
+    "id": 142,
+    "module": "upsc_gs",
+    "topic": "geography",
+    "question": "What is desertification, and does it happen only in deserts?",
+    "answer": "Desertification is land degradation in arid, semi-arid, and dry sub-humid areas, and it can occur outside existing deserts."
+  },
+  {
+    "id": 143,
+    "module": "upsc_gs",
+    "topic": "geography",
+    "question": "How would you explain urbanization from a geographical perspective?",
+    "answer": "Urbanization is the process by which population and economic activity become increasingly concentrated in towns and cities."
+  },
+  {
+    "id": 144,
+    "module": "upsc_gs",
+    "topic": "geography",
+    "question": "Why do geographers talk about rural-urban migration as both opportunity and challenge?",
+    "answer": "Rural-urban migration can improve access to jobs and services, but it can also strain housing, infrastructure, and urban governance."
+  },
+  {
+    "id": 145,
+    "module": "upsc_gs",
+    "topic": "geography",
+    "question": "What is the significance of coastal regions for India?",
+    "answer": "Coastal regions are significant for ports, fisheries, trade, tourism, biodiversity, energy, and strategic maritime interests."
+  },
+  {
+    "id": 146,
+    "module": "upsc_gs",
+    "topic": "geography",
+    "question": "Why are deltas ecologically and economically important?",
+    "answer": "Deltas are important because they support fertile agriculture, dense settlement, fisheries, wetlands, and biodiversity, though they are also highly vulnerable."
+  },
+  {
+    "id": 147,
+    "module": "upsc_gs",
+    "topic": "geography",
+    "question": "How would you explain the idea of biodiversity hotspots?",
+    "answer": "Biodiversity hotspots are regions with exceptionally high endemic species richness that are also under significant threat."
+  },
+  {
+    "id": 148,
+    "module": "upsc_gs",
+    "topic": "geography",
+    "question": "Why are the Western Ghats often discussed in both geography and environment?",
+    "answer": "The Western Ghats are discussed because they are an ecologically rich mountain system that strongly influences rainfall, river systems, and biodiversity."
+  },
+  {
+    "id": 149,
+    "module": "upsc_gs",
+    "topic": "geography",
+    "question": "What is an ecosystem in geographical terms?",
+    "answer": "An ecosystem is a functional unit where living organisms interact with each other and with their physical environment."
+  },
+  {
+    "id": 150,
+    "module": "upsc_gs",
+    "topic": "geography",
+    "question": "How does deforestation alter local and regional geography?",
+    "answer": "Deforestation alters land cover, hydrology, soil stability, biodiversity, and even local climatic conditions."
+  },
+  {
+    "id": 151,
+    "module": "upsc_gs",
+    "topic": "geography",
+    "question": "Why do earthquakes occur, and why is India vulnerable in several zones?",
+    "answer": "Earthquakes occur due to tectonic stresses and sudden release of energy along faults, and India is vulnerable because of active plate boundaries and fault systems."
+  },
+  {
+    "id": 152,
+    "module": "upsc_gs",
+    "topic": "geography",
+    "question": "How would you explain the difference between hazard, vulnerability, and disaster?",
+    "answer": "A hazard is a potentially damaging event, vulnerability is the susceptibility to harm, and a disaster occurs when a hazard causes serious disruption beyond coping capacity."
+  },
+  {
+    "id": 153,
+    "module": "upsc_gs",
+    "topic": "geography",
+    "question": "Why are floods becoming more severe in many areas even where floods are not new?",
+    "answer": "Flood severity can increase due to extreme rainfall, encroachment on floodplains, poor drainage, land-use change, and inadequate preparedness."
+  },
+  {
+    "id": 154,
+    "module": "upsc_gs",
+    "topic": "geography",
+    "question": "What is climate change, and how is it different from normal climate variability?",
+    "answer": "Climate change refers to long-term shifts in climate patterns, especially those linked today to human-induced greenhouse gas emissions, unlike short-term natural variability."
+  },
+  {
+    "id": 155,
+    "module": "upsc_gs",
+    "topic": "geography",
+    "question": "If asked why geography is important for administration, what would you say?",
+    "answer": "Geography is important for administration because planning, resource use, disaster management, infrastructure, and livelihoods all depend on spatial realities."
+  },
+  {
+    "id": 156,
+    "module": "upsc_gs",
+    "topic": "environment",
+    "question": "If someone asks you what ecology studies, how would you answer in one clear sentence?",
+    "answer": "Ecology studies the relationships among living organisms and between organisms and their physical environment."
+  },
+  {
+    "id": 157,
+    "module": "upsc_gs",
+    "topic": "environment",
+    "question": "Why is biodiversity important even to people who never visit forests?",
+    "answer": "Biodiversity supports ecosystem services such as pollination, climate regulation, food systems, water security, medicine, and resilience."
+  },
+  {
+    "id": 158,
+    "module": "upsc_gs",
+    "topic": "environment",
+    "question": "How would you explain ecosystem services in everyday language?",
+    "answer": "Ecosystem services are the benefits humans receive from nature, such as clean water, fertile soil, pollination, carbon storage, and flood control."
+  },
+  {
+    "id": 159,
+    "module": "upsc_gs",
+    "topic": "environment",
+    "question": "What is the difference between conservation and preservation?",
+    "answer": "Conservation means sustainable use and management of natural resources, while preservation emphasizes protecting nature from significant human interference."
+  },
+  {
+    "id": 160,
+    "module": "upsc_gs",
+    "topic": "environment",
+    "question": "Why are forests important beyond timber value?",
+    "answer": "Forests are important because they regulate climate, conserve soil and water, support biodiversity, provide livelihoods, and store carbon."
+  },
+  {
+    "id": 161,
+    "module": "upsc_gs",
+    "topic": "environment",
+    "question": "How would you explain the idea of sustainable development to a policymaker?",
+    "answer": "Sustainable development means meeting present needs without compromising the ability of future generations to meet their own needs."
+  },
+  {
+    "id": 162,
+    "module": "upsc_gs",
+    "topic": "environment",
+    "question": "Why is climate change considered both an environmental and developmental challenge?",
+    "answer": "Climate change affects agriculture, water, health, infrastructure, migration, and livelihoods, making it both an ecological and developmental issue."
+  },
+  {
+    "id": 163,
+    "module": "upsc_gs",
+    "topic": "environment",
+    "question": "What are greenhouse gases, and why do they matter?",
+    "answer": "Greenhouse gases trap heat in the atmosphere and are important because rising concentrations intensify global warming."
+  },
+  {
+    "id": 164,
+    "module": "upsc_gs",
+    "topic": "environment",
+    "question": "How would you explain global warming versus climate change?",
+    "answer": "Global warming refers specifically to the rise in average global temperatures, while climate change includes broader long-term changes in temperature, rainfall, and extremes."
+  },
+  {
+    "id": 165,
+    "module": "upsc_gs",
+    "topic": "environment",
+    "question": "Why are extreme weather events getting so much attention in climate discussions?",
+    "answer": "Extreme weather events receive attention because warming can increase the intensity, frequency, or impacts of heatwaves, heavy rainfall, droughts, and storms."
+  },
+  {
+    "id": 166,
+    "module": "upsc_gs",
+    "topic": "environment",
+    "question": "What is carbon sequestration, and why is it relevant to climate policy?",
+    "answer": "Carbon sequestration is the process of capturing and storing carbon in forests, soils, oceans, or technological systems to reduce atmospheric carbon dioxide."
+  },
+  {
+    "id": 167,
+    "module": "upsc_gs",
+    "topic": "environment",
+    "question": "How would you explain the significance of wetlands?",
+    "answer": "Wetlands are significant because they store water, support biodiversity, filter pollutants, recharge groundwater, and reduce flood risks."
+  },
+  {
+    "id": 168,
+    "module": "upsc_gs",
+    "topic": "environment",
+    "question": "Why are mangroves often described as natural coastal defenders?",
+    "answer": "Mangroves buffer coastlines from storm surges and erosion, support fisheries, store carbon, and protect coastal ecosystems."
+  },
+  {
+    "id": 169,
+    "module": "upsc_gs",
+    "topic": "environment",
+    "question": "What is the difference between mitigation and adaptation in climate policy?",
+    "answer": "Mitigation aims to reduce the causes of climate change, while adaptation focuses on adjusting systems and communities to its impacts."
+  },
+  {
+    "id": 170,
+    "module": "upsc_gs",
+    "topic": "environment",
+    "question": "How would you explain environmental impact assessment in simple terms?",
+    "answer": "Environmental impact assessment is a process of evaluating the likely environmental consequences of a proposed project before approval."
+  },
+  {
+    "id": 171,
+    "module": "upsc_gs",
+    "topic": "environment",
+    "question": "Why is carrying capacity an important concept in environmental planning?",
+    "answer": "Carrying capacity is important because it indicates the level of human activity an ecosystem or area can sustain without serious degradation."
+  },
+  {
+    "id": 172,
+    "module": "upsc_gs",
+    "topic": "environment",
+    "question": "What is the problem with air pollution from a public health perspective?",
+    "answer": "Air pollution is harmful because it increases respiratory and cardiovascular disease, reduces productivity, and disproportionately affects vulnerable populations."
+  },
+  {
+    "id": 173,
+    "module": "upsc_gs",
+    "topic": "environment",
+    "question": "How would you distinguish point source pollution from non-point source pollution?",
+    "answer": "Point source pollution comes from identifiable single sources, while non-point source pollution is diffuse and arises from multiple scattered sources."
+  },
+  {
+    "id": 174,
+    "module": "upsc_gs",
+    "topic": "environment",
+    "question": "Why is waste management now a major governance issue and not just a sanitation issue?",
+    "answer": "Waste management affects public health, land use, water quality, emissions, recycling systems, and urban sustainability."
+  },
+  {
+    "id": 175,
+    "module": "upsc_gs",
+    "topic": "environment",
+    "question": "What is the circular economy, and how is it different from the take-make-dispose model?",
+    "answer": "A circular economy emphasizes reducing waste by designing for reuse, repair, recycling, and resource efficiency rather than linear consumption."
+  },
+  {
+    "id": 176,
+    "module": "upsc_gs",
+    "topic": "environment",
+    "question": "Why is overfishing considered an ecological as well as economic problem?",
+    "answer": "Overfishing depletes fish populations and marine ecosystems while also threatening livelihoods, food security, and long-term economic sustainability."
+  },
+  {
+    "id": 177,
+    "module": "upsc_gs",
+    "topic": "environment",
+    "question": "How would you explain invasive species and their impact?",
+    "answer": "Invasive species are non-native organisms that spread aggressively and disrupt ecosystems, native species, and ecological balance."
+  },
+  {
+    "id": 178,
+    "module": "upsc_gs",
+    "topic": "environment",
+    "question": "Why is environmental justice becoming an important policy concept?",
+    "answer": "Environmental justice emphasizes that environmental harms and benefits should not be distributed unfairly across communities, especially marginalized groups."
+  },
+  {
+    "id": 179,
+    "module": "upsc_gs",
+    "topic": "environment",
+    "question": "What is the significance of protected areas like national parks and wildlife sanctuaries?",
+    "answer": "Protected areas conserve ecosystems, habitats, and species by regulating human activity and providing legal protection to biodiversity."
+  },
+  {
+    "id": 180,
+    "module": "upsc_gs",
+    "topic": "environment",
+    "question": "If asked why environment should matter to a civil servant, what would you say?",
+    "answer": "Environment matters to a civil servant because development outcomes, disaster resilience, health, livelihoods, and intergenerational welfare depend on ecological sustainability."
+  },
+  {
+    "id": 181,
+    "module": "upsc_gs",
+    "topic": "ethics",
+    "question": "If you had to define ethics in one line for an interview board, what would you say?",
+    "answer": "Ethics is the study and practice of what is right and wrong in human conduct and decision-making."
+  },
+  {
+    "id": 182,
+    "module": "upsc_gs",
+    "topic": "ethics",
+    "question": "How would you explain the difference between ethics and law?",
+    "answer": "Law prescribes minimum enforceable standards of behavior, while ethics concerns broader moral principles about what ought to be done."
+  },
+  {
+    "id": 183,
+    "module": "upsc_gs",
+    "topic": "ethics",
+    "question": "Why is integrity considered so central in public service?",
+    "answer": "Integrity is central in public service because it ensures honesty, consistency of conduct, and faithful performance of duty without improper influence."
+  },
+  {
+    "id": 184,
+    "module": "upsc_gs",
+    "topic": "ethics",
+    "question": "What is the difference between integrity and probity?",
+    "answer": "Integrity refers to moral wholeness and adherence to ethical principles, while probity emphasizes uprightness, honesty, and incorruptibility in public life."
+  },
+  {
+    "id": 185,
+    "module": "upsc_gs",
+    "topic": "ethics",
+    "question": "How would you explain objectivity in administration?",
+    "answer": "Objectivity means making decisions based on evidence, rules, and fairness rather than personal bias, favoritism, or prejudice."
+  },
+  {
+    "id": 186,
+    "module": "upsc_gs",
+    "topic": "ethics",
+    "question": "Why is empathy important for a civil servant, and where should its limits lie?",
+    "answer": "Empathy helps a civil servant understand people's circumstances and respond humanely, but decisions must still remain lawful, fair, and impartial."
+  },
+  {
+    "id": 187,
+    "module": "upsc_gs",
+    "topic": "ethics",
+    "question": "What is accountability, and why is it an ethical as well as administrative value?",
+    "answer": "Accountability means being answerable for decisions and actions, and it is ethical because public power must be exercised with responsibility and justification."
+  },
+  {
+    "id": 188,
+    "module": "upsc_gs",
+    "topic": "ethics",
+    "question": "How would you distinguish between personal morality and public ethics?",
+    "answer": "Personal morality reflects an individual's private beliefs, while public ethics concerns standards required in public roles to ensure fairness, legality, and public trust."
+  },
+  {
+    "id": 189,
+    "module": "upsc_gs",
+    "topic": "ethics",
+    "question": "Why do conflicts of interest matter even if no corruption has occurred yet?",
+    "answer": "Conflicts of interest matter because they can compromise impartial judgment, weaken trust, and create conditions for misuse of office."
+  },
+  {
+    "id": 190,
+    "module": "upsc_gs",
+    "topic": "ethics",
+    "question": "What is the ethical significance of transparency in governance?",
+    "answer": "Transparency has ethical significance because it enables scrutiny, discourages abuse of power, and respects the public's right to know."
+  },
+  {
+    "id": 191,
+    "module": "upsc_gs",
+    "topic": "ethics",
+    "question": "How would you define compassion in public service without making it sound sentimental?",
+    "answer": "Compassion in public service means being sensitive to human suffering and designing or implementing responses that are humane and just."
+  },
+  {
+    "id": 192,
+    "module": "upsc_gs",
+    "topic": "ethics",
+    "question": "Why is courage considered an ethical virtue for administrators?",
+    "answer": "Courage is an ethical virtue because officials may need to uphold the law and public interest despite pressure, risk, or personal cost."
+  },
+  {
+    "id": 193,
+    "module": "upsc_gs",
+    "topic": "ethics",
+    "question": "What is the difference between efficiency and ethics when administrative decisions are being made?",
+    "answer": "Efficiency focuses on achieving results with optimal use of resources, while ethics asks whether the means and outcomes are fair, lawful, and morally justified."
+  },
+  {
+    "id": 194,
+    "module": "upsc_gs",
+    "topic": "ethics",
+    "question": "How would you explain the idea of the public interest?",
+    "answer": "Public interest refers to the welfare and long-term good of the community as a whole rather than narrow private or sectional gain."
+  },
+  {
+    "id": 195,
+    "module": "upsc_gs",
+    "topic": "ethics",
+    "question": "Why can neutrality in public service not mean indifference to injustice?",
+    "answer": "Neutrality means non-partisanship and fairness, not passivity; civil servants must still uphold constitutional values and lawful duties."
+  },
+  {
+    "id": 196,
+    "module": "upsc_gs",
+    "topic": "ethics",
+    "question": "What is whistleblowing, and why is it ethically complex?",
+    "answer": "Whistleblowing is the disclosure of wrongdoing within an organization, and it is ethically complex because it balances loyalty, legality, public interest, and personal risk."
+  },
+  {
+    "id": 197,
+    "module": "upsc_gs",
+    "topic": "ethics",
+    "question": "How would you explain ethical leadership in administration?",
+    "answer": "Ethical leadership means setting an example through integrity, fairness, accountability, and value-based decision-making."
+  },
+  {
+    "id": 198,
+    "module": "upsc_gs",
+    "topic": "ethics",
+    "question": "Why is trust so important in governance?",
+    "answer": "Trust is important because governance works better when citizens believe institutions are fair, competent, and acting in the public interest."
+  },
+  {
+    "id": 199,
+    "module": "upsc_gs",
+    "topic": "ethics",
+    "question": "What is emotional intelligence, and why is it useful in public administration?",
+    "answer": "Emotional intelligence is the ability to understand and manage one's own emotions and relate effectively to others, which helps in leadership, conflict resolution, and service delivery."
+  },
+  {
+    "id": 200,
+    "module": "upsc_gs",
+    "topic": "ethics",
+    "question": "If asked for the one ethical principle that should never be compromised in public life, what would you say?",
+    "answer": "A core principle that should never be compromised in public life is integrity, because without it authority loses legitimacy and public trust collapses."
+  }
+]

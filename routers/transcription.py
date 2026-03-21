@@ -60,6 +60,10 @@ async def _upsert_answer(
         answer.transcript      = transcript
         answer.semantic_score  = evaluation["semantic_score"]
         answer.keyword_score   = evaluation["keyword_score"]
+        answer.question_relevance = evaluation.get("question_relevance", 0.0)
+        answer.lexical_diversity = evaluation.get("lexical_diversity", 0.0)
+        answer.discourse_score = evaluation.get("discourse_score", 0.0)
+        answer.penalty = evaluation.get("penalty", 0.0)
         answer.final_score     = evaluation["final_score"]
         answer.feedback        = evaluation["feedback"]
         answer.tip             = evaluation["tip"]
@@ -71,6 +75,10 @@ async def _upsert_answer(
             transcript       = transcript,
             semantic_score   = evaluation["semantic_score"],
             keyword_score    = evaluation["keyword_score"],
+            question_relevance = evaluation.get("question_relevance", 0.0),
+            lexical_diversity = evaluation.get("lexical_diversity", 0.0),
+            discourse_score = evaluation.get("discourse_score", 0.0),
+            penalty = evaluation.get("penalty", 0.0),
             final_score      = evaluation["final_score"],
             feedback         = evaluation["feedback"],
             tip              = evaluation["tip"],
