@@ -132,19 +132,28 @@ class PerformanceStatsResponse(BaseModel):
 
 # ── Hierarchy ─────────────────────────────────────────────────────────────────
 
-class DomainOut(BaseModel):
+class ModuleOut(BaseModel):
     id: int
-    name: str
+    module_name: str
     slug: str
-
+    is_free: bool = True
+    question_count: int = 0
 
 class SubdomainOut(BaseModel):
     id: int
     name: str
     slug: str
+    modules: List[ModuleOut] = []
 
-
-class ModuleOut(BaseModel):
+class DomainOut(BaseModel):
     id: int
-    module_name: str
+    name: str
     slug: str
+    subdomains: List[SubdomainOut] = []
+
+class DomainListOut(BaseModel):
+    data: List[DomainOut]
+
+class ModuleDetailOut(ModuleOut):
+    domain_name: Optional[str] = None
+    subdomain_name: Optional[str] = None

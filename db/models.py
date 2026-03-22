@@ -65,6 +65,10 @@ class Module(Base):
     questions: Mapped[List["Question"]] = relationship(back_populates="module")
     sessions: Mapped[List["InterviewSession"]] = relationship(back_populates="module")
 
+    @property
+    def question_count(self) -> int:
+        return len(self.questions)
+
 
 # ── Django-managed tables — FastAPI reads and writes ─────────────────────────
 
