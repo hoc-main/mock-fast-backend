@@ -1,0 +1,649 @@
+[
+  {
+    "sample_id": "upsc_gs_polity_q001_strong_complete",
+    "schema_version": "2.0",
+    "module": "upsc_gs",
+    "split": "train",
+    "question_data": {
+      "id": "polity_q001",
+      "module": "upsc_gs",
+      "topic": "polity",
+      "subtopic": "constitution_basics",
+      "difficulty": 2,
+      "question": "If you had to explain to a school student what the Constitution actually does, how would you put it?",
+      "primary_answer": "The Constitution is the supreme law of the land. It defines the structure of the government, distributes powers between different organs, and protects the fundamental rights of citizens. Every law passed by Parliament must conform to the Constitution.",
+      "answer_variants": [
+        "The Constitution is the highest law in India. It lays down how the government is organised, what powers each branch has, and guarantees basic rights to every citizen.",
+        "Think of the Constitution as the rulebook for the country. It sets up the government, says what Parliament and courts can do, and makes sure citizens have rights that cannot be taken away.",
+        "The Constitution is the supreme law. It creates the government, gives it its powers, limits those powers, and protects citizens by listing their fundamental rights."
+      ],
+      "expected_keywords": {
+        "critical": ["supreme law", "constitution", "government", "rights", "citizens"],
+        "supporting": ["parliament", "powers", "fundamental rights", "structure", "distribute"],
+        "bonus": ["preamble", "directive principles", "judiciary", "federalism", "amendment"]
+      },
+      "scoring_weights": {
+        "semantic": 0.50,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 45,
+      "domain_tags": ["civics", "constitutional_law", "basic_concepts"]
+    },
+    "candidate": "The Constitution is the supreme law of the land. It does three main things: first, it sets up the structure of the government by creating Parliament, the Executive, and the Judiciary. Second, it distributes powers so no single body becomes too powerful. Third, and most importantly for citizens, it guarantees fundamental rights that the government cannot take away, like the right to equality and freedom of speech.",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.91,
+      "question_relevance": 0.95,
+      "keyword_coverage": 0.88,
+      "length_appropriateness": 0.90,
+      "discourse_quality": 0.95,
+      "lexical_diversity": 0.82,
+      "factual_accuracy": 1.00,
+      "answer_completeness": 0.92
+    },
+    "score": 0.92,
+    "scoring_rationale": "Covers all critical keywords, uses a clear three-part structure with discourse markers (first/second/third), factually accurate, well within ideal length, directly addresses the 'explain to a student' framing of the question."
+  },
+
+  {
+    "sample_id": "upsc_gs_polity_q001_strong_concise",
+    "schema_version": "2.0",
+    "module": "upsc_gs",
+    "split": "train",
+    "question_data": {
+      "id": "polity_q001",
+      "module": "upsc_gs",
+      "topic": "polity",
+      "subtopic": "constitution_basics",
+      "difficulty": 2,
+      "question": "If you had to explain to a school student what the Constitution actually does, how would you put it?",
+      "primary_answer": "The Constitution is the supreme law of the land. It defines the structure of the government, distributes powers between different organs, and protects the fundamental rights of citizens. Every law passed by Parliament must conform to the Constitution.",
+      "answer_variants": [
+        "The Constitution is the highest law in India. It lays down how the government is organised, what powers each branch has, and guarantees basic rights to every citizen.",
+        "Think of the Constitution as the rulebook for the country. It sets up the government, says what Parliament and courts can do, and makes sure citizens have rights that cannot be taken away.",
+        "The Constitution is the supreme law. It creates the government, gives it its powers, limits those powers, and protects citizens by listing their fundamental rights."
+      ],
+      "expected_keywords": {
+        "critical": ["supreme law", "constitution", "government", "rights", "citizens"],
+        "supporting": ["parliament", "powers", "fundamental rights", "structure", "distribute"],
+        "bonus": ["preamble", "directive principles", "judiciary", "federalism", "amendment"]
+      },
+      "scoring_weights": {
+        "semantic": 0.50,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 45,
+      "domain_tags": ["civics", "constitutional_law", "basic_concepts"]
+    },
+    "candidate": "The Constitution is the supreme law of India. It defines the structure of our government, distributes powers between Parliament, the Executive, and courts, and protects citizens' fundamental rights.",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.88,
+      "question_relevance": 0.92,
+      "keyword_coverage": 0.82,
+      "length_appropriateness": 0.70,
+      "discourse_quality": 0.60,
+      "lexical_diversity": 0.78,
+      "factual_accuracy": 1.00,
+      "answer_completeness": 0.78
+    },
+    "score": 0.84,
+    "scoring_rationale": "Hits all critical keywords and is factually correct, but brevity leaves out examples and structure that a student explanation would need. Length score reduced because it is 28 words vs ideal 45."
+  },
+
+  {
+    "sample_id": "upsc_gs_polity_q001_good_partial_keywords",
+    "schema_version": "2.0",
+    "module": "upsc_gs",
+    "split": "train",
+    "question_data": {
+      "id": "polity_q001",
+      "module": "upsc_gs",
+      "topic": "polity",
+      "subtopic": "constitution_basics",
+      "difficulty": 2,
+      "question": "If you had to explain to a school student what the Constitution actually does, how would you put it?",
+      "primary_answer": "The Constitution is the supreme law of the land. It defines the structure of the government, distributes powers between different organs, and protects the fundamental rights of citizens. Every law passed by Parliament must conform to the Constitution.",
+      "answer_variants": [
+        "The Constitution is the highest law in India. It lays down how the government is organised, what powers each branch has, and guarantees basic rights to every citizen.",
+        "Think of the Constitution as the rulebook for the country. It sets up the government, says what Parliament and courts can do, and makes sure citizens have rights that cannot be taken away.",
+        "The Constitution is the supreme law. It creates the government, gives it its powers, limits those powers, and protects citizens by listing their fundamental rights."
+      ],
+      "expected_keywords": {
+        "critical": ["supreme law", "constitution", "government", "rights", "citizens"],
+        "supporting": ["parliament", "powers", "fundamental rights", "structure", "distribute"],
+        "bonus": ["preamble", "directive principles", "judiciary", "federalism", "amendment"]
+      },
+      "scoring_weights": {
+        "semantic": 0.50,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 45,
+      "domain_tags": ["civics", "constitutional_law", "basic_concepts"]
+    },
+    "candidate": "The Constitution is a very important document for our country. It tells us how the government should work and what people are allowed to do. It has been there since India became independent and has helped keep things in order.",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.72,
+      "question_relevance": 0.85,
+      "keyword_coverage": 0.42,
+      "length_appropriateness": 0.78,
+      "discourse_quality": 0.35,
+      "lexical_diversity": 0.68,
+      "factual_accuracy": 0.80,
+      "answer_completeness": 0.45
+    },
+    "score": 0.66,
+    "scoring_rationale": "Addresses the right topic and stays somewhat relevant to the student-friendly framing. However, misses critical keywords 'supreme law' and 'rights', gives no specific structure, and uses vague language ('very important', 'in order') instead of precise constitutional terms."
+  },
+
+  {
+    "sample_id": "upsc_gs_polity_q001_partial_off_topic",
+    "schema_version": "2.0",
+    "module": "upsc_gs",
+    "split": "train",
+    "question_data": {
+      "id": "polity_q001",
+      "module": "upsc_gs",
+      "topic": "polity",
+      "subtopic": "constitution_basics",
+      "difficulty": 2,
+      "question": "If you had to explain to a school student what the Constitution actually does, how would you put it?",
+      "primary_answer": "The Constitution is the supreme law of the land. It defines the structure of the government, distributes powers between different organs, and protects the fundamental rights of citizens. Every law passed by Parliament must conform to the Constitution.",
+      "answer_variants": [
+        "The Constitution is the highest law in India. It lays down how the government is organised, what powers each branch has, and guarantees basic rights to every citizen.",
+        "Think of the Constitution as the rulebook for the country. It sets up the government, says what Parliament and courts can do, and makes sure citizens have rights that cannot be taken away.",
+        "The Constitution is the supreme law. It creates the government, gives it its powers, limits those powers, and protects citizens by listing their fundamental rights."
+      ],
+      "expected_keywords": {
+        "critical": ["supreme law", "constitution", "government", "rights", "citizens"],
+        "supporting": ["parliament", "powers", "fundamental rights", "structure", "distribute"],
+        "bonus": ["preamble", "directive principles", "judiciary", "federalism", "amendment"]
+      },
+      "scoring_weights": {
+        "semantic": 0.50,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 45,
+      "domain_tags": ["civics", "constitutional_law", "basic_concepts"]
+    },
+    "candidate": "The Constitution of India was drafted by the Constituent Assembly. It was adopted on 26 November 1949 and came into force on 26 January 1950. Dr. B.R. Ambedkar was the chairman of the drafting committee and played a key role in its formation.",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.48,
+      "question_relevance": 0.22,
+      "keyword_coverage": 0.18,
+      "length_appropriateness": 0.75,
+      "discourse_quality": 0.30,
+      "lexical_diversity": 0.70,
+      "factual_accuracy": 1.00,
+      "answer_completeness": 0.15
+    },
+    "score": 0.34,
+    "scoring_rationale": "Factually correct but completely misses the question. The student was asked what the Constitution DOES, not its history or who wrote it. question_relevance is very low. This is the off-topic penalty pattern the model must learn."
+  },
+
+  {
+    "sample_id": "upsc_gs_polity_q001_weak_vague",
+    "schema_version": "2.0",
+    "module": "upsc_gs",
+    "split": "train",
+    "question_data": {
+      "id": "polity_q001",
+      "module": "upsc_gs",
+      "topic": "polity",
+      "subtopic": "constitution_basics",
+      "difficulty": 2,
+      "question": "If you had to explain to a school student what the Constitution actually does, how would you put it?",
+      "primary_answer": "The Constitution is the supreme law of the land. It defines the structure of the government, distributes powers between different organs, and protects the fundamental rights of citizens. Every law passed by Parliament must conform to the Constitution.",
+      "answer_variants": [
+        "The Constitution is the highest law in India. It lays down how the government is organised, what powers each branch has, and guarantees basic rights to every citizen.",
+        "Think of the Constitution as the rulebook for the country. It sets up the government, says what Parliament and courts can do, and makes sure citizens have rights that cannot be taken away.",
+        "The Constitution is the supreme law. It creates the government, gives it its powers, limits those powers, and protects citizens by listing their fundamental rights."
+      ],
+      "expected_keywords": {
+        "critical": ["supreme law", "constitution", "government", "rights", "citizens"],
+        "supporting": ["parliament", "powers", "fundamental rights", "structure", "distribute"],
+        "bonus": ["preamble", "directive principles", "judiciary", "federalism", "amendment"]
+      },
+      "scoring_weights": {
+        "semantic": 0.50,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 45,
+      "domain_tags": ["civics", "constitutional_law", "basic_concepts"]
+    },
+    "candidate": "The Constitution is something that every country has and it is about how the country runs. It has many articles and provisions.",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.42,
+      "question_relevance": 0.55,
+      "keyword_coverage": 0.12,
+      "length_appropriateness": 0.40,
+      "discourse_quality": 0.10,
+      "lexical_diversity": 0.55,
+      "factual_accuracy": 0.70,
+      "answer_completeness": 0.12
+    },
+    "score": 0.36,
+    "scoring_rationale": "Mentions the Constitution but provides no substance. 'How the country runs' is too vague to demonstrate understanding. No critical keywords, no structure, too short. Doesn't attempt the student-friendly explanation requested."
+  },
+
+  {
+    "sample_id": "upsc_gs_polity_q001_weak_refusal",
+    "schema_version": "2.0",
+    "module": "upsc_gs",
+    "split": "train",
+    "question_data": {
+      "id": "polity_q001",
+      "module": "upsc_gs",
+      "topic": "polity",
+      "subtopic": "constitution_basics",
+      "difficulty": 2,
+      "question": "If you had to explain to a school student what the Constitution actually does, how would you put it?",
+      "primary_answer": "The Constitution is the supreme law of the land. It defines the structure of the government, distributes powers between different organs, and protects the fundamental rights of citizens. Every law passed by Parliament must conform to the Constitution.",
+      "answer_variants": [
+        "The Constitution is the highest law in India. It lays down how the government is organised, what powers each branch has, and guarantees basic rights to every citizen.",
+        "Think of the Constitution as the rulebook for the country. It sets up the government, says what Parliament and courts can do, and makes sure citizens have rights that cannot be taken away.",
+        "The Constitution is the supreme law. It creates the government, gives it its powers, limits those powers, and protects citizens by listing their fundamental rights."
+      ],
+      "expected_keywords": {
+        "critical": ["supreme law", "constitution", "government", "rights", "citizens"],
+        "supporting": ["parliament", "powers", "fundamental rights", "structure", "distribute"],
+        "bonus": ["preamble", "directive principles", "judiciary", "federalism", "amendment"]
+      },
+      "scoring_weights": {
+        "semantic": 0.50,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 45,
+      "domain_tags": ["civics", "constitutional_law", "basic_concepts"]
+    },
+    "candidate": "I am not really sure about this topic. I haven't studied it much.",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.05,
+      "question_relevance": 0.08,
+      "keyword_coverage": 0.00,
+      "length_appropriateness": 0.10,
+      "discourse_quality": 0.00,
+      "lexical_diversity": 0.50,
+      "factual_accuracy": 1.00,
+      "answer_completeness": 0.00
+    },
+    "score": 0.08,
+    "scoring_rationale": "Explicit refusal / no knowledge response. No content whatsoever. Factual_accuracy is 1.0 because nothing stated is wrong, but every other dimension is near zero."
+  },
+
+  {
+    "sample_id": "upsc_gs_polity_q001_stt_artifact_good",
+    "schema_version": "2.0",
+    "module": "upsc_gs",
+    "split": "train",
+    "question_data": {
+      "id": "polity_q001",
+      "module": "upsc_gs",
+      "topic": "polity",
+      "subtopic": "constitution_basics",
+      "difficulty": 2,
+      "question": "If you had to explain to a school student what the Constitution actually does, how would you put it?",
+      "primary_answer": "The Constitution is the supreme law of the land. It defines the structure of the government, distributes powers between different organs, and protects the fundamental rights of citizens. Every law passed by Parliament must conform to the Constitution.",
+      "answer_variants": [
+        "The Constitution is the highest law in India. It lays down how the government is organised, what powers each branch has, and guarantees basic rights to every citizen.",
+        "Think of the Constitution as the rulebook for the country. It sets up the government, says what Parliament and courts can do, and makes sure citizens have rights that cannot be taken away.",
+        "The Constitution is the supreme law. It creates the government, gives it its powers, limits those powers, and protects citizens by listing their fundamental rights."
+      ],
+      "expected_keywords": {
+        "critical": ["supreme law", "constitution", "government", "rights", "citizens"],
+        "supporting": ["parliament", "powers", "fundamental rights", "structure", "distribute"],
+        "bonus": ["preamble", "directive principles", "judiciary", "federalism", "amendment"]
+      },
+      "scoring_weights": {
+        "semantic": 0.50,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 45,
+      "domain_tags": ["civics", "constitutional_law", "basic_concepts"]
+    },
+    "candidate": "so the constitution is basically um the supreme law of our country right and uh it does three things i think first it sets up how the government works like the parliament and courts and executive and then it uh distributes powers so no one body gets too powerful and and most importantly it protects the fundamental rights of citizens so the government cannot just take away your rights",
+    "stt_realistic": true,
+    "labels": {
+      "semantic_similarity": 0.85,
+      "question_relevance": 0.90,
+      "keyword_coverage": 0.78,
+      "length_appropriateness": 0.88,
+      "discourse_quality": 0.60,
+      "lexical_diversity": 0.62,
+      "factual_accuracy": 1.00,
+      "answer_completeness": 0.82
+    },
+    "score": 0.82,
+    "scoring_rationale": "Same content as a strong answer but delivered with spoken fillers (um, uh, basically, right) and repetition (and and). Semantics and facts are solid. Discourse score reduced due to spoken structure rather than written structure. This pattern teaches the model to not penalise STT artifacts when the underlying content is correct."
+  },
+
+  {
+    "sample_id": "upsc_gs_polity_q001_good_verbose",
+    "schema_version": "2.0",
+    "module": "upsc_gs",
+    "split": "train",
+    "question_data": {
+      "id": "polity_q001",
+      "module": "upsc_gs",
+      "topic": "polity",
+      "subtopic": "constitution_basics",
+      "difficulty": 2,
+      "question": "If you had to explain to a school student what the Constitution actually does, how would you put it?",
+      "primary_answer": "The Constitution is the supreme law of the land. It defines the structure of the government, distributes powers between different organs, and protects the fundamental rights of citizens. Every law passed by Parliament must conform to the Constitution.",
+      "answer_variants": [
+        "The Constitution is the highest law in India. It lays down how the government is organised, what powers each branch has, and guarantees basic rights to every citizen.",
+        "Think of the Constitution as the rulebook for the country. It sets up the government, says what Parliament and courts can do, and makes sure citizens have rights that cannot be taken away.",
+        "The Constitution is the supreme law. It creates the government, gives it its powers, limits those powers, and protects citizens by listing their fundamental rights."
+      ],
+      "expected_keywords": {
+        "critical": ["supreme law", "constitution", "government", "rights", "citizens"],
+        "supporting": ["parliament", "powers", "fundamental rights", "structure", "distribute"],
+        "bonus": ["preamble", "directive principles", "judiciary", "federalism", "amendment"]
+      },
+      "scoring_weights": {
+        "semantic": 0.50,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 45,
+      "domain_tags": ["civics", "constitutional_law", "basic_concepts"]
+    },
+    "candidate": "The Constitution is the supreme law of the land and it is the supreme document and it governs everything and it is very important. It basically means that the government is structured in a certain way and the government has to follow the Constitution. The rights of citizens are also protected by the Constitution and citizens have fundamental rights and the Constitution protects these fundamental rights and no government can violate these fundamental rights.",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.79,
+      "question_relevance": 0.82,
+      "keyword_coverage": 0.72,
+      "length_appropriateness": 0.65,
+      "discourse_quality": 0.20,
+      "lexical_diversity": 0.38,
+      "factual_accuracy": 1.00,
+      "answer_completeness": 0.72
+    },
+    "score": 0.70,
+    "scoring_rationale": "Contains the correct concepts but is severely repetitive (supreme law/supreme document, Constitution mentioned 6 times, fundamental rights repeated 3 times). Lexical diversity is low. Lacks structure. Length is above ideal without adding new information — penalised via lexical_diversity and discourse_quality."
+  },
+
+  {
+    "sample_id": "upsc_gs_economy_q001_strong_complete",
+    "schema_version": "2.0",
+    "module": "upsc_gs",
+    "split": "train",
+    "question_data": {
+      "id": "economy_q001",
+      "module": "upsc_gs",
+      "topic": "economy",
+      "subtopic": "gdp_basics",
+      "difficulty": 2,
+      "question": "A friend who has never studied economics asks you what GDP means and why it matters. How would you explain it?",
+      "primary_answer": "GDP, or Gross Domestic Product, is the total monetary value of all goods and services produced in a country within a specific period, usually a year. It matters because it is the primary measure of a country's economic size and growth. When GDP rises, it generally means more jobs, higher incomes, and better living standards. When it falls, it signals a recession.",
+      "answer_variants": [
+        "GDP stands for Gross Domestic Product. It measures the total value of everything a country produces in a year — goods like cars and clothes, and services like banking and education. It is the most widely used indicator of how well an economy is performing.",
+        "Gross Domestic Product is how economists measure the size of an economy. It adds up the value of all final goods and services produced domestically in a year. A growing GDP typically means the economy is doing well and creating jobs.",
+        "GDP is essentially the report card of an economy. It tells you the total economic output of a country. If GDP is growing, jobs are being created and incomes are rising. If GDP shrinks for two quarters in a row, the country is in a recession."
+      ],
+      "expected_keywords": {
+        "critical": ["gdp", "gross domestic product", "goods and services", "economy", "growth"],
+        "supporting": ["monetary value", "produced", "year", "jobs", "recession", "income"],
+        "bonus": ["nominal", "real gdp", "per capita", "inflation", "quarterly"]
+      },
+      "scoring_weights": {
+        "semantic": 0.48,
+        "question_relevance": 0.18,
+        "keyword": 0.18,
+        "length": 0.06,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 55,
+      "domain_tags": ["economics", "macroeconomics", "basic_concepts"]
+    },
+    "candidate": "GDP stands for Gross Domestic Product. It is the total value of all goods and services produced in a country in a year. Think of it as the country's income report. If GDP is growing, it means businesses are producing more, people have more jobs and money, and the economy is healthy. If GDP keeps falling for a couple of quarters, we call that a recession. So GDP basically tells us how well the economy is doing.",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.92,
+      "question_relevance": 0.96,
+      "keyword_coverage": 0.85,
+      "length_appropriateness": 0.92,
+      "discourse_quality": 0.80,
+      "lexical_diversity": 0.78,
+      "factual_accuracy": 1.00,
+      "answer_completeness": 0.88
+    },
+    "score": 0.91,
+    "scoring_rationale": "Excellent answer. Uses the friend-friendly framing (think of it as the country's income report), explains both the definition and the significance, correctly identifies recession, good structure. Hits all critical and most supporting keywords."
+  },
+
+  {
+    "sample_id": "upsc_gs_economy_q001_partial_off_topic",
+    "schema_version": "2.0",
+    "module": "upsc_gs",
+    "split": "train",
+    "question_data": {
+      "id": "economy_q001",
+      "module": "upsc_gs",
+      "topic": "economy",
+      "subtopic": "gdp_basics",
+      "difficulty": 2,
+      "question": "A friend who has never studied economics asks you what GDP means and why it matters. How would you explain it?",
+      "primary_answer": "GDP, or Gross Domestic Product, is the total monetary value of all goods and services produced in a country within a specific period, usually a year. It matters because it is the primary measure of a country's economic size and growth. When GDP rises, it generally means more jobs, higher incomes, and better living standards. When it falls, it signals a recession.",
+      "answer_variants": [
+        "GDP stands for Gross Domestic Product. It measures the total value of everything a country produces in a year — goods like cars and clothes, and services like banking and education. It is the most widely used indicator of how well an economy is performing.",
+        "Gross Domestic Product is how economists measure the size of an economy. It adds up the value of all final goods and services produced domestically in a year. A growing GDP typically means the economy is doing well and creating jobs.",
+        "GDP is essentially the report card of an economy. It tells you the total economic output of a country. If GDP is growing, jobs are being created and incomes are rising. If GDP shrinks for two quarters in a row, the country is in a recession."
+      ],
+      "expected_keywords": {
+        "critical": ["gdp", "gross domestic product", "goods and services", "economy", "growth"],
+        "supporting": ["monetary value", "produced", "year", "jobs", "recession", "income"],
+        "bonus": ["nominal", "real gdp", "per capita", "inflation", "quarterly"]
+      },
+      "scoring_weights": {
+        "semantic": 0.48,
+        "question_relevance": 0.18,
+        "keyword": 0.18,
+        "length": 0.06,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 55,
+      "domain_tags": ["economics", "macroeconomics", "basic_concepts"]
+    },
+    "candidate": "GDP is calculated using three methods — the expenditure approach, the income approach, and the production approach. The expenditure method is GDP equals C plus I plus G plus net exports. India's GDP growth rate has been around 6 to 7 percent in recent years and we are one of the fastest growing major economies.",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.55,
+      "question_relevance": 0.28,
+      "keyword_coverage": 0.38,
+      "length_appropriateness": 0.70,
+      "discourse_quality": 0.40,
+      "lexical_diversity": 0.72,
+      "factual_accuracy": 0.90,
+      "answer_completeness": 0.25
+    },
+    "score": 0.42,
+    "scoring_rationale": "Textbook-level content about GDP calculation methods, but completely ignores the 'explain to a friend' framing. The friend asked what GDP means and why it matters — not how to calculate it. This is the key off-topic pattern: correct domain, wrong question angle."
+  },
+
+  {
+    "sample_id": "upsc_gs_economy_q001_stt_artifact_partial",
+    "schema_version": "2.0",
+    "module": "upsc_gs",
+    "split": "train",
+    "question_data": {
+      "id": "economy_q001",
+      "module": "upsc_gs",
+      "topic": "economy",
+      "subtopic": "gdp_basics",
+      "difficulty": 2,
+      "question": "A friend who has never studied economics asks you what GDP means and why it matters. How would you explain it?",
+      "primary_answer": "GDP, or Gross Domestic Product, is the total monetary value of all goods and services produced in a country within a specific period, usually a year. It matters because it is the primary measure of a country's economic size and growth. When GDP rises, it generally means more jobs, higher incomes, and better living standards. When it falls, it signals a recession.",
+      "answer_variants": [
+        "GDP stands for Gross Domestic Product. It measures the total value of everything a country produces in a year — goods like cars and clothes, and services like banking and education. It is the most widely used indicator of how well an economy is performing.",
+        "Gross Domestic Product is how economists measure the size of an economy. It adds up the value of all final goods and services produced domestically in a year. A growing GDP typically means the economy is doing well and creating jobs.",
+        "GDP is essentially the report card of an economy. It tells you the total economic output of a country. If GDP is growing, jobs are being created and incomes are rising. If GDP shrinks for two quarters in a row, the country is in a recession."
+      ],
+      "expected_keywords": {
+        "critical": ["gdp", "gross domestic product", "goods and services", "economy", "growth"],
+        "supporting": ["monetary value", "produced", "year", "jobs", "recession", "income"],
+        "bonus": ["nominal", "real gdp", "per capita", "inflation", "quarterly"]
+      },
+      "scoring_weights": {
+        "semantic": 0.48,
+        "question_relevance": 0.18,
+        "keyword": 0.18,
+        "length": 0.06,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 55,
+      "domain_tags": ["economics", "macroeconomics", "basic_concepts"]
+    },
+    "candidate": "so gdp is um gross domestic product and its basically about uh the economy of a country and how much it produces and and it matters because like if the economy grows then jobs are created and stuff like that so yeah its a measure of how the economy is doing",
+    "stt_realistic": true,
+    "labels": {
+      "semantic_similarity": 0.68,
+      "question_relevance": 0.78,
+      "keyword_coverage": 0.52,
+      "length_appropriateness": 0.72,
+      "discourse_quality": 0.25,
+      "lexical_diversity": 0.55,
+      "factual_accuracy": 0.90,
+      "answer_completeness": 0.48
+    },
+    "score": 0.60,
+    "scoring_rationale": "Heavy STT artifacts (um, uh, like, stuff like that, so yeah) but the underlying content is partially correct — knows GDP relates to economy and job creation, but never defines 'Gross Domestic Product' fully, misses 'goods and services', no mention of recession or why it matters as a metric. Partial score correctly due to content gaps, not penalised additionally for speech artifacts."
+  },
+
+  {
+    "sample_id": "upsc_gs_ethics_q001_strong_complete",
+    "schema_version": "2.0",
+    "module": "upsc_gs",
+    "split": "val",
+    "question_data": {
+      "id": "ethics_q001",
+      "module": "upsc_gs",
+      "topic": "ethics",
+      "subtopic": "integrity_in_public_service",
+      "difficulty": 4,
+      "question": "As a district collector, you discover that a senior officer in your department has been falsifying beneficiary records to redirect government scheme funds. He is close to retirement and has an otherwise spotless career. What do you do and why?",
+      "primary_answer": "Integrity requires reporting the misconduct through proper channels regardless of the officer's personal circumstances. I would first verify the evidence independently, then report it to the appropriate authority — the state vigilance commission or the anti-corruption bureau. Compassion for personal circumstances cannot override accountability, because the harm is to vulnerable scheme beneficiaries. I would ensure due process is followed, the officer has the opportunity to respond, and I would recuse myself from any part of the investigation to avoid conflict of interest.",
+      "answer_variants": [
+        "The right course of action is to report the misconduct formally after gathering solid evidence. The officer's proximity to retirement and clean record are mitigating factors in sentencing but not in whether to report. Not reporting would make me complicit and harm the real beneficiaries. I would initiate a formal inquiry, protect whistleblowers if any, and ensure the funds are recovered and redirected correctly.",
+        "Regardless of personal sympathy, the duty as a public servant is to protect public funds and the intended beneficiaries. I would document the evidence, report to the vigilance commission, and ensure the inquiry is impartial. The officer deserves due process but not a cover-up. Any cover-up would also expose me to legal liability."
+      ],
+      "expected_keywords": {
+        "critical": ["report", "misconduct", "integrity", "evidence", "accountability", "beneficiaries"],
+        "supporting": ["vigilance", "due process", "impartial", "recuse", "anti-corruption", "public funds"],
+        "bonus": ["conflict of interest", "whistleblower", "compassion", "rule of law", "complicit"]
+      },
+      "scoring_weights": {
+        "semantic": 0.45,
+        "question_relevance": 0.20,
+        "keyword": 0.18,
+        "length": 0.05,
+        "discourse": 0.07,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 80,
+      "domain_tags": ["ethics", "public_administration", "case_study", "decision_making"]
+    },
+    "candidate": "In this situation, my primary duty as a district collector is to uphold integrity and protect public funds and the scheme beneficiaries. First, I would independently verify and document the evidence of falsification before taking any action. Then I would report the matter formally to the state vigilance commission or the anti-corruption bureau, depending on the jurisdiction. The officer's seniority and clean record are factors the inquiry authority may consider in mitigation, but they cannot be reasons for me to suppress a serious misconduct. Doing so would make me complicit, harm the vulnerable beneficiaries, and violate my oath of office. I would ensure due process — the officer would be given a chance to respond — and I would recuse myself from any supervisory role in the investigation to avoid conflict of interest. If any subordinate assisted in uncovering this, I would protect them from retaliation.",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.90,
+      "question_relevance": 0.96,
+      "keyword_coverage": 0.88,
+      "length_appropriateness": 0.95,
+      "discourse_quality": 0.90,
+      "lexical_diversity": 0.84,
+      "factual_accuracy": 1.00,
+      "answer_completeness": 0.92
+    },
+    "score": 0.92,
+    "scoring_rationale": "Directly addresses the ethical dilemma, demonstrates nuanced understanding — acknowledges personal circumstances without using them as justification for inaction, identifies the correct reporting channel, mentions conflict of interest and whistleblower protection as advanced points. Well structured with clear reasoning chain."
+  },
+
+  {
+    "sample_id": "upsc_gs_ethics_q001_partial_correct",
+    "schema_version": "2.0",
+    "module": "upsc_gs",
+    "split": "val",
+    "question_data": {
+      "id": "ethics_q001",
+      "module": "upsc_gs",
+      "topic": "ethics",
+      "subtopic": "integrity_in_public_service",
+      "difficulty": 4,
+      "question": "As a district collector, you discover that a senior officer in your department has been falsifying beneficiary records to redirect government scheme funds. He is close to retirement and has an otherwise spotless career. What do you do and why?",
+      "primary_answer": "Integrity requires reporting the misconduct through proper channels regardless of the officer's personal circumstances. I would first verify the evidence independently, then report it to the appropriate authority — the state vigilance commission or the anti-corruption bureau. Compassion for personal circumstances cannot override accountability, because the harm is to vulnerable scheme beneficiaries. I would ensure due process is followed, the officer has the opportunity to respond, and I would recuse myself from any part of the investigation to avoid conflict of interest.",
+      "answer_variants": [
+        "The right course of action is to report the misconduct formally after gathering solid evidence. The officer's proximity to retirement and clean record are mitigating factors in sentencing but not in whether to report. Not reporting would make me complicit and harm the real beneficiaries. I would initiate a formal inquiry, protect whistleblowers if any, and ensure the funds are recovered and redirected correctly.",
+        "Regardless of personal sympathy, the duty as a public servant is to protect public funds and the intended beneficiaries. I would document the evidence, report to the vigilance commission, and ensure the inquiry is impartial. The officer deserves due process but not a cover-up. Any cover-up would also expose me to legal liability."
+      ],
+      "expected_keywords": {
+        "critical": ["report", "misconduct", "integrity", "evidence", "accountability", "beneficiaries"],
+        "supporting": ["vigilance", "due process", "impartial", "recuse", "anti-corruption", "public funds"],
+        "bonus": ["conflict of interest", "whistleblower", "compassion", "rule of law", "complicit"]
+      },
+      "scoring_weights": {
+        "semantic": 0.45,
+        "question_relevance": 0.20,
+        "keyword": 0.18,
+        "length": 0.05,
+        "discourse": 0.07,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 80,
+      "domain_tags": ["ethics", "public_administration", "case_study", "decision_making"]
+    },
+    "candidate": "This is a difficult situation. On one hand, the officer has a good track record and is about to retire. On the other hand, misconduct cannot be ignored. I think the right thing is to speak to the officer privately first and give him a chance to correct things on his own. If he refuses, then I would consider escalating it. We should also think about the impact on his family.",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.58,
+      "question_relevance": 0.75,
+      "keyword_coverage": 0.28,
+      "length_appropriateness": 0.70,
+      "discourse_quality": 0.45,
+      "lexical_diversity": 0.72,
+      "factual_accuracy": 0.70,
+      "answer_completeness": 0.38
+    },
+    "score": 0.55,
+    "scoring_rationale": "Identifies the ethical tension but resolves it poorly. Suggesting a private confrontation before formal reporting is a significant ethical and procedural error — it could allow evidence tampering. Shows personal compassion but lacks understanding of public accountability. Misses formal reporting, vigilance commission, due process, and conflict of interest. Scores partial because the right instinct (misconduct should be addressed) is there but the method is wrong."
+  }
+]

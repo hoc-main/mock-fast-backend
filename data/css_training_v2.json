@@ -1,0 +1,1734 @@
+[
+  {
+    "sample_id": "unknown_0001_migrated",
+    "schema_version": "2.0",
+    "module": "unknown",
+    "split": "train",
+    "question_data": {
+      "id": "q1",
+      "module": "unknown",
+      "topic": "general",
+      "subtopic": "",
+      "difficulty": 2,
+      "question": "What is CSS and why is it used?",
+      "primary_answer": "CSS stands for Cascading Style Sheets. It is used to style and layout web pages, for example to change colors, fonts, spacing, and positioning.",
+      "answer_variants": [
+        "CSS stands for Cascading Style Sheets. It is used to style and layout web pages, for example to change colors, fonts, spacing, and positioning."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "css",
+          "stands",
+          "cascading",
+          "style"
+        ],
+        "supporting": [
+          "sheets",
+          "used",
+          "layout",
+          "web"
+        ],
+        "bonus": [
+          "pages",
+          "example",
+          "change",
+          "colors"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 40,
+      "domain_tags": [
+        "general"
+      ]
+    },
+    "candidate": "CSS is used to style web pages like colors and layout",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.52,
+      "question_relevance": 0.62,
+      "keyword_coverage": 0.35,
+      "length_appropriateness": 0.6,
+      "discourse_quality": 0.28,
+      "lexical_diversity": 0.58,
+      "factual_accuracy": 0.75,
+      "answer_completeness": 0.4
+    },
+    "score": 0.85,
+    "scoring_rationale": "[MIGRATED from v1 — partial tier] Labels approximated from quality label. question_relevance and discourse_quality labels require human review.",
+    "_migration_notes": {
+      "original_quality": "partial",
+      "labels_are_approximate": true,
+      "needs_review": [
+        "question_relevance",
+        "discourse_quality",
+        "score"
+      ]
+    }
+  },
+  {
+    "sample_id": "unknown_0002_migrated",
+    "schema_version": "2.0",
+    "module": "unknown",
+    "split": "train",
+    "question_data": {
+      "id": "q2",
+      "module": "unknown",
+      "topic": "general",
+      "subtopic": "",
+      "difficulty": 2,
+      "question": "What is CSS and why is it used?",
+      "primary_answer": "CSS stands for Cascading Style Sheets. It is used to style and layout web pages, for example to change colors, fonts, spacing, and positioning.",
+      "answer_variants": [
+        "CSS stands for Cascading Style Sheets. It is used to style and layout web pages, for example to change colors, fonts, spacing, and positioning."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "css",
+          "stands",
+          "cascading",
+          "style"
+        ],
+        "supporting": [
+          "sheets",
+          "used",
+          "layout",
+          "web"
+        ],
+        "bonus": [
+          "pages",
+          "example",
+          "change",
+          "colors"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 40,
+      "domain_tags": [
+        "general"
+      ]
+    },
+    "candidate": "CSS is a programming language",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.52,
+      "question_relevance": 0.62,
+      "keyword_coverage": 0.35,
+      "length_appropriateness": 0.6,
+      "discourse_quality": 0.28,
+      "lexical_diversity": 0.58,
+      "factual_accuracy": 0.75,
+      "answer_completeness": 0.4
+    },
+    "score": 0.2,
+    "scoring_rationale": "[MIGRATED from v1 — partial tier] Labels approximated from quality label. question_relevance and discourse_quality labels require human review.",
+    "_migration_notes": {
+      "original_quality": "partial",
+      "labels_are_approximate": true,
+      "needs_review": [
+        "question_relevance",
+        "discourse_quality",
+        "score"
+      ]
+    }
+  },
+  {
+    "sample_id": "unknown_0003_migrated",
+    "schema_version": "2.0",
+    "module": "unknown",
+    "split": "train",
+    "question_data": {
+      "id": "q3",
+      "module": "unknown",
+      "topic": "general",
+      "subtopic": "",
+      "difficulty": 2,
+      "question": "What is the CSS Box Model?",
+      "primary_answer": "The CSS Box Model consists of content, padding, border, and margin. It defines the layout and spacing of elements.",
+      "answer_variants": [
+        "The CSS Box Model consists of content, padding, border, and margin. It defines the layout and spacing of elements."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "css",
+          "box",
+          "model",
+          "consists"
+        ],
+        "supporting": [
+          "content",
+          "padding",
+          "border",
+          "margin"
+        ],
+        "bonus": [
+          "defines",
+          "layout",
+          "spacing",
+          "elements"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 40,
+      "domain_tags": [
+        "general"
+      ]
+    },
+    "candidate": "Box model includes margin padding border and content",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.52,
+      "question_relevance": 0.62,
+      "keyword_coverage": 0.35,
+      "length_appropriateness": 0.6,
+      "discourse_quality": 0.28,
+      "lexical_diversity": 0.58,
+      "factual_accuracy": 0.75,
+      "answer_completeness": 0.4
+    },
+    "score": 0.95,
+    "scoring_rationale": "[MIGRATED from v1 — partial tier] Labels approximated from quality label. Score is a v1 hard-bin value — replace with continuous label. question_relevance and discourse_quality labels require human review.",
+    "_migration_notes": {
+      "original_quality": "partial",
+      "labels_are_approximate": true,
+      "needs_review": [
+        "question_relevance",
+        "discourse_quality",
+        "score"
+      ]
+    }
+  },
+  {
+    "sample_id": "unknown_0004_migrated",
+    "schema_version": "2.0",
+    "module": "unknown",
+    "split": "train",
+    "question_data": {
+      "id": "q4",
+      "module": "unknown",
+      "topic": "general",
+      "subtopic": "",
+      "difficulty": 2,
+      "question": "What is the CSS Box Model?",
+      "primary_answer": "The CSS Box Model consists of content, padding, border, and margin. It defines the layout and spacing of elements.",
+      "answer_variants": [
+        "The CSS Box Model consists of content, padding, border, and margin. It defines the layout and spacing of elements."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "css",
+          "box",
+          "model",
+          "consists"
+        ],
+        "supporting": [
+          "content",
+          "padding",
+          "border",
+          "margin"
+        ],
+        "bonus": [
+          "defines",
+          "layout",
+          "spacing",
+          "elements"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 40,
+      "domain_tags": [
+        "general"
+      ]
+    },
+    "candidate": "Box model is about layout",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.52,
+      "question_relevance": 0.62,
+      "keyword_coverage": 0.35,
+      "length_appropriateness": 0.6,
+      "discourse_quality": 0.28,
+      "lexical_diversity": 0.58,
+      "factual_accuracy": 0.75,
+      "answer_completeness": 0.4
+    },
+    "score": 0.5,
+    "scoring_rationale": "[MIGRATED from v1 — partial tier] Labels approximated from quality label. question_relevance and discourse_quality labels require human review.",
+    "_migration_notes": {
+      "original_quality": "partial",
+      "labels_are_approximate": true,
+      "needs_review": [
+        "question_relevance",
+        "discourse_quality",
+        "score"
+      ]
+    }
+  },
+  {
+    "sample_id": "unknown_0005_migrated",
+    "schema_version": "2.0",
+    "module": "unknown",
+    "split": "train",
+    "question_data": {
+      "id": "q5",
+      "module": "unknown",
+      "topic": "general",
+      "subtopic": "",
+      "difficulty": 2,
+      "question": "What is specificity in CSS?",
+      "primary_answer": "Specificity determines which CSS rule is applied when multiple rules target the same element. It is calculated based on inline styles, IDs, classes, and elements.",
+      "answer_variants": [
+        "Specificity determines which CSS rule is applied when multiple rules target the same element. It is calculated based on inline styles, IDs, classes, and elements."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "specificity",
+          "determines",
+          "css",
+          "rule"
+        ],
+        "supporting": [
+          "applied",
+          "multiple",
+          "rules",
+          "target"
+        ],
+        "bonus": [
+          "same",
+          "element",
+          "calculated",
+          "based"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 40,
+      "domain_tags": [
+        "general"
+      ]
+    },
+    "candidate": "Specificity decides which CSS rule is applied using id class and element priority",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.52,
+      "question_relevance": 0.62,
+      "keyword_coverage": 0.35,
+      "length_appropriateness": 0.6,
+      "discourse_quality": 0.28,
+      "lexical_diversity": 0.58,
+      "factual_accuracy": 0.75,
+      "answer_completeness": 0.4
+    },
+    "score": 0.9,
+    "scoring_rationale": "[MIGRATED from v1 — partial tier] Labels approximated from quality label. question_relevance and discourse_quality labels require human review.",
+    "_migration_notes": {
+      "original_quality": "partial",
+      "labels_are_approximate": true,
+      "needs_review": [
+        "question_relevance",
+        "discourse_quality",
+        "score"
+      ]
+    }
+  },
+  {
+    "sample_id": "unknown_0006_migrated",
+    "schema_version": "2.0",
+    "module": "unknown",
+    "split": "train",
+    "question_data": {
+      "id": "q6",
+      "module": "unknown",
+      "topic": "general",
+      "subtopic": "",
+      "difficulty": 2,
+      "question": "What is specificity in CSS?",
+      "primary_answer": "Specificity determines which CSS rule is applied when multiple rules target the same element. It is calculated based on inline styles, IDs, classes, and elements.",
+      "answer_variants": [
+        "Specificity determines which CSS rule is applied when multiple rules target the same element. It is calculated based on inline styles, IDs, classes, and elements."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "specificity",
+          "determines",
+          "css",
+          "rule"
+        ],
+        "supporting": [
+          "applied",
+          "multiple",
+          "rules",
+          "target"
+        ],
+        "bonus": [
+          "same",
+          "element",
+          "calculated",
+          "based"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 40,
+      "domain_tags": [
+        "general"
+      ]
+    },
+    "candidate": "Specificity is random",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.52,
+      "question_relevance": 0.62,
+      "keyword_coverage": 0.35,
+      "length_appropriateness": 0.6,
+      "discourse_quality": 0.28,
+      "lexical_diversity": 0.58,
+      "factual_accuracy": 0.75,
+      "answer_completeness": 0.4
+    },
+    "score": 0.1,
+    "scoring_rationale": "[MIGRATED from v1 — partial tier] Labels approximated from quality label. question_relevance and discourse_quality labels require human review.",
+    "_migration_notes": {
+      "original_quality": "partial",
+      "labels_are_approximate": true,
+      "needs_review": [
+        "question_relevance",
+        "discourse_quality",
+        "score"
+      ]
+    }
+  },
+  {
+    "sample_id": "unknown_0007_migrated",
+    "schema_version": "2.0",
+    "module": "unknown",
+    "split": "train",
+    "question_data": {
+      "id": "q7",
+      "module": "unknown",
+      "topic": "general",
+      "subtopic": "",
+      "difficulty": 2,
+      "question": "What is flexbox?",
+      "primary_answer": "Flexbox is a layout model that allows items to align and distribute space efficiently in a container, even when their size is unknown.",
+      "answer_variants": [
+        "Flexbox is a layout model that allows items to align and distribute space efficiently in a container, even when their size is unknown."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "flexbox",
+          "layout",
+          "model",
+          "allows"
+        ],
+        "supporting": [
+          "items",
+          "align",
+          "distribute",
+          "space"
+        ],
+        "bonus": [
+          "efficiently",
+          "container",
+          "even",
+          "size"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 40,
+      "domain_tags": [
+        "general"
+      ]
+    },
+    "candidate": "Flexbox is used for layout and alignment of elements",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.52,
+      "question_relevance": 0.62,
+      "keyword_coverage": 0.35,
+      "length_appropriateness": 0.6,
+      "discourse_quality": 0.28,
+      "lexical_diversity": 0.58,
+      "factual_accuracy": 0.75,
+      "answer_completeness": 0.4
+    },
+    "score": 0.9,
+    "scoring_rationale": "[MIGRATED from v1 — partial tier] Labels approximated from quality label. question_relevance and discourse_quality labels require human review.",
+    "_migration_notes": {
+      "original_quality": "partial",
+      "labels_are_approximate": true,
+      "needs_review": [
+        "question_relevance",
+        "discourse_quality",
+        "score"
+      ]
+    }
+  },
+  {
+    "sample_id": "unknown_0008_migrated",
+    "schema_version": "2.0",
+    "module": "unknown",
+    "split": "train",
+    "question_data": {
+      "id": "q8",
+      "module": "unknown",
+      "topic": "general",
+      "subtopic": "",
+      "difficulty": 2,
+      "question": "What is flexbox?",
+      "primary_answer": "Flexbox is a layout model that allows items to align and distribute space efficiently in a container, even when their size is unknown.",
+      "answer_variants": [
+        "Flexbox is a layout model that allows items to align and distribute space efficiently in a container, even when their size is unknown."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "flexbox",
+          "layout",
+          "model",
+          "allows"
+        ],
+        "supporting": [
+          "items",
+          "align",
+          "distribute",
+          "space"
+        ],
+        "bonus": [
+          "efficiently",
+          "container",
+          "even",
+          "size"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 40,
+      "domain_tags": [
+        "general"
+      ]
+    },
+    "candidate": "Flexbox is used for colors",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.52,
+      "question_relevance": 0.62,
+      "keyword_coverage": 0.35,
+      "length_appropriateness": 0.6,
+      "discourse_quality": 0.28,
+      "lexical_diversity": 0.58,
+      "factual_accuracy": 0.75,
+      "answer_completeness": 0.4
+    },
+    "score": 0.2,
+    "scoring_rationale": "[MIGRATED from v1 — partial tier] Labels approximated from quality label. question_relevance and discourse_quality labels require human review.",
+    "_migration_notes": {
+      "original_quality": "partial",
+      "labels_are_approximate": true,
+      "needs_review": [
+        "question_relevance",
+        "discourse_quality",
+        "score"
+      ]
+    }
+  },
+  {
+    "sample_id": "unknown_0009_migrated",
+    "schema_version": "2.0",
+    "module": "unknown",
+    "split": "train",
+    "question_data": {
+      "id": "q9",
+      "module": "unknown",
+      "topic": "general",
+      "subtopic": "",
+      "difficulty": 2,
+      "question": "What is CSS Grid?",
+      "primary_answer": "CSS Grid is a two-dimensional layout system used for designing complex layouts using rows and columns.",
+      "answer_variants": [
+        "CSS Grid is a two-dimensional layout system used for designing complex layouts using rows and columns."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "css",
+          "grid",
+          "two-dimensional",
+          "layout"
+        ],
+        "supporting": [
+          "system",
+          "used",
+          "designing",
+          "complex"
+        ],
+        "bonus": [
+          "layouts",
+          "using",
+          "rows",
+          "columns"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 40,
+      "domain_tags": [
+        "general"
+      ]
+    },
+    "candidate": "Grid is a two dimensional layout system with rows and columns",
+    "stt_realistic": true,
+    "labels": {
+      "semantic_similarity": 0.52,
+      "question_relevance": 0.62,
+      "keyword_coverage": 0.35,
+      "length_appropriateness": 0.6,
+      "discourse_quality": 0.28,
+      "lexical_diversity": 0.58,
+      "factual_accuracy": 0.75,
+      "answer_completeness": 0.4
+    },
+    "score": 0.95,
+    "scoring_rationale": "[MIGRATED from v1 — partial tier] Labels approximated from quality label. Score is a v1 hard-bin value — replace with continuous label. question_relevance and discourse_quality labels require human review.",
+    "_migration_notes": {
+      "original_quality": "partial",
+      "labels_are_approximate": true,
+      "needs_review": [
+        "question_relevance",
+        "discourse_quality",
+        "score"
+      ]
+    }
+  },
+  {
+    "sample_id": "unknown_0010_migrated",
+    "schema_version": "2.0",
+    "module": "unknown",
+    "split": "train",
+    "question_data": {
+      "id": "q10",
+      "module": "unknown",
+      "topic": "general",
+      "subtopic": "",
+      "difficulty": 2,
+      "question": "What is CSS Grid?",
+      "primary_answer": "CSS Grid is a two-dimensional layout system used for designing complex layouts using rows and columns.",
+      "answer_variants": [
+        "CSS Grid is a two-dimensional layout system used for designing complex layouts using rows and columns."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "css",
+          "grid",
+          "two-dimensional",
+          "layout"
+        ],
+        "supporting": [
+          "system",
+          "used",
+          "designing",
+          "complex"
+        ],
+        "bonus": [
+          "layouts",
+          "using",
+          "rows",
+          "columns"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 40,
+      "domain_tags": [
+        "general"
+      ]
+    },
+    "candidate": "Grid is similar to flexbox but more complex",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.52,
+      "question_relevance": 0.62,
+      "keyword_coverage": 0.35,
+      "length_appropriateness": 0.6,
+      "discourse_quality": 0.28,
+      "lexical_diversity": 0.58,
+      "factual_accuracy": 0.75,
+      "answer_completeness": 0.4
+    },
+    "score": 0.6,
+    "scoring_rationale": "[MIGRATED from v1 — partial tier] Labels approximated from quality label. question_relevance and discourse_quality labels require human review.",
+    "_migration_notes": {
+      "original_quality": "partial",
+      "labels_are_approximate": true,
+      "needs_review": [
+        "question_relevance",
+        "discourse_quality",
+        "score"
+      ]
+    }
+  },
+  {
+    "sample_id": "unknown_0011_migrated",
+    "schema_version": "2.0",
+    "module": "unknown",
+    "split": "train",
+    "question_data": {
+      "id": "q11",
+      "module": "unknown",
+      "topic": "general",
+      "subtopic": "",
+      "difficulty": 2,
+      "question": "What is position property in CSS?",
+      "primary_answer": "The position property defines how an element is positioned. Values include static, relative, absolute, fixed, and sticky.",
+      "answer_variants": [
+        "The position property defines how an element is positioned. Values include static, relative, absolute, fixed, and sticky."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "position",
+          "property",
+          "defines",
+          "element"
+        ],
+        "supporting": [
+          "positioned",
+          "values",
+          "include",
+          "static"
+        ],
+        "bonus": [
+          "relative",
+          "absolute",
+          "fixed",
+          "sticky"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 40,
+      "domain_tags": [
+        "general"
+      ]
+    },
+    "candidate": "Position property defines how elements are placed like absolute relative fixed",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.52,
+      "question_relevance": 0.62,
+      "keyword_coverage": 0.35,
+      "length_appropriateness": 0.6,
+      "discourse_quality": 0.28,
+      "lexical_diversity": 0.58,
+      "factual_accuracy": 0.75,
+      "answer_completeness": 0.4
+    },
+    "score": 0.9,
+    "scoring_rationale": "[MIGRATED from v1 — partial tier] Labels approximated from quality label. question_relevance and discourse_quality labels require human review.",
+    "_migration_notes": {
+      "original_quality": "partial",
+      "labels_are_approximate": true,
+      "needs_review": [
+        "question_relevance",
+        "discourse_quality",
+        "score"
+      ]
+    }
+  },
+  {
+    "sample_id": "unknown_0012_migrated",
+    "schema_version": "2.0",
+    "module": "unknown",
+    "split": "train",
+    "question_data": {
+      "id": "q12",
+      "module": "unknown",
+      "topic": "general",
+      "subtopic": "",
+      "difficulty": 2,
+      "question": "What is position property in CSS?",
+      "primary_answer": "The position property defines how an element is positioned. Values include static, relative, absolute, fixed, and sticky.",
+      "answer_variants": [
+        "The position property defines how an element is positioned. Values include static, relative, absolute, fixed, and sticky."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "position",
+          "property",
+          "defines",
+          "element"
+        ],
+        "supporting": [
+          "positioned",
+          "values",
+          "include",
+          "static"
+        ],
+        "bonus": [
+          "relative",
+          "absolute",
+          "fixed",
+          "sticky"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 40,
+      "domain_tags": [
+        "general"
+      ]
+    },
+    "candidate": "Position is used to move elements",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.52,
+      "question_relevance": 0.62,
+      "keyword_coverage": 0.35,
+      "length_appropriateness": 0.6,
+      "discourse_quality": 0.28,
+      "lexical_diversity": 0.58,
+      "factual_accuracy": 0.75,
+      "answer_completeness": 0.4
+    },
+    "score": 0.5,
+    "scoring_rationale": "[MIGRATED from v1 — partial tier] Labels approximated from quality label. question_relevance and discourse_quality labels require human review.",
+    "_migration_notes": {
+      "original_quality": "partial",
+      "labels_are_approximate": true,
+      "needs_review": [
+        "question_relevance",
+        "discourse_quality",
+        "score"
+      ]
+    }
+  },
+  {
+    "sample_id": "unknown_0013_migrated",
+    "schema_version": "2.0",
+    "module": "unknown",
+    "split": "train",
+    "question_data": {
+      "id": "q13",
+      "module": "unknown",
+      "topic": "general",
+      "subtopic": "",
+      "difficulty": 2,
+      "question": "What is z-index?",
+      "primary_answer": "z-index controls the vertical stacking order of positioned elements. Higher values appear on top.",
+      "answer_variants": [
+        "z-index controls the vertical stacking order of positioned elements. Higher values appear on top."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "z-index",
+          "controls",
+          "vertical"
+        ],
+        "supporting": [
+          "stacking",
+          "order",
+          "positioned"
+        ],
+        "bonus": [
+          "elements",
+          "higher",
+          "values",
+          "appear",
+          "top"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 40,
+      "domain_tags": [
+        "general"
+      ]
+    },
+    "candidate": "z index controls stacking order of elements",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.52,
+      "question_relevance": 0.62,
+      "keyword_coverage": 0.35,
+      "length_appropriateness": 0.6,
+      "discourse_quality": 0.28,
+      "lexical_diversity": 0.58,
+      "factual_accuracy": 0.75,
+      "answer_completeness": 0.4
+    },
+    "score": 0.9,
+    "scoring_rationale": "[MIGRATED from v1 — partial tier] Labels approximated from quality label. question_relevance and discourse_quality labels require human review.",
+    "_migration_notes": {
+      "original_quality": "partial",
+      "labels_are_approximate": true,
+      "needs_review": [
+        "question_relevance",
+        "discourse_quality",
+        "score"
+      ]
+    }
+  },
+  {
+    "sample_id": "unknown_0014_migrated",
+    "schema_version": "2.0",
+    "module": "unknown",
+    "split": "train",
+    "question_data": {
+      "id": "q14",
+      "module": "unknown",
+      "topic": "general",
+      "subtopic": "",
+      "difficulty": 2,
+      "question": "What is z-index?",
+      "primary_answer": "z-index controls the vertical stacking order of positioned elements. Higher values appear on top.",
+      "answer_variants": [
+        "z-index controls the vertical stacking order of positioned elements. Higher values appear on top."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "z-index",
+          "controls",
+          "vertical"
+        ],
+        "supporting": [
+          "stacking",
+          "order",
+          "positioned"
+        ],
+        "bonus": [
+          "elements",
+          "higher",
+          "values",
+          "appear",
+          "top"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 40,
+      "domain_tags": [
+        "general"
+      ]
+    },
+    "candidate": "z index is used for alignment",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.52,
+      "question_relevance": 0.62,
+      "keyword_coverage": 0.35,
+      "length_appropriateness": 0.6,
+      "discourse_quality": 0.28,
+      "lexical_diversity": 0.58,
+      "factual_accuracy": 0.75,
+      "answer_completeness": 0.4
+    },
+    "score": 0.2,
+    "scoring_rationale": "[MIGRATED from v1 — partial tier] Labels approximated from quality label. question_relevance and discourse_quality labels require human review.",
+    "_migration_notes": {
+      "original_quality": "partial",
+      "labels_are_approximate": true,
+      "needs_review": [
+        "question_relevance",
+        "discourse_quality",
+        "score"
+      ]
+    }
+  },
+  {
+    "sample_id": "unknown_0015_migrated",
+    "schema_version": "2.0",
+    "module": "unknown",
+    "split": "train",
+    "question_data": {
+      "id": "q15",
+      "module": "unknown",
+      "topic": "general",
+      "subtopic": "",
+      "difficulty": 2,
+      "question": "What is margin vs padding?",
+      "primary_answer": "Margin controls space outside the element, while padding controls space inside the element between content and border.",
+      "answer_variants": [
+        "Margin controls space outside the element, while padding controls space inside the element between content and border."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "margin",
+          "controls",
+          "space"
+        ],
+        "supporting": [
+          "outside",
+          "element",
+          "while"
+        ],
+        "bonus": [
+          "padding",
+          "inside",
+          "between",
+          "content",
+          "border"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 40,
+      "domain_tags": [
+        "general"
+      ]
+    },
+    "candidate": "Margin is outer space and padding is inner space",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.52,
+      "question_relevance": 0.62,
+      "keyword_coverage": 0.35,
+      "length_appropriateness": 0.6,
+      "discourse_quality": 0.28,
+      "lexical_diversity": 0.58,
+      "factual_accuracy": 0.75,
+      "answer_completeness": 0.4
+    },
+    "score": 0.95,
+    "scoring_rationale": "[MIGRATED from v1 — partial tier] Labels approximated from quality label. Score is a v1 hard-bin value — replace with continuous label. question_relevance and discourse_quality labels require human review.",
+    "_migration_notes": {
+      "original_quality": "partial",
+      "labels_are_approximate": true,
+      "needs_review": [
+        "question_relevance",
+        "discourse_quality",
+        "score"
+      ]
+    }
+  },
+  {
+    "sample_id": "unknown_0016_migrated",
+    "schema_version": "2.0",
+    "module": "unknown",
+    "split": "train",
+    "question_data": {
+      "id": "q16",
+      "module": "unknown",
+      "topic": "general",
+      "subtopic": "",
+      "difficulty": 2,
+      "question": "What is margin vs padding?",
+      "primary_answer": "Margin controls space outside the element, while padding controls space inside the element between content and border.",
+      "answer_variants": [
+        "Margin controls space outside the element, while padding controls space inside the element between content and border."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "margin",
+          "controls",
+          "space"
+        ],
+        "supporting": [
+          "outside",
+          "element",
+          "while"
+        ],
+        "bonus": [
+          "padding",
+          "inside",
+          "between",
+          "content",
+          "border"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 40,
+      "domain_tags": [
+        "general"
+      ]
+    },
+    "candidate": "Margin and padding are same",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.52,
+      "question_relevance": 0.62,
+      "keyword_coverage": 0.35,
+      "length_appropriateness": 0.6,
+      "discourse_quality": 0.28,
+      "lexical_diversity": 0.58,
+      "factual_accuracy": 0.75,
+      "answer_completeness": 0.4
+    },
+    "score": 0.1,
+    "scoring_rationale": "[MIGRATED from v1 — partial tier] Labels approximated from quality label. question_relevance and discourse_quality labels require human review.",
+    "_migration_notes": {
+      "original_quality": "partial",
+      "labels_are_approximate": true,
+      "needs_review": [
+        "question_relevance",
+        "discourse_quality",
+        "score"
+      ]
+    }
+  },
+  {
+    "sample_id": "unknown_0017_migrated",
+    "schema_version": "2.0",
+    "module": "unknown",
+    "split": "train",
+    "question_data": {
+      "id": "q17",
+      "module": "unknown",
+      "topic": "general",
+      "subtopic": "",
+      "difficulty": 2,
+      "question": "What are media queries?",
+      "primary_answer": "Media queries are used to apply CSS styles based on device characteristics like width, height, or resolution.",
+      "answer_variants": [
+        "Media queries are used to apply CSS styles based on device characteristics like width, height, or resolution."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "media",
+          "queries",
+          "used",
+          "apply"
+        ],
+        "supporting": [
+          "css",
+          "styles",
+          "based",
+          "device"
+        ],
+        "bonus": [
+          "characteristics",
+          "like",
+          "width",
+          "height"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 40,
+      "domain_tags": [
+        "general"
+      ]
+    },
+    "candidate": "Media queries are used for responsive design based on screen size",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.52,
+      "question_relevance": 0.62,
+      "keyword_coverage": 0.35,
+      "length_appropriateness": 0.6,
+      "discourse_quality": 0.28,
+      "lexical_diversity": 0.58,
+      "factual_accuracy": 0.75,
+      "answer_completeness": 0.4
+    },
+    "score": 0.9,
+    "scoring_rationale": "[MIGRATED from v1 — partial tier] Labels approximated from quality label. question_relevance and discourse_quality labels require human review.",
+    "_migration_notes": {
+      "original_quality": "partial",
+      "labels_are_approximate": true,
+      "needs_review": [
+        "question_relevance",
+        "discourse_quality",
+        "score"
+      ]
+    }
+  },
+  {
+    "sample_id": "unknown_0018_migrated",
+    "schema_version": "2.0",
+    "module": "unknown",
+    "split": "train",
+    "question_data": {
+      "id": "q18",
+      "module": "unknown",
+      "topic": "general",
+      "subtopic": "",
+      "difficulty": 2,
+      "question": "What are media queries?",
+      "primary_answer": "Media queries are used to apply CSS styles based on device characteristics like width, height, or resolution.",
+      "answer_variants": [
+        "Media queries are used to apply CSS styles based on device characteristics like width, height, or resolution."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "media",
+          "queries",
+          "used",
+          "apply"
+        ],
+        "supporting": [
+          "css",
+          "styles",
+          "based",
+          "device"
+        ],
+        "bonus": [
+          "characteristics",
+          "like",
+          "width",
+          "height"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 40,
+      "domain_tags": [
+        "general"
+      ]
+    },
+    "candidate": "Media queries are used for animations",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.52,
+      "question_relevance": 0.62,
+      "keyword_coverage": 0.35,
+      "length_appropriateness": 0.6,
+      "discourse_quality": 0.28,
+      "lexical_diversity": 0.58,
+      "factual_accuracy": 0.75,
+      "answer_completeness": 0.4
+    },
+    "score": 0.2,
+    "scoring_rationale": "[MIGRATED from v1 — partial tier] Labels approximated from quality label. question_relevance and discourse_quality labels require human review.",
+    "_migration_notes": {
+      "original_quality": "partial",
+      "labels_are_approximate": true,
+      "needs_review": [
+        "question_relevance",
+        "discourse_quality",
+        "score"
+      ]
+    }
+  },
+  {
+    "sample_id": "unknown_0019_migrated",
+    "schema_version": "2.0",
+    "module": "unknown",
+    "split": "train",
+    "question_data": {
+      "id": "q19",
+      "module": "unknown",
+      "topic": "general",
+      "subtopic": "",
+      "difficulty": 2,
+      "question": "What is display property in CSS?",
+      "primary_answer": "The display property specifies how an element is displayed. Common values include block, inline, inline-block, and none.",
+      "answer_variants": [
+        "The display property specifies how an element is displayed. Common values include block, inline, inline-block, and none."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "display",
+          "property",
+          "specifies",
+          "element"
+        ],
+        "supporting": [
+          "displayed",
+          "common",
+          "values",
+          "include"
+        ],
+        "bonus": [
+          "block",
+          "inline",
+          "inline-block",
+          "none"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 40,
+      "domain_tags": [
+        "general"
+      ]
+    },
+    "candidate": "Display block takes full width inline takes only needed width",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.52,
+      "question_relevance": 0.62,
+      "keyword_coverage": 0.35,
+      "length_appropriateness": 0.6,
+      "discourse_quality": 0.28,
+      "lexical_diversity": 0.58,
+      "factual_accuracy": 0.75,
+      "answer_completeness": 0.4
+    },
+    "score": 0.85,
+    "scoring_rationale": "[MIGRATED from v1 — partial tier] Labels approximated from quality label. question_relevance and discourse_quality labels require human review.",
+    "_migration_notes": {
+      "original_quality": "partial",
+      "labels_are_approximate": true,
+      "needs_review": [
+        "question_relevance",
+        "discourse_quality",
+        "score"
+      ]
+    }
+  },
+  {
+    "sample_id": "unknown_0020_migrated",
+    "schema_version": "2.0",
+    "module": "unknown",
+    "split": "train",
+    "question_data": {
+      "id": "q20",
+      "module": "unknown",
+      "topic": "general",
+      "subtopic": "",
+      "difficulty": 2,
+      "question": "What is display property in CSS?",
+      "primary_answer": "The display property specifies how an element is displayed. Common values include block, inline, inline-block, and none.",
+      "answer_variants": [
+        "The display property specifies how an element is displayed. Common values include block, inline, inline-block, and none."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "display",
+          "property",
+          "specifies",
+          "element"
+        ],
+        "supporting": [
+          "displayed",
+          "common",
+          "values",
+          "include"
+        ],
+        "bonus": [
+          "block",
+          "inline",
+          "inline-block",
+          "none"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 40,
+      "domain_tags": [
+        "general"
+      ]
+    },
+    "candidate": "Display is used to hide elements",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.52,
+      "question_relevance": 0.62,
+      "keyword_coverage": 0.35,
+      "length_appropriateness": 0.6,
+      "discourse_quality": 0.28,
+      "lexical_diversity": 0.58,
+      "factual_accuracy": 0.75,
+      "answer_completeness": 0.4
+    },
+    "score": 0.3,
+    "scoring_rationale": "[MIGRATED from v1 — partial tier] Labels approximated from quality label. question_relevance and discourse_quality labels require human review.",
+    "_migration_notes": {
+      "original_quality": "partial",
+      "labels_are_approximate": true,
+      "needs_review": [
+        "question_relevance",
+        "discourse_quality",
+        "score"
+      ]
+    }
+  },
+  {
+    "sample_id": "unknown_0021_migrated",
+    "schema_version": "2.0",
+    "module": "unknown",
+    "split": "train",
+    "question_data": {
+      "id": "q21",
+      "module": "unknown",
+      "topic": "general",
+      "subtopic": "",
+      "difficulty": 2,
+      "question": "What is opacity?",
+      "primary_answer": "Opacity controls the transparency level of an element from 0 to 1.",
+      "answer_variants": [
+        "Opacity controls the transparency level of an element from 0 to 1."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "opacity",
+          "controls"
+        ],
+        "supporting": [
+          "transparency",
+          "level"
+        ],
+        "bonus": [
+          "element"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 40,
+      "domain_tags": [
+        "general"
+      ]
+    },
+    "candidate": "Opacity controls transparency from 0 to 1",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.52,
+      "question_relevance": 0.62,
+      "keyword_coverage": 0.35,
+      "length_appropriateness": 0.6,
+      "discourse_quality": 0.28,
+      "lexical_diversity": 0.58,
+      "factual_accuracy": 0.75,
+      "answer_completeness": 0.4
+    },
+    "score": 0.95,
+    "scoring_rationale": "[MIGRATED from v1 — partial tier] Labels approximated from quality label. Score is a v1 hard-bin value — replace with continuous label. question_relevance and discourse_quality labels require human review.",
+    "_migration_notes": {
+      "original_quality": "partial",
+      "labels_are_approximate": true,
+      "needs_review": [
+        "question_relevance",
+        "discourse_quality",
+        "score"
+      ]
+    }
+  },
+  {
+    "sample_id": "unknown_0022_migrated",
+    "schema_version": "2.0",
+    "module": "unknown",
+    "split": "train",
+    "question_data": {
+      "id": "q22",
+      "module": "unknown",
+      "topic": "general",
+      "subtopic": "",
+      "difficulty": 2,
+      "question": "What is opacity?",
+      "primary_answer": "Opacity controls the transparency level of an element from 0 to 1.",
+      "answer_variants": [
+        "Opacity controls the transparency level of an element from 0 to 1."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "opacity",
+          "controls"
+        ],
+        "supporting": [
+          "transparency",
+          "level"
+        ],
+        "bonus": [
+          "element"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 40,
+      "domain_tags": [
+        "general"
+      ]
+    },
+    "candidate": "Opacity changes color",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.52,
+      "question_relevance": 0.62,
+      "keyword_coverage": 0.35,
+      "length_appropriateness": 0.6,
+      "discourse_quality": 0.28,
+      "lexical_diversity": 0.58,
+      "factual_accuracy": 0.75,
+      "answer_completeness": 0.4
+    },
+    "score": 0.2,
+    "scoring_rationale": "[MIGRATED from v1 — partial tier] Labels approximated from quality label. question_relevance and discourse_quality labels require human review.",
+    "_migration_notes": {
+      "original_quality": "partial",
+      "labels_are_approximate": true,
+      "needs_review": [
+        "question_relevance",
+        "discourse_quality",
+        "score"
+      ]
+    }
+  },
+  {
+    "sample_id": "unknown_0023_migrated",
+    "schema_version": "2.0",
+    "module": "unknown",
+    "split": "train",
+    "question_data": {
+      "id": "q23",
+      "module": "unknown",
+      "topic": "general",
+      "subtopic": "",
+      "difficulty": 2,
+      "question": "What is box-sizing?",
+      "primary_answer": "box-sizing defines how width and height are calculated. border-box includes padding and border in total size.",
+      "answer_variants": [
+        "box-sizing defines how width and height are calculated. border-box includes padding and border in total size."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "box-sizing",
+          "defines",
+          "width"
+        ],
+        "supporting": [
+          "height",
+          "calculated",
+          "border-box"
+        ],
+        "bonus": [
+          "includes",
+          "padding",
+          "border",
+          "total",
+          "size"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 40,
+      "domain_tags": [
+        "general"
+      ]
+    },
+    "candidate": "Box sizing border box includes padding and border in width",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.52,
+      "question_relevance": 0.62,
+      "keyword_coverage": 0.35,
+      "length_appropriateness": 0.6,
+      "discourse_quality": 0.28,
+      "lexical_diversity": 0.58,
+      "factual_accuracy": 0.75,
+      "answer_completeness": 0.4
+    },
+    "score": 0.9,
+    "scoring_rationale": "[MIGRATED from v1 — partial tier] Labels approximated from quality label. question_relevance and discourse_quality labels require human review.",
+    "_migration_notes": {
+      "original_quality": "partial",
+      "labels_are_approximate": true,
+      "needs_review": [
+        "question_relevance",
+        "discourse_quality",
+        "score"
+      ]
+    }
+  },
+  {
+    "sample_id": "unknown_0024_migrated",
+    "schema_version": "2.0",
+    "module": "unknown",
+    "split": "train",
+    "question_data": {
+      "id": "q24",
+      "module": "unknown",
+      "topic": "general",
+      "subtopic": "",
+      "difficulty": 2,
+      "question": "What is box-sizing?",
+      "primary_answer": "box-sizing defines how width and height are calculated. border-box includes padding and border in total size.",
+      "answer_variants": [
+        "box-sizing defines how width and height are calculated. border-box includes padding and border in total size."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "box-sizing",
+          "defines",
+          "width"
+        ],
+        "supporting": [
+          "height",
+          "calculated",
+          "border-box"
+        ],
+        "bonus": [
+          "includes",
+          "padding",
+          "border",
+          "total",
+          "size"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 40,
+      "domain_tags": [
+        "general"
+      ]
+    },
+    "candidate": "Box sizing changes font",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.52,
+      "question_relevance": 0.62,
+      "keyword_coverage": 0.35,
+      "length_appropriateness": 0.6,
+      "discourse_quality": 0.28,
+      "lexical_diversity": 0.58,
+      "factual_accuracy": 0.75,
+      "answer_completeness": 0.4
+    },
+    "score": 0.1,
+    "scoring_rationale": "[MIGRATED from v1 — partial tier] Labels approximated from quality label. question_relevance and discourse_quality labels require human review.",
+    "_migration_notes": {
+      "original_quality": "partial",
+      "labels_are_approximate": true,
+      "needs_review": [
+        "question_relevance",
+        "discourse_quality",
+        "score"
+      ]
+    }
+  }
+]
