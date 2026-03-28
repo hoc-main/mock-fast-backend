@@ -132,8 +132,8 @@ async def transcribe_websocket(session_id: int, websocket: WebSocket, prior: str
 
         final_parts: list[str] = []
         # Tracks whether we've told the client to stop sending audio
-        if prior.strip():
-            final_parts.append(prior.strip())
+        # if prior.strip():
+        #     final_parts.append(prior.strip())
             
         audio_paused = False
 
