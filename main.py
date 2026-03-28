@@ -36,19 +36,19 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    logger.info("Starting up — loading Vosk model...")
-    load_model()
-    logger.info("Ready to accept connections.")
-    yield
-    logger.info("Shutting down.")
+# @asynccontextmanager
+# async def lifespan(app: FastAPI):
+#     logger.info("Starting up — loading Vosk model...")
+#     load_model()
+#     logger.info("Ready to accept connections.")
+#     yield
+#     logger.info("Shutting down.")
 
 
 app = FastAPI(
     title="Interview Transcription API",
     version="1.0.0",
-    lifespan=lifespan,
+    # lifespan=lifespan,
 )
 
 app.add_middleware(

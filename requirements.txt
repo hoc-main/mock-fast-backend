@@ -15,3 +15,4 @@ nltk
 spacy
 tqdm
 pandas
+deepgram-sdk
