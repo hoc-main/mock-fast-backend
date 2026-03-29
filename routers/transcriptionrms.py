@@ -19,7 +19,6 @@ import json
 import logging
 import os
 from typing import Optional
-import time
 
 from deepgram import AsyncDeepgramClient
 from deepgram.core.events import EventType
@@ -96,6 +95,10 @@ async def _upsert_answer(
     await db.commit()
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# /ws/transcribe/{session_id}
+# ─────────────────────────────────────────────────────────────────────────────
+
 @router.websocket("/ws/transcribe/{session_id}")
 async def transcribe_websocket(session_id: int, websocket: WebSocket, prior: str = Query(default="")):
     await websocket.accept()
@@ -127,78 +130,19 @@ async def transcribe_websocket(session_id: int, websocket: WebSocket, prior: str
 
         logger.info(f"[session={session_id}] Q#{session.current_index}: {current_question.question_text[:60]}...")
 
-        final_transcript: str = ""
+        final_parts: list[str] = []
         last_partial: str = ""
-        # Mutable state accessible from nested async functions
-        state = {
-            "first_audio_at": None,   # when first PCM chunk arrived
-            "evaluation_sent": False,
-        }
-
-        async def handle_end_of_turn(transcript: str) -> None:
-            if state["evaluation_sent"]:
-                return
-
-            # ✅ Guard: ignore EndOfTurn if less than 2s of audio received
-            # Prevents firing during the initial silence or on very short utterances
-            elapsed = (
-                time.time() - state["first_audio_at"]
-                if state["first_audio_at"] else 0
-            )
-            if elapsed < 2.0:
-                logger.info(
-                    f"[session={session_id}] EndOfTurn ignored — only {elapsed:.1f}s of audio"
-                )
-                return
-
-            state["evaluation_sent"] = True
-
-            current = transcript or last_partial
-            full_transcript = (
-                f"{prior.strip()} {current}".strip()
-                if prior.strip() else current
-            )
-
-            logger.info(f"[session={session_id}] EndOfTurn → evaluating: {full_transcript[:80]}")
-
-            question_data = {
-                "id": current_question.id,
-                "question": current_question.question_text,
-                "answer": current_question.expected_answer,
-            }
-            evaluation = evaluate_answer(
-                transcript=full_transcript,
-                question_data=question_data,
-                model_path=(session.module.model_pkl_path if session.module else None),
-            )
-
-            await _upsert_answer(session, current_question, full_transcript, evaluation, db)
-            logger.info(f"[session={session_id}] saved. score={evaluation['final_score']}")
-
-            await websocket.send_text(json.dumps({
-                "type": "evaluation",
-                "transcript": full_transcript,
-                "evaluation": {
-                    "score":            evaluation["final_score"],
-                    "semantic_score":   evaluation["semantic_score"],
-                    "keyword_score":    evaluation["keyword_score"],
-                    "feedback":         evaluation["feedback"],
-                    "tip":              evaluation["tip"],
-                    "missing_keywords": evaluation["missing_keywords"],
-                },
-            }))
+        audio_paused = False
 
         try:
             async with _dg_client.listen.v2.connect(
                 model="flux-general-en",
                 encoding="linear16",
                 sample_rate="16000",
-                eot_timeout_ms="3000",   # ✅ generous pause tolerance
-                eot_threshold="0.5",     # ✅ less sensitive to turn endings
             ) as dg_conn:
 
                 def on_message(message) -> None:
-                    nonlocal final_transcript, last_partial
+                    nonlocal last_partial
                     if getattr(message, "type", "") != "TurnInfo":
                         return
 
@@ -207,17 +151,12 @@ async def transcribe_websocket(session_id: int, websocket: WebSocket, prior: str
                         return
 
                     event = getattr(message, "event", "")
-                    logger.debug(f"[session={session_id}] {event}: {transcript[:60]}")
+                    print(f"[session={session_id}] event={event} transcript={transcript[:60]}")
 
-                    if event == "Update":
-                        last_partial = transcript
-                    elif event == "EndOfTurn":
-                        final_transcript = transcript
-                        last_partial = ""
-                        asyncio.create_task(handle_end_of_turn(transcript))
+                    last_partial = transcript
 
                 def on_error(error) -> None:
-                    logger.error(f"[session={session_id}] Deepgram error: {error}")
+                    print(f"[session={session_id}] Deepgram error: {error}")
                     asyncio.create_task(
                         websocket.send_text(json.dumps({"type": "error", "message": str(error)}))
                     )
@@ -233,19 +172,72 @@ async def transcribe_websocket(session_id: int, websocket: WebSocket, prior: str
 
                         if "bytes" in message:
                             pcm = message["bytes"]
-                            if len(pcm) >= 2:
-                                # ✅ Track when first audio arrives
-                                if state["first_audio_at"] is None:
-                                    state["first_audio_at"] = time.time()
+                            if len(pcm) >= 2 and not audio_paused:
                                 await dg_conn._send(pcm)
 
                         elif "text" in message:
-                            if message["text"].strip().upper() == "STOP":
-                                listen_task.cancel()
-                                if not state["evaluation_sent"]:
-                                    await handle_end_of_turn(final_transcript or last_partial)
-                                await websocket.close()
-                                break
+                            text = message["text"].strip().upper()
+
+                            if text == "PAUSE":
+                                audio_paused = True
+                                logger.info(f"[session={session_id}] PAUSE — stopping audio forward, waiting for EndOfTurn")
+                                continue
+
+                            if text != "STOP":
+                                continue
+
+                            # Give Flux time to fire EndOfTurn after the silence gap
+                            await asyncio.sleep(0.8)
+                            listen_task.cancel()
+
+                            # Merge committed turns + any uncommitted partial
+                            parts_to_join = last_partial
+
+                            current_transcript = " ".join(parts_to_join).strip()
+
+                            # Prepend prior continuation if this is a "continue" chunk
+                            full_transcript = (
+                                f"{prior.strip()} {current_transcript}".strip()
+                                if prior.strip()
+                                else current_transcript
+                            )
+
+                            logger.info(
+                                f"[session={session_id}] STOP. "
+                                f"transcript ({len(full_transcript)} chars): {full_transcript[:80]}"
+                            )
+
+                            question_data = {
+                                "id": current_question.id,
+                                "question": current_question.question_text,
+                                "answer": current_question.expected_answer,
+                            }
+                            evaluation = evaluate_answer(
+                                transcript=full_transcript,
+                                question_data=question_data,
+                                model_path=(
+                                    session.module.model_pkl_path if session.module else None
+                                ),
+                            )
+
+                            await _upsert_answer(session, current_question, full_transcript, evaluation, db)
+                            logger.info(f"[session={session_id}] saved. score={evaluation['final_score']}")
+
+                            await websocket.send_text(json.dumps({
+                                "type": "evaluation",
+                                "transcript": full_transcript,
+                                "evaluation": {
+                                    "score":            evaluation["final_score"],
+                                    "semantic_score":   evaluation["semantic_score"],
+                                    "keyword_score":    evaluation["keyword_score"],
+                                    "feedback":         evaluation["feedback"],
+                                    "tip":              evaluation["tip"],
+                                    "missing_keywords": evaluation["missing_keywords"],
+                                },
+                            }))
+
+                            await websocket.close()
+                            break
 
                 except WebSocketDisconnect:
                     logger.info(f"[session={session_id}] client disconnected")
@@ -265,54 +257,40 @@ async def transcribe_websocket(session_id: int, websocket: WebSocket, prior: str
                 await websocket.close()
             except Exception:
                 pass
+# ─────────────────────────────────────────────────────────────────────────────
+# /ws/intent/{session_id}
+# ─────────────────────────────────────────────────────────────────────────────
 
 @router.websocket("/ws/intent/{session_id}")
 async def intent_websocket(session_id: int, websocket: WebSocket):
     await websocket.accept()
     logger.info(f"[intent session={session_id}] connected")
 
-    last_partial: str = ""
-    intent_sent = False
-
-    async def handle_intent_end_of_turn(transcript: str) -> None:
-        nonlocal intent_sent
-        if intent_sent:
-            return
-        intent_sent = True
-        intent = classify_confirmation_intent(transcript)
-        logger.info(f"[intent session={session_id}] transcript='{transcript}' intent={intent}")
-        await websocket.send_text(json.dumps({
-            "session_id": session_id,
-            "intent": intent,
-            "transcript": transcript,
-        }))
+    parts: list[str] = []
 
     try:
+        # Intent answers are short — use tighter eot_timeout
         async with _dg_client.listen.v2.connect(
             model="flux-general-en",
             encoding="linear16",
             sample_rate="16000",
-            eot_timeout_ms="1800",
+            eot_timeout_ms="800",   # short: "yes / no / continue" answers
         ) as dg_conn:
 
             def on_message(message) -> None:
-                nonlocal last_partial
-                if getattr(message, "type", "") != "TurnInfo":
+                msg_type = getattr(message, "type", "")
+                if msg_type != "TurnInfo":
                     return
                 transcript = getattr(message, "transcript", "").strip()
-                if not transcript:
-                    return
                 event = getattr(message, "event", "")
-                if event == "Update":
-                    last_partial = transcript
-                elif event == "EndOfTurn":
-                    asyncio.create_task(handle_intent_end_of_turn(transcript))
+                if transcript and event == "EndOfTurn":
+                    parts.append(transcript)
 
             def on_error(error) -> None:
                 logger.error(f"[intent session={session_id}] Deepgram error: {error}")
 
             dg_conn.on(EventType.MESSAGE, on_message)
-            dg_conn.on(EventType.ERROR, on_error)
+            dg_conn.on(EventType.ERROR,   on_error)
 
             listen_task = asyncio.create_task(dg_conn.start_listening())
 
@@ -324,13 +302,21 @@ async def intent_websocket(session_id: int, websocket: WebSocket):
                     if len(pcm) >= 2:
                         await dg_conn._send(pcm)
 
-                elif "text" in message:
-                    if message["text"].strip().upper() == "STOP":
-                        listen_task.cancel()
-                        if not intent_sent:
-                            await handle_intent_end_of_turn(last_partial)
-                        await websocket.close()
-                        break
+                elif "text" in message and message["text"].strip().upper() == "STOP":
+                    await asyncio.sleep(0.3)
+                    listen_task.cancel()
+
+                    transcript = " ".join(parts).strip()
+                    intent = classify_confirmation_intent(transcript)
+                    logger.info(f"[intent session={session_id}] transcript='{transcript}' intent={intent}")
+
+                    await websocket.send_text(json.dumps({
+                        "session_id": session_id,
+                        "intent": intent,
+                        "transcript": transcript,
+                    }))
+                    await websocket.close()
+                    break
 
     except WebSocketDisconnect:
         logger.info(f"[intent session={session_id}] disconnected")
