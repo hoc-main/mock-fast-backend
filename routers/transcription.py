@@ -245,8 +245,10 @@ async def transcribe_websocket(session_id: int, websocket: WebSocket, prior: str
                                 await websocket.close()
                                 break
 
-                except WebSocketDisconnect:
-                    logger.info(f"[session={session_id}] client disconnected")
+                except (WebSocketDisconnect, RuntimeError) as exc:
+                    if isinstance(exc, RuntimeError) and "disconnect" not in str(exc).lower():
+                        raise
+                    logger.info(f"[session={session_id}] client disconnected (normal)")
                     listen_task.cancel()
                 except Exception as exc:
                     logger.exception(f"[session={session_id}] error: {exc}")
