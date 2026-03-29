@@ -1,0 +1,40 @@
+WITH new_domain AS (
+    INSERT INTO domains (
+        name,
+        slug,
+        display_title
+    )
+    VALUES (
+        'Computer Science',
+        'computer-science',
+        'Computer Science'
+    )
+    RETURNING id
+),
+new_subdomain AS (
+    INSERT INTO subdomains (
+        domain_id,
+        name,
+        slug,
+        display_title
+    )
+    SELECT
+        id,
+        'AI/ML',
+        'ai-ml',
+        'AI/ML'
+    FROM new_domain
+    RETURNING id
+)
+INSERT INTO modules (
+    subdomain_id,
+    module_name,
+    slug,
+    module_json_path
+)
+SELECT
+    id,
+    'AI Mock 1',
+    'ai-mock-1',
+    '/modules/ai-mock-1.json'
+FROM new_subdomain;
