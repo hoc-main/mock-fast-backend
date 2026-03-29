@@ -141,12 +141,12 @@ async def transcribe_websocket(session_id: int, websocket: WebSocket, prior: str
 
             # ✅ Guard: reject suspiciously short transcripts
             # Mid-sentence interruptions produce short incomplete text
-            word_count = len(transcript.split())
-            if word_count < 5:
-                logger.info(
-                    f"[session={session_id}] EndOfTurn ignored — only {word_count} words: '{transcript}'"
-                )
-                return
+            # word_count = len(transcript.split())
+            # if word_count < 5:
+            #     logger.info(
+            #         f"[session={session_id}] EndOfTurn ignored — only {word_count} words: '{transcript}'"
+            #     )
+            #     return
 
             state["evaluation_sent"] = True
 
