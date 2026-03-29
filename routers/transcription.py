@@ -139,15 +139,12 @@ async def transcribe_websocket(session_id: int, websocket: WebSocket, prior: str
             if state["evaluation_sent"]:
                 return
 
-            # ✅ Guard: ignore EndOfTurn if less than 2s of audio received
-            # Prevents firing during the initial silence or on very short utterances
-            elapsed = (
-                time.time() - state["first_audio_at"]
-                if state["first_audio_at"] else 0
-            )
-            if elapsed < 2.0:
+            # ✅ Guard: reject suspiciously short transcripts
+            # Mid-sentence interruptions produce short incomplete text
+            word_count = len(transcript.split())
+            if word_count < 5:
                 logger.info(
-                    f"[session={session_id}] EndOfTurn ignored — only {elapsed:.1f}s of audio"
+                    f"[session={session_id}] EndOfTurn ignored — only {word_count} words: '{transcript}'"
                 )
                 return
 
@@ -193,8 +190,7 @@ async def transcribe_websocket(session_id: int, websocket: WebSocket, prior: str
                 model="flux-general-en",
                 encoding="linear16",
                 sample_rate="16000",
-                eot_timeout_ms="3000",   # ✅ generous pause tolerance
-                eot_threshold="0.5",     # ✅ less sensitive to turn endings
+                eot_timeout_ms="4000",   # ✅ generous pause tolerance
             ) as dg_conn:
 
                 def on_message(message) -> None:
