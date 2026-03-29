@@ -1,0 +1,2757 @@
+[
+  {
+    "sample_id": "ml_interview_0001",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_1",
+      "topic": "",
+      "question": "",
+      "primary_answer": "",
+      "answer_variants": [
+        "",
+        ""
+      ],
+      "expected_keywords": {
+        "critical": [],
+        "supporting": [],
+        "bonus": []
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 0
+    },
+    "candidate": "",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.3,
+      "question_relevance": 0.25,
+      "keyword_coverage": 0.15,
+      "length_appropriateness": 0.3,
+      "discourse_quality": 0.2,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 0.4,
+      "answer_completeness": 0.2
+    },
+    "score": 0.28,
+    "scoring_rationale": "Auto-generated from  quality and  type."
+  },
+  {
+    "sample_id": "ml_interview_0002",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_2",
+      "topic": "Classification",
+      "question": "Why can’t you use Linear Regression for a classification task?",
+      "primary_answer": "Linear regression is designed for continuous targets, not discrete classes. Its predictions can be negative or greater than one, which makes them invalid probabilities. Logistic regression solves this by converting outputs into probabilities.",
+      "answer_variants": [
+        "Because linear regression outputs a continuous value, not a probability between 0 and 1.",
+        "Linear regression predicts continuous, unbounded values, so outputs can fall outside the 0–1 probability range required for classification. Logistic Regression uses a sigmoid function to map outputs into valid probabilities."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "linear regression",
+          "continuous output"
+        ],
+        "supporting": [
+          "probability",
+          "sigmoid"
+        ],
+        "bonus": [
+          "logistic regression",
+          "classification",
+          "bounded"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 33
+    },
+    "candidate": "um so linear regression basically uh outputs a continuous value right and like it doesn't give you probabilities between zero and one so the the output can be like negative or greater than one and that that makes it invalid for classification and uh logistic regression solves this by using a sigmoid function to map the output to like a valid probability range",
+    "stt_realistic": true,
+    "labels": {
+      "semantic_similarity": 0.75,
+      "question_relevance": 0.7,
+      "keyword_coverage": 0.6,
+      "length_appropriateness": 0.75,
+      "discourse_quality": 0.45,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 0.85,
+      "answer_completeness": 0.65
+    },
+    "score": 0.698,
+    "scoring_rationale": "Auto-generated from good quality and stt type."
+  },
+  {
+    "sample_id": "ml_interview_0003",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_3",
+      "topic": "Neural Networks",
+      "question": " Can you explain Backpropagation simply?",
+      "primary_answer": "Backpropagation is the learning algorithm used in neural networks. It computes the prediction error and sends it backward through the network to calculate gradients and update weights to minimize the loss.",
+      "answer_variants": [
+        "Backpropagation is an optimization method where the network performs a forward pass to compute output, then a backward pass to compute gradients and update weights to reduce the loss.",
+        "It’s the algorithm neural networks use to learn. It calculates the error and propagates it backward through the network to update the weights"
+      ],
+      "expected_keywords": {
+        "critical": [
+          "backpropagation",
+          "chain rule"
+        ],
+        "supporting": [
+          "gradient",
+          "forward pass"
+        ],
+        "bonus": [
+          "backward pass",
+          "loss",
+          "weights",
+          "optimizer"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 31
+    },
+    "candidate": "Backpropagation is the algorithm used to train neural networks. It performs a forward pass to compute predictions and loss, then uses the chain rule to propagate gradients backward through each layer. These gradients are used by an optimizer like SGD or Adam to update the weights and minimize the loss function. This process repeats over many iterations until the model converges.",
+    "stt_realistic": true,
+    "labels": {
+      "semantic_similarity": 0.9,
+      "question_relevance": 0.85,
+      "keyword_coverage": 0.75,
+      "length_appropriateness": 0.9,
+      "discourse_quality": 0.8,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 1,
+      "answer_completeness": 0.8
+    },
+    "score": 0.851,
+    "scoring_rationale": "Auto-generated from strong quality and correct type."
+  },
+  {
+    "sample_id": "ml_interview_0004",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_4",
+      "topic": "Neural Networks",
+      "question": "What are vanishing and exploding gradients?",
+      "primary_answer": "During backpropagation, gradients can shrink or grow exponentially due to repeated multiplications. This causes vanishing or exploding gradients. Techniques like ReLU, better weight initialization, batch normalization, and gradient clipping help stabilize training.",
+      "answer_variants": [
+        "In deep networks, gradients can become very small or very large, which makes the network stop learning or become unstable.",
+        "Deep networks suffer from vanishing or exploding gradients because gradient values compound across layers. Small gradients disappear, large ones blow up. Solutions include ReLU activations, Xavier/He initialization, batch normalization, and gradient clipping."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "vanishing gradient",
+          "exploding gradient"
+        ],
+        "supporting": [
+          "deep network",
+          "backpropagation"
+        ],
+        "bonus": [
+          "ReLU",
+          "gradient clipping",
+          "instability"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 32
+    },
+    "candidate": "It's a gradient problem in deep networks.",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.2,
+      "question_relevance": 0.15,
+      "keyword_coverage": 0.05,
+      "length_appropriateness": 0.2,
+      "discourse_quality": 0.1,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 0.3,
+      "answer_completeness": 0.1
+    },
+    "score": 0.186,
+    "scoring_rationale": "Auto-generated from weak quality and concise type."
+  },
+  {
+    "sample_id": "ml_interview_0005",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_5",
+      "topic": "Deep Learning",
+      "question": "Why are Convolutional Neural Networks (CNNs) so effective for images?",
+      "primary_answer": "CNNs work well on images because they exploit spatial structure. They use parameter sharing with filters across the image and pooling layers for spatial invariance, reducing parameters and learning hierarchical visual features.",
+      "answer_variants": [
+        "They use convolutional filters to detect features like edges and shapes in images.",
+        "CNNs are efficient because the same convolution filter scans the entire image, reducing parameters. Pooling layers make the model robust to small translations, enabling it to learn hierarchical patterns in images."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "CNN",
+          "convolutional filter"
+        ],
+        "supporting": [
+          "parameter sharing",
+          "pooling"
+        ],
+        "bonus": [
+          "spatial",
+          "feature map",
+          "hierarchical"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 32
+    },
+    "candidate": "um cnns are effective for images basically because they use convolution filters right and these filters learn local patterns like edges and shapes and um the the same filter is applied across the image so like it shares parameters and reduces the number of weights and pooling layers reduce spatial dimensions and uh yeah they're really good at capturing spatial relationships",
+    "stt_realistic": true,
+    "labels": {
+      "semantic_similarity": 0.75,
+      "question_relevance": 0.7,
+      "keyword_coverage": 0.6,
+      "length_appropriateness": 0.75,
+      "discourse_quality": 0.45,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 0.85,
+      "answer_completeness": 0.65
+    },
+    "score": 0.698,
+    "scoring_rationale": "Auto-generated from good quality and stt type."
+  },
+  {
+    "sample_id": "ml_interview_0006",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_6",
+      "topic": "NLP / Transformers",
+      "question": " Why have Transformers largely replaced RNNs in NLP?",
+      "primary_answer": "Transformers outperform RNNs due to self-attention, which allows parallel computation of all tokens and creates direct relationships between words, enabling faster training and better handling of long-range dependencies.",
+      "answer_variants": [
+        "They're faster to train and better at handling long sentences.",
+        "Transformers use self-attention to compute relationships between all tokens simultaneously. This enables parallelization on GPUs and solves the long-range dependency issue common in RNN-based architectures."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "transformer",
+          "self-attention"
+        ],
+        "supporting": [
+          "parallelization",
+          "RNN"
+        ],
+        "bonus": [
+          "sequential",
+          "vanishing gradient",
+          "scalable"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 28
+    },
+    "candidate": "Transformers have replaced RNNs primarily due to the self-attention mechanism, which allows every token in a sequence to attend to every other token simultaneously. This enables full parallelization during training, unlike RNNs which process tokens sequentially. Transformers also avoid the vanishing gradient problem that affects long sequences in RNNs. Additionally, with large-scale pre-training, Transformers like BERT and GPT have demonstrated superior performance on nearly all NLP benchmarks. The positional encoding approach preserves sequence order without recurrence, making Transformers both faster and more scalable.",
+    "stt_realistic": true,
+    "labels": {
+      "semantic_similarity": 0.9,
+      "question_relevance": 0.85,
+      "keyword_coverage": 0.75,
+      "length_appropriateness": 0.9,
+      "discourse_quality": 0.8,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 1,
+      "answer_completeness": 0.8
+    },
+    "score": 0.851,
+    "scoring_rationale": "Auto-generated from strong quality and verbose type."
+  },
+  {
+    "sample_id": "ml_interview_0007",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_7",
+      "topic": "NLP / Transformers",
+      "question": "What is the self-attention mechanism?",
+      "primary_answer": "It allows the model to weigh the importance of different words in a sentence when processing a particular word.",
+      "answer_variants": [
+        "It allows the model to weigh the importance of different words in a sentence when processing a particular word.",
+        "In self-attention, every token generates three vectors: Query, Key, and Value. The Query of a word is compared with Keys of all other words to compute similarity scores. These scores are normalized with softmax to produce attention weights, which are applied to the Value vectors to create a context-aware representation."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "self-attention",
+          "query"
+        ],
+        "supporting": [
+          "key",
+          "value"
+        ],
+        "bonus": [
+          "attention score",
+          "softmax",
+          "context",
+          "weighted sum"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 19
+    },
+    "candidate": "I'm not entirely sure how self-attention works at a technical level. I know it's part of the Transformer architecture but I haven't studied the math behind it in detail.",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.2,
+      "question_relevance": 0.15,
+      "keyword_coverage": 0.05,
+      "length_appropriateness": 0.2,
+      "discourse_quality": 0.1,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 0.3,
+      "answer_completeness": 0.1
+    },
+    "score": 0.186,
+    "scoring_rationale": "Auto-generated from weak quality and refusal type."
+  },
+  {
+    "sample_id": "ml_interview_0008",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_8",
+      "topic": "Generative AI",
+      "question": "What is Retrieval-Augmented Generation (RAG)?",
+      "primary_answer": "Retrieval-Augmented Generation (RAG) improves LLM reliability by combining retrieval with generation. First, a retriever searches a knowledge base, often a vector database, to find relevant documents. Then the generator LLM uses the query and retrieved context to produce the answer, reducing hallucinations and enabling factual, up-to-date responses.",
+      "answer_variants": [
+        "It's a way to connect a Large Language Model to an external knowledge base, like a database, to give it access to up-to-date and specific information.",
+        "In RAG systems, a retriever first identifies relevant documents related to the user’s query. These documents are passed to the LLM as context. The model then synthesizes a response grounded in that information, improving reliability, reducing hallucinations, and enabling answers based on external knowledge sources."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "RAG",
+          "retrieval"
+        ],
+        "supporting": [
+          "generation",
+          "knowledge base"
+        ],
+        "bonus": [
+          "context",
+          "LLM",
+          "up-to-date",
+          "document"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 47
+    },
+    "candidate": "um rag is basically retrieval augmented generation right so like the idea is uh you have a retriever that fetches relevant documents from a knowledge base and then the llm uses those documents as context to generate a response and uh this helps the model access up to date information without retraining and so it's useful for question answering and like factual tasks",
+    "stt_realistic": true,
+    "labels": {
+      "semantic_similarity": 0.75,
+      "question_relevance": 0.7,
+      "keyword_coverage": 0.6,
+      "length_appropriateness": 0.75,
+      "discourse_quality": 0.45,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 0.85,
+      "answer_completeness": 0.65
+    },
+    "score": 0.698,
+    "scoring_rationale": "Auto-generated from good quality and stt type."
+  },
+  {
+    "sample_id": "ml_interview_0009",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_9",
+      "topic": "Generative AI",
+      "question": "What is Reinforcement Learning from Human Feedback (RLHF)?",
+      "primary_answer": " It's a three-step process to align a model with nuanced human preferences. First, you start with a base LLM and do supervised fine-tuning on a small set of high-quality, human-written examples. Second, you train a separate reward model. To do this, you have the model generate several responses to a prompt, and a human ranks them from best to worst. The reward model learns to predict which response a human would prefer. Finally, you use reinforcement learning (specifically an algorithm like PPO) to fine-tune your LLM, using the reward model's score as the reward signal. This directly optimizes the LLM to generate outputs that humans will find helpful, harmless, and honest.",
+      "answer_variants": [
+        "It's the technique used to train models like ChatGPT to be more helpful and follow instructions better, using human feedback",
+        "RLHF improves LLM behavior by incorporating human feedback. The process starts with supervised fine-tuning on curated examples, followed by training a reward model using human rankings of responses. Reinforcement learning then adjusts the LLM’s outputs to maximize reward scores reflecting helpful and safe responses."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "RLHF",
+          "reward model"
+        ],
+        "supporting": [
+          "PPO",
+          "human feedback"
+        ],
+        "bonus": [
+          "fine-tuning",
+          "alignment",
+          "preferences"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 111
+    },
+    "candidate": "RLHF stands for Reinforcement Learning from Human Feedback. It is used to align language models with human preferences. The process involves three stages: supervised fine-tuning on curated demonstrations, training a reward model using human preference comparisons between model outputs, and then using Proximal Policy Optimization (PPO) to fine-tune the language model to maximize the learned reward. This technique was central to training models like InstructGPT and ChatGPT.",
+    "stt_realistic": true,
+    "labels": {
+      "semantic_similarity": 0.9,
+      "question_relevance": 0.85,
+      "keyword_coverage": 0.75,
+      "length_appropriateness": 0.9,
+      "discourse_quality": 0.8,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 1,
+      "answer_completeness": 0.8
+    },
+    "score": 0.851,
+    "scoring_rationale": "Auto-generated from strong quality and correct type."
+  },
+  {
+    "sample_id": "ml_interview_0010",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_10",
+      "topic": "ML Systems",
+      "question": "What is Federated Learning?",
+      "primary_answer": "That's the core privacy-preserving benefit. The process works by having a central server send a global model to a set of client devices. Each device then trains the model on its own local data. Instead of sending the raw data back, the devices only send their updated model parameters (the weights and biases) to the server. The server then aggregates these updates to improve the global model. This is a powerful paradigm for privacy, but it comes with unique challenges, like managing communication overhead and dealing with statistical heterogeneity, since the data on each device is non-IID (not independently and identically distributed)",
+      "answer_variants": [
+        "It's a way to train a machine learning model on data from multiple devices, like phones, without the data ever leaving the device",
+        "Federated learning trains models collaboratively without sharing raw data. A central server sends a global model to client devices, which train locally on their data. Devices return updated model parameters instead of data, and the server aggregates them to update the global model while preserving privacy."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "federated learning",
+          "decentralized"
+        ],
+        "supporting": [
+          "local training",
+          "privacy"
+        ],
+        "bonus": [
+          "aggregation",
+          "gradient",
+          "server"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 102
+    },
+    "candidate": "Federated learning is when multiple devices train a model together without sharing their raw data. Each device trains locally and sends updates to a central server.",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.55,
+      "question_relevance": 0.5,
+      "keyword_coverage": 0.4,
+      "length_appropriateness": 0.55,
+      "discourse_quality": 0.45,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 0.65,
+      "answer_completeness": 0.45
+    },
+    "score": 0.518,
+    "scoring_rationale": "Auto-generated from partial quality and concise type."
+  },
+  {
+    "sample_id": "ml_interview_0011",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_11",
+      "topic": "Optimization",
+      "question": "What's the difference between the Adam and RMSprop optimizers?",
+      "primary_answer": "Both are adaptive learning rate optimizers, meaning they compute individual learning rates for different parameters. RMSprop maintains a moving average of the squared gradients for each parameter and divides the learning rate by this average. This helps it handle non-stationary objectives. Adam (Adaptive Moment Estimation) takes this a step further. It not only keeps a moving average of the squared gradients (like RMSprop) but also keeps a moving average of the gradients themselves (the first moment), which is like momentum. This helps Adam accelerate in the relevant direction and often leads to faster convergence, which is why it's such a popular default choice.",
+      "answer_variants": [
+        "They are both popular optimization algorithms used in deep learning. Adam is often used as a good default",
+        "Both RMSprop and Adam are adaptive learning rate optimizers that adjust learning rates per parameter. RMSprop keeps a moving average of squared gradients to normalize updates. Adam extends this by also maintaining a moving average of gradients (momentum), allowing faster and more stable convergence during training."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "Adam",
+          "RMSprop"
+        ],
+        "supporting": [
+          "adaptive",
+          "learning rate"
+        ],
+        "bonus": [
+          "momentum",
+          "squared gradients",
+          "convergence"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 103
+    },
+    "candidate": "Adam and RMSprop are both adaptive optimizers. RMSprop divides the learning rate by an exponential moving average of squared gradients to normalize updates. Adam extends this by also tracking a moving average of the gradients themselves, which acts like momentum. Adam is generally faster to converge. However, Adam can sometimes generalize worse than SGD because its sharp adaptive steps may lead to sharper minima that don't transfer well.",
+    "stt_realistic": true,
+    "labels": {
+      "semantic_similarity": 0.9,
+      "question_relevance": 0.85,
+      "keyword_coverage": 0.75,
+      "length_appropriateness": 0.9,
+      "discourse_quality": 0.8,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 1,
+      "answer_completeness": 0.8
+    },
+    "score": 0.851,
+    "scoring_rationale": "Auto-generated from strong quality and correct type."
+  },
+  {
+    "sample_id": "ml_interview_0012",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_12",
+      "topic": "Model Evaluation",
+      "question": "Explain the bias-variance tradeoff.",
+      "primary_answer": "The bias–variance tradeoff explains the balance between underfitting and overfitting in machine learning models. High bias models are too simple and miss patterns in the data, while high variance models are too complex and fit noise. The goal is to find a model complexity that minimizes both errors.",
+      "answer_variants": [
+        "Bias–variance tradeoff describes how model complexity affects performance. High bias leads to underfitting because the model is too simple. High variance leads to overfitting because the model learns noise. A good model balances bias and variance to generalize well.",
+        "In machine learning, bias measures error from incorrect assumptions, while variance measures sensitivity to training data fluctuations. Increasing model complexity reduces bias but increases variance. The bias–variance tradeoff involves choosing a model that achieves optimal generalization performance."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "bias",
+          "variance"
+        ],
+        "supporting": [
+          "underfitting",
+          "overfitting"
+        ],
+        "bonus": [
+          "regularization",
+          "tradeoff",
+          "complexity"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 48
+    },
+    "candidate": "so the bias variance tradeoff is basically uh the tension between model simplicity and flexibility right like a high bias model is too simple and underfits the data and a high variance model is too complex and like memorizes the training data and overfits and um you need to find the sweet spot and uh techniques like regularization and cross validation help you balance both",
+    "stt_realistic": true,
+    "labels": {
+      "semantic_similarity": 0.75,
+      "question_relevance": 0.7,
+      "keyword_coverage": 0.6,
+      "length_appropriateness": 0.75,
+      "discourse_quality": 0.45,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 0.85,
+      "answer_completeness": 0.65
+    },
+    "score": 0.698,
+    "scoring_rationale": "Auto-generated from good quality and stt type."
+  },
+  {
+    "sample_id": "ml_interview_0013",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_13",
+      "topic": "Classical ML",
+      "question": "Describe how a decision tree works.",
+      "primary_answer": "A decision tree works by recursively splitting data based on feature values to create decision rules. At each node, the algorithm selects the feature that best separates the data using metrics like information gain or Gini impurity, forming branches until reaching leaf nodes that represent the final prediction.",
+      "answer_variants": [
+        "A decision tree predicts outcomes by splitting the dataset into smaller subsets based on feature conditions. Each internal node represents a decision rule, branches represent outcomes, and leaf nodes give the final prediction. The model selects splits that maximize information gain or minimize impurity.",
+        "Decision trees classify or predict by creating a tree-like structure of decisions. The algorithm evaluates features and selects the best split based on criteria like Gini impurity or entropy. This process repeats recursively until the data is sufficiently separated into leaf nodes."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "decision tree",
+          "Gini impurity"
+        ],
+        "supporting": [
+          "information gain",
+          "split"
+        ],
+        "bonus": [
+          "leaf",
+          "pruning",
+          "interpretable"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 48
+    },
+    "candidate": "A decision tree splits data at each node using the feature that provides the greatest information gain or lowest Gini impurity. Splitting continues recursively until a stopping criterion such as maximum depth or minimum samples per leaf is reached. Each leaf node holds a class label or predicted value. Decision trees are highly interpretable but prone to overfitting without pruning or ensemble methods.",
+    "stt_realistic": true,
+    "labels": {
+      "semantic_similarity": 0.9,
+      "question_relevance": 0.85,
+      "keyword_coverage": 0.75,
+      "length_appropriateness": 0.9,
+      "discourse_quality": 0.8,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 1,
+      "answer_completeness": 0.8
+    },
+    "score": 0.851,
+    "scoring_rationale": "Auto-generated from strong quality and correct type."
+  },
+  {
+    "sample_id": "ml_interview_0014",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_14",
+      "topic": "Ensemble Methods",
+      "question": "Discuss the difference between bagging and boosting.",
+      "primary_answer": "Bagging and boosting are ensemble learning techniques but differ in training strategy. Bagging trains multiple models independently on random bootstrap samples and averages their predictions to reduce variance. Boosting trains models sequentially, where each new model focuses on correcting the errors made by previous ones.",
+      "answer_variants": [
+        "Bagging improves stability by training models in parallel on different bootstrap datasets and combining their predictions. Boosting builds models sequentially, giving more weight to misclassified samples so later models focus on difficult cases.",
+        "In bagging, multiple models are trained independently on random subsets of data, and their outputs are averaged to reduce variance. Boosting trains models sequentially, adjusting weights so that later models learn from the mistakes of earlier ones."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "bagging",
+          "boosting"
+        ],
+        "supporting": [
+          "ensemble",
+          "bootstrap"
+        ],
+        "bonus": [
+          "variance",
+          "bias",
+          "parallel",
+          "sequential",
+          "random forest"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 45
+    },
+    "candidate": "um so bagging is like random forest right where you train multiple trees and boosting is adaboost and xgboost and um they're both ensemble methods but bagging trains in parallel and boosting trains sequentially and uh boosting focuses on errors from the previous model and bagging just averages and um yeah bagging reduces variance and boosting reduces bias i think",
+    "stt_realistic": true,
+    "labels": {
+      "semantic_similarity": 0.55,
+      "question_relevance": 0.5,
+      "keyword_coverage": 0.4,
+      "length_appropriateness": 0.55,
+      "discourse_quality": 0.25,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 0.65,
+      "answer_completeness": 0.45
+    },
+    "score": 0.508,
+    "scoring_rationale": "Auto-generated from partial quality and stt type."
+  },
+  {
+    "sample_id": "ml_interview_0015",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_15",
+      "topic": "Optimization",
+      "question": "What the importance of the learning rate in training neural networks.",
+      "primary_answer": "The learning rate controls how much model weights are updated during training. If it is too high, the model may overshoot the optimal solution and fail to converge. If it is too low, training becomes very slow. Choosing an appropriate learning rate ensures stable and efficient convergence.",
+      "answer_variants": [
+        "he learning rate determines the step size taken during gradient descent when updating model parameters. A large learning rate can cause unstable training, while a very small one slows convergence. Proper tuning helps the model reach the optimal solution efficiently.",
+        "In neural networks, the learning rate controls how quickly weights are adjusted based on gradients. Too high leads to oscillations or divergence, while too low results in slow learning. A balanced learning rate enables stable optimization and faster convergence."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "learning rate",
+          "gradient descent"
+        ],
+        "supporting": [
+          "convergence",
+          "diverge"
+        ],
+        "bonus": [
+          "scheduler",
+          "adaptive",
+          "hyperparameter"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 47
+    },
+    "candidate": "The learning rate controls how large each weight update step is during gradient descent. A learning rate that is too high can cause the loss to diverge or oscillate around the minimum, while one that is too low results in very slow convergence. Practitioners often use learning rate schedules that decay the rate over time, or adaptive optimizers like Adam that adjust the rate per parameter. Finding a good learning rate is one of the most critical aspects of training neural networks effectively.",
+    "stt_realistic": true,
+    "labels": {
+      "semantic_similarity": 0.9,
+      "question_relevance": 0.85,
+      "keyword_coverage": 0.75,
+      "length_appropriateness": 0.9,
+      "discourse_quality": 0.8,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 1,
+      "answer_completeness": 0.8
+    },
+    "score": 0.851,
+    "scoring_rationale": "Auto-generated from strong quality and correct type."
+  },
+  {
+    "sample_id": "ml_interview_0016",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_16",
+      "topic": "Deep Learning",
+      "question": "What are recurrent neural networks (RNNs), and when are they useful?",
+      "primary_answer": "Recurrent Neural Networks (RNNs) are neural networks designed to process sequential data by maintaining a hidden state that carries information from previous inputs. This allows the model to capture temporal dependencies across time steps. RNNs are useful for tasks where the order of data matters, such as language modeling, speech recognition, machine translation, and time-series forecasting.",
+      "answer_variants": [
+        "RNNs are deep learning models specialized for handling sequences of data. Unlike traditional neural networks, they feed the output from the previous step back into the network, enabling them to remember past information. This capability makes them effective for applications like text generation, sentiment analysis, speech processing, and financial time-series prediction.",
+        "Recurrent Neural Networks work by processing inputs step-by-step while maintaining a hidden state that stores context from earlier inputs. This structure helps the model capture dependencies across time. They are particularly useful for sequential tasks such as natural language processing, handwriting recognition, speech recognition, and forecasting problems."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "RNN",
+          "hidden state"
+        ],
+        "supporting": [
+          "sequential",
+          "recurrent"
+        ],
+        "bonus": [
+          "vanishing gradient",
+          "LSTM",
+          "GRU",
+          "time series"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 56
+    },
+    "candidate": "I don't really know much about recurrent neural networks. I think they're used for sequences but I haven't worked with them.",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.2,
+      "question_relevance": 0.15,
+      "keyword_coverage": 0.05,
+      "length_appropriateness": 0.2,
+      "discourse_quality": 0.1,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 0.3,
+      "answer_completeness": 0.1
+    },
+    "score": 0.186,
+    "scoring_rationale": "Auto-generated from weak quality and refusal type."
+  },
+  {
+    "sample_id": "ml_interview_0017",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_17",
+      "topic": "Deep Learning",
+      "question": "Explain the concept of transfer learning in neural networks.",
+      "primary_answer": "Transfer learning is a technique where a neural network trained on one task is reused as the starting point for a related task. Instead of training a model from scratch, knowledge learned from a large dataset is transferred and fine-tuned on a smaller dataset. This approach reduces training time, improves performance, and is especially useful when labeled data is limited.",
+      "answer_variants": [
+        "Transfer learning involves taking a pre-trained neural network and adapting it to solve a new but related problem. The earlier layers capture general features such as patterns or edges, while the later layers are fine-tuned for the new task. This method speeds up training and improves accuracy when only a small dataset is available.",
+        "In transfer learning, a model trained on a large dataset is reused for another related task. Instead of learning everything from scratch, the model leverages previously learned features and adjusts only certain layers. This approach is widely used in computer vision and NLP to save computational resources and improve performance."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "transfer learning",
+          "pretrained"
+        ],
+        "supporting": [
+          "fine-tuning",
+          "feature extraction"
+        ],
+        "bonus": [
+          "domain",
+          "limited data"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 60
+    },
+    "candidate": "Transfer learning means using a pretrained model on a new task. You fine-tune it on your data.",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.55,
+      "question_relevance": 0.5,
+      "keyword_coverage": 0.4,
+      "length_appropriateness": 0.55,
+      "discourse_quality": 0.45,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 0.65,
+      "answer_completeness": 0.45
+    },
+    "score": 0.518,
+    "scoring_rationale": "Auto-generated from partial quality and concise type."
+  },
+  {
+    "sample_id": "ml_interview_0018",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_18",
+      "topic": "Model Evaluation",
+      "question": "What metrics would you use to evaluate a binary classification model?",
+      "primary_answer": "To evaluate a binary classification model, common metrics include accuracy, precision, recall, and F1-score. Accuracy measures overall correctness, while precision evaluates how many predicted positives are actually correct. Recall measures how well the model identifies actual positives. The F1-score balances precision and recall, making it useful when classes are imbalanced.",
+      "answer_variants": [
+        "Binary classification models are evaluated using metrics such as accuracy, precision, recall, and F1-score. Additionally, ROC-AUC measures the model’s ability to distinguish between classes across thresholds. These metrics help assess not only overall correctness but also how well the model handles false positives and false negatives.",
+        "Important evaluation metrics for binary classification include accuracy, precision, recall, and F1-score, which are derived from the confusion matrix. ROC-AUC and Precision-Recall curves are also used to evaluate performance across different thresholds, especially when dealing with imbalanced datasets."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "precision",
+          "recall"
+        ],
+        "supporting": [
+          "F1",
+          "AUC"
+        ],
+        "bonus": [
+          "ROC",
+          "confusion matrix",
+          "accuracy",
+          "imbalanced"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 50
+    },
+    "candidate": "For binary classification you should use accuracy. Accuracy tells you how many predictions were correct overall and is a simple and widely understood metric. It works well for most use cases.",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.2,
+      "question_relevance": 0.15,
+      "keyword_coverage": 0.05,
+      "length_appropriateness": 0.2,
+      "discourse_quality": 0.1,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 0.3,
+      "answer_completeness": 0.1
+    },
+    "score": 0.186,
+    "scoring_rationale": "Auto-generated from weak quality and correct type."
+  },
+  {
+    "sample_id": "ml_interview_0019",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_19",
+      "topic": "Model Evaluation",
+      "question": "Explain the confusion matrix and its components.",
+      "primary_answer": "A confusion matrix is a table used to evaluate the performance of a classification model. It compares predicted labels with actual labels and consists of four components: True Positives, True Negatives, False Positives, and False Negatives. These values help calculate important metrics like accuracy, precision, recall, and F1-score to better understand model performance.",
+      "answer_variants": [
+        "The confusion matrix is a performance evaluation tool for classification models. It summarizes predictions into four categories: True Positive (correct positive prediction), True Negative (correct negative prediction), False Positive (incorrect positive prediction), and False Negative (missed positive prediction). These components provide insight into different types of model errors.",
+        "A confusion matrix represents how well a classifier performs by showing the relationship between predicted and actual labels. It includes True Positives, True Negatives, False Positives, and False Negatives. These values help measure how accurately the model predicts each class and are used to derive evaluation metrics."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "confusion matrix",
+          "true positive"
+        ],
+        "supporting": [
+          "false positive",
+          "true negative"
+        ],
+        "bonus": [
+          "false negative",
+          "precision",
+          "recall"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 53
+    },
+    "candidate": "um a confusion matrix is basically a table that shows model predictions versus actual labels right and uh the four cells are true positives true negatives false positives and false negatives and from that you can compute like accuracy precision recall and f1 and uh false positives are type one errors and false negatives are type two errors and yeah it gives a full picture of performance",
+    "stt_realistic": true,
+    "labels": {
+      "semantic_similarity": 0.75,
+      "question_relevance": 0.7,
+      "keyword_coverage": 0.6,
+      "length_appropriateness": 0.75,
+      "discourse_quality": 0.45,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 0.85,
+      "answer_completeness": 0.65
+    },
+    "score": 0.698,
+    "scoring_rationale": "Auto-generated from good quality and stt type."
+  },
+  {
+    "sample_id": "ml_interview_0020",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_20",
+      "topic": "Data Preprocessing",
+      "question": "Discuss techniques for handling missing data.",
+      "primary_answer": "Handling missing data is important for building reliable machine learning models. Common techniques include removing rows or columns with many missing values, imputing missing values using mean, median, or mode, and using more advanced methods like KNN or model-based imputation. Another approach is to add a missing indicator feature so the model can learn patterns related to missingness.",
+      "answer_variants": [
+        "Missing data can be handled through deletion or imputation techniques. Simple approaches include dropping records with missing values or filling them using mean, median, or mode. More advanced techniques include KNN imputation, regression-based imputation, or using models that can handle missing values directly. Choosing the right technique depends on the dataset and missing data pattern.",
+        "To handle missing data, analysts may remove incomplete records if the missing portion is small. Alternatively, missing values can be filled using statistical measures like mean or median, or through predictive methods such as regression or KNN imputation. Advanced strategies also include using algorithms that are robust to missing values."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "missing data",
+          "imputation"
+        ],
+        "supporting": [
+          "mean",
+          "median"
+        ],
+        "bonus": [
+          "KNN",
+          "iterative",
+          "deletion",
+          "indicator"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 58
+    },
+    "candidate": "Handling missing data is an important preprocessing step. One approach is to simply delete rows or columns with missing values, but this risks losing significant information. A better strategy is imputation — using the mean, median, or mode for numerical features, or the most frequent value for categorical ones. More sophisticated methods include KNN imputation, which uses similar samples to estimate missing values, and iterative imputation using regression models. In some cases, missingness itself carries signal, so adding a binary indicator column for whether a value was missing can improve model performance.",
+    "stt_realistic": true,
+    "labels": {
+      "semantic_similarity": 0.9,
+      "question_relevance": 0.85,
+      "keyword_coverage": 0.75,
+      "length_appropriateness": 0.9,
+      "discourse_quality": 0.8,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 1,
+      "answer_completeness": 0.8
+    },
+    "score": 0.851,
+    "scoring_rationale": "Auto-generated from strong quality and verbose type."
+  },
+  {
+    "sample_id": "ml_interview_0021",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_21",
+      "topic": "Feature Engineering",
+      "question": "What is one-hot encoding, and when would you use it?",
+      "primary_answer": "One-hot encoding is a technique used to convert categorical variables into a numerical format suitable for machine learning models. Each category is represented as a binary vector where one element is 1 and the rest are 0. It is commonly used when categorical features have no ordinal relationship, such as colors, countries, or product categories.",
+      "answer_variants": [
+        "One-hot encoding transforms categorical data into multiple binary columns, each representing a unique category. For example, a “color” feature with values red, blue, and green becomes separate columns with 0s and 1s. This method is used when machine learning algorithms require numerical inputs and when categories do not have a natural order.",
+        "In one-hot encoding, each category in a categorical variable is converted into a separate binary feature. Only the column corresponding to the actual category is marked as 1, while others are 0. This prevents models from assuming ordinal relationships between categories and improves compatibility with many algorithms."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "one-hot encoding",
+          "categorical"
+        ],
+        "supporting": [
+          "binary",
+          "nominal"
+        ],
+        "bonus": [
+          "multicollinearity",
+          "sparse",
+          "dummy variable"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 55
+    },
+    "candidate": "One-hot encoding converts each category into a separate binary column with a 1 in the relevant position and 0 elsewhere. It is used for nominal categorical variables without ordinal relationships, such as color or country. One column should be dropped to avoid multicollinearity in linear models.",
+    "stt_realistic": true,
+    "labels": {
+      "semantic_similarity": 0.75,
+      "question_relevance": 0.7,
+      "keyword_coverage": 0.6,
+      "length_appropriateness": 0.75,
+      "discourse_quality": 0.65,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 0.85,
+      "answer_completeness": 0.65
+    },
+    "score": 0.708,
+    "scoring_rationale": "Auto-generated from good quality and correct type."
+  },
+  {
+    "sample_id": "ml_interview_0022",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_22",
+      "topic": "Data Preprocessing",
+      "question": "Explain the importance of data normalization.",
+      "primary_answer": "Data normalization is the process of scaling numerical features to a common range so that no single feature dominates the learning process. It improves model performance and training stability, especially for algorithms that rely on distance or gradient-based optimization. Normalization helps ensure faster convergence and more balanced influence of features.",
+      "answer_variants": [
+        "Normalization adjusts feature values to a similar scale, typically between 0 and 1 or with zero mean and unit variance. This prevents features with larger magnitudes from disproportionately influencing the model and improves the efficiency of optimization algorithms during training.",
+        "Data normalization is important because many machine learning algorithms perform better when input features are on similar scales. Without normalization, features with large values can dominate the learning process. Scaling the data improves model stability, speeds up convergence, and helps gradient-based algorithms perform effectively."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "normalization",
+          "standardization"
+        ],
+        "supporting": [
+          "min-max",
+          "zero mean"
+        ],
+        "bonus": [
+          "unit variance",
+          "scaling",
+          "feature"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 50
+    },
+    "candidate": "um normalization basically rescales features to a common range right so that no single feature dominates the others during training and uh it's important for distance based algorithms like knn and for gradient based optimization and um min max scaling puts values between zero and one and standardization makes the distribution have zero mean and unit variance and yeah both are common",
+    "stt_realistic": true,
+    "labels": {
+      "semantic_similarity": 0.75,
+      "question_relevance": 0.7,
+      "keyword_coverage": 0.6,
+      "length_appropriateness": 0.75,
+      "discourse_quality": 0.45,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 0.85,
+      "answer_completeness": 0.65
+    },
+    "score": 0.698,
+    "scoring_rationale": "Auto-generated from good quality and stt type."
+  },
+  {
+    "sample_id": "ml_interview_0023",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_23",
+      "topic": "Data Preprocessing",
+      "question": "How do you handle imbalanced datasets?",
+      "primary_answer": "Imbalanced datasets occur when one class significantly outnumbers another. To handle this, techniques such as oversampling the minority class, undersampling the majority class, and generating synthetic samples using methods like SMOTE can be used. Additionally, choosing appropriate evaluation metrics like F1-score or ROC-AUC instead of accuracy helps better assess model performance.",
+      "answer_variants": [
+        "Handling imbalanced datasets involves balancing class distributions to improve model learning. This can be done using oversampling methods like SMOTE, undersampling the majority class, or applying class weights during training. Using evaluation metrics such as precision, recall, and F1-score is also important to properly evaluate model performance.",
+        "When datasets are imbalanced, models may become biased toward the majority class. Solutions include oversampling minority samples, undersampling majority samples, using synthetic data generation techniques like SMOTE, and applying cost-sensitive learning or class weighting to emphasize minority class predictions."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "imbalanced",
+          "SMOTE"
+        ],
+        "supporting": [
+          "oversampling",
+          "undersampling"
+        ],
+        "bonus": [
+          "class weight",
+          "F1",
+          "AUC-PR",
+          "threshold"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 51
+    },
+    "candidate": "For imbalanced datasets, you can use SMOTE to oversample the minority class, or undersample the majority class. Adjusting class weights in the loss function is another option. Using metrics like F1 score and AUC-PR instead of accuracy is critical since accuracy is misleading on imbalanced data. Threshold tuning post-training and cost-sensitive learning are also effective. In extreme cases, framing the problem as anomaly detection may be more appropriate.",
+    "stt_realistic": true,
+    "labels": {
+      "semantic_similarity": 0.9,
+      "question_relevance": 0.85,
+      "keyword_coverage": 0.75,
+      "length_appropriateness": 0.9,
+      "discourse_quality": 0.8,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 1,
+      "answer_completeness": 0.8
+    },
+    "score": 0.851,
+    "scoring_rationale": "Auto-generated from strong quality and correct type."
+  },
+  {
+    "sample_id": "ml_interview_0024",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_24",
+      "topic": "Data Preprocessing",
+      "question": "What is data augmentation, and when is it useful?",
+      "primary_answer": "Data augmentation is a technique used to increase the size and diversity of a training dataset by creating modified versions of existing data. In image tasks, this may include rotations, flips, scaling, or cropping. It helps improve model generalization and reduces overfitting, especially when the available dataset is small.",
+      "answer_variants": [
+        "Data augmentation involves generating additional training samples by applying transformations to existing data. For images, common transformations include rotation, flipping, brightness changes, and cropping. This technique is useful when training data is limited, as it helps models learn more robust patterns and improves generalization.",
+        "Data augmentation artificially expands a dataset by applying label-preserving transformations to training data. These transformations create new variations while keeping the original meaning intact. It is commonly used in computer vision and deep learning to improve model robustness and prevent overfitting."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "data augmentation",
+          "transformation"
+        ],
+        "supporting": [
+          "flip",
+          "rotation"
+        ],
+        "bonus": [
+          "crop",
+          "diversity",
+          "overfitting"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 49
+    },
+    "candidate": "Data augmentation increases training diversity by applying transformations like flips, rotations, crops, and brightness changes to existing samples. It reduces overfitting and is especially useful when labeled data is scarce.",
+    "stt_realistic": true,
+    "labels": {
+      "semantic_similarity": 0.75,
+      "question_relevance": 0.7,
+      "keyword_coverage": 0.6,
+      "length_appropriateness": 0.75,
+      "discourse_quality": 0.65,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 0.85,
+      "answer_completeness": 0.65
+    },
+    "score": 0.708,
+    "scoring_rationale": "Auto-generated from good quality and concise type."
+  },
+  {
+    "sample_id": "ml_interview_0025",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_25",
+      "topic": "Deep Learning",
+      "question": "How does batch normalization work, and what are its benefits?",
+      "primary_answer": "Batch normalization is a technique used in neural networks to normalize the inputs of each layer during training. It standardizes activations by adjusting them to have zero mean and unit variance within a mini-batch. This stabilizes the learning process, speeds up training, and allows the use of higher learning rates while reducing sensitivity to initialization.",
+      "answer_variants": [
+        "Batch normalization works by normalizing the outputs of a layer using the mean and variance of the current mini-batch. After normalization, learnable scaling and shifting parameters are applied. This helps stabilize gradients, accelerate convergence, and reduce internal covariate shift during neural network training.",
+        "In deep learning, batch normalization standardizes intermediate activations in each mini-batch during training. By keeping the distribution of inputs stable across layers, it improves training speed and stability. It also acts as a mild regularizer, reducing overfitting and improving model generalization."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "batch normalization",
+          "activation"
+        ],
+        "supporting": [
+          "zero mean",
+          "unit variance"
+        ],
+        "bonus": [
+          "stable training",
+          "regularization",
+          "learnable"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 55
+    },
+    "candidate": "so batch normalization basically normalizes the activations of each layer across a mini batch right and uh it standardizes the inputs to have zero mean and unit variance and then applies learnable scale and shift parameters and um this helps stabilize training reduces the sensitivity to learning rate and acts as a regularizer and yeah it made training deep networks much more practical",
+    "stt_realistic": true,
+    "labels": {
+      "semantic_similarity": 0.75,
+      "question_relevance": 0.7,
+      "keyword_coverage": 0.6,
+      "length_appropriateness": 0.75,
+      "discourse_quality": 0.45,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 0.85,
+      "answer_completeness": 0.65
+    },
+    "score": 0.698,
+    "scoring_rationale": "Auto-generated from good quality and stt type."
+  },
+  {
+    "sample_id": "ml_interview_0026",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_26",
+      "topic": "NLP / Transformers",
+      "question": "Explain the concept of word embeddings.",
+      "primary_answer": "Word embeddings are numerical vector representations of words used in NLP models. Instead of treating words as discrete symbols, embeddings map them into continuous vector spaces where semantically similar words are located closer together. This allows models to capture relationships and contextual similarities between words, improving performance in tasks like sentiment analysis, translation, and text classification.",
+      "answer_variants": [
+        "Word embeddings convert words into dense numerical vectors that capture semantic meaning. Unlike one-hot encoding, embeddings represent words in a lower-dimensional space where similar words have similar vector representations. This helps NLP models understand relationships between words and improves performance in tasks such as language modeling and text classification.",
+        "In NLP, word embeddings represent words as continuous vectors learned from large text corpora. These vectors capture semantic and syntactic relationships between words. For example, similar words often appear close in vector space. Word embeddings help models process language more effectively compared to simple categorical representations."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "word embedding",
+          "dense vector"
+        ],
+        "supporting": [
+          "semantic",
+          "Word2Vec"
+        ],
+        "bonus": [
+          "GloVe",
+          "context",
+          "similarity"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 56
+    },
+    "candidate": "Word embeddings are a technique for encoding words as numerical vectors so computers can process them. They are used in NLP tasks. Word2Vec and GloVe are popular methods for generating them. The vectors are dense and low-dimensional.",
+    "stt_realistic": true,
+    "labels": {
+      "semantic_similarity": 0.55,
+      "question_relevance": 0.5,
+      "keyword_coverage": 0.4,
+      "length_appropriateness": 0.55,
+      "discourse_quality": 0.45,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 0.65,
+      "answer_completeness": 0.45
+    },
+    "score": 0.518,
+    "scoring_rationale": "Auto-generated from partial quality and correct type."
+  },
+  {
+    "sample_id": "ml_interview_0027",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_27",
+      "topic": "Optimization",
+      "question": "What situations can cause gradient descent to fail to converge, and how would you debug or fix them in code?",
+      "primary_answer": "Gradient descent may fail to converge when the learning rate is too high or too low. A very high learning rate causes the algorithm to overshoot the minimum and oscillate, while a very small one makes training extremely slow. I would debug this by plotting the loss curve, reducing the learning rate, or using adaptive optimizers like Adam optimizer or RMSProp to stabilize updates.",
+      "answer_variants": [
+        "Gradient descent struggles when features have different scales, leading to slow convergence or divergence. For example, one feature might range from 1–10 while another ranges from 1–10000. I would fix this by applying normalization techniques such as Min-Max scaling or Z-score standardization, ensuring the gradient updates move consistently across dimensions.",
+        "In complex models like deep neural networks, the loss surface can contain local minima, saddle points, or flat regions, causing gradient descent to stall. I would debug this by experimenting with different weight initialization, using momentum-based optimizers, or switching to optimizers like Adam optimizer which handle noisy gradients better."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "gradient descent",
+          "learning rate"
+        ],
+        "supporting": [
+          "vanishing gradient",
+          "exploding gradient"
+        ],
+        "bonus": [
+          "saddle point",
+          "diverge",
+          "convergence"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 64
+    },
+    "candidate": "Regularization is a technique to reduce overfitting by adding a penalty term to the loss function. L1 regularization adds the absolute value of weights and promotes sparsity. L2 adds squared weights and shrinks all values. Ridge regression uses L2 and Lasso uses L1. Both are used to control model complexity and improve generalization on unseen data.",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.3,
+      "question_relevance": 0.25,
+      "keyword_coverage": 0.15,
+      "length_appropriateness": 0.3,
+      "discourse_quality": 0.2,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 0.4,
+      "answer_completeness": 0.2
+    },
+    "score": 0.28,
+    "scoring_rationale": "Auto-generated from off_topic quality and off_topic type."
+  },
+  {
+    "sample_id": "ml_interview_0028",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_28",
+      "topic": "ML Systems",
+      "question": "How would you detect and prevent data leakage in a machine learning pipeline?",
+      "primary_answer": "Data leakage occurs when information from the test set or future data unintentionally influences the training process, leading to overly optimistic performance. To detect it, monitor unusually high validation accuracy and review the data pipeline. Prevention methods include proper train–test splitting, applying preprocessing only on training data, and using cross-validation to ensure models do not access unseen information.",
+      "answer_variants": [
+        "Data leakage can be detected when model performance on validation data is suspiciously high compared to real-world results. It often happens when preprocessing, feature engineering, or scaling is done before splitting the dataset. To prevent it, ensure the dataset is split first, and apply transformations separately within the training pipeline.",
+        "Detecting data leakage involves checking for features that indirectly contain target information or future data. Reviewing the pipeline and validating the model with cross-validation can help identify leakage. Prevention includes strict separation of training and test data and applying preprocessing steps only after the split."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "data leakage",
+          "train-test split"
+        ],
+        "supporting": [
+          "preprocessing",
+          "look-ahead bias"
+        ],
+        "bonus": [
+          "pipeline",
+          "time series"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 58
+    },
+    "candidate": "um data leakage happens when the model sees information during training that it wouldn't have at prediction time right and uh this inflates evaluation metrics and makes the model fail in production and um you should always split data before any preprocessing and ensure feature engineering only uses past data and uh cross validation should be done carefully on time series to avoid look ahead bias",
+    "stt_realistic": true,
+    "labels": {
+      "semantic_similarity": 0.75,
+      "question_relevance": 0.7,
+      "keyword_coverage": 0.6,
+      "length_appropriateness": 0.75,
+      "discourse_quality": 0.45,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 0.85,
+      "answer_completeness": 0.65
+    },
+    "score": 0.698,
+    "scoring_rationale": "Auto-generated from good quality and stt type."
+  },
+  {
+    "sample_id": "ml_interview_0029",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_29",
+      "topic": "Data Preprocessing",
+      "question": "If your dataset has 0.5% positive class, what techniques would you apply and how would you evaluate the model properly?",
+      "primary_answer": "With only 0.5% positive samples, the dataset is highly imbalanced. I would apply techniques such as oversampling the minority class, undersampling the majority class, or synthetic sampling like SMOTE. I would also use class-weighted loss functions. For evaluation, accuracy would be misleading, so I would rely on precision, recall, F1-score, and PR-AUC to properly assess performance.",
+      "answer_variants": [
+        "For a dataset with 0.5% positive class, I would first address imbalance using resampling methods such as oversampling or undersampling, or generate synthetic samples using SMOTE. I would also consider cost-sensitive learning. Instead of accuracy, I would evaluate the model using recall, precision, F1-score, and Precision-Recall curves.",
+        "In extremely imbalanced datasets, I would balance the data using techniques like oversampling, undersampling, or synthetic data generation. I would also tune class weights during training. For evaluation, metrics such as recall, precision, F1-score, and PR-AUC are more appropriate than accuracy because they better reflect minority class performance."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "class imbalance",
+          "SMOTE"
+        ],
+        "supporting": [
+          "class weight",
+          "precision-recall"
+        ],
+        "bonus": [
+          "AUC-PR",
+          "threshold",
+          "anomaly detection"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 56
+    },
+    "candidate": "When only 0.5% of samples are positive, standard accuracy is useless. I would apply SMOTE for oversampling, use class weights in the loss, evaluate using precision-recall AUC rather than ROC, and tune the decision threshold after training. Anomaly detection or cost-sensitive learning are worth exploring too.",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.9,
+      "question_relevance": 0.85,
+      "keyword_coverage": 0.75,
+      "length_appropriateness": 0.9,
+      "discourse_quality": 0.8,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 1,
+      "answer_completeness": 0.8
+    },
+    "score": 0.851,
+    "scoring_rationale": "Auto-generated from strong quality and correct type."
+  },
+  {
+    "sample_id": "ml_interview_0030",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_30",
+      "topic": "Optimization",
+      "question": "Your neural network loss stops decreasing after a few epochs.\nWhat are the possible causes and how would you debug it?",
+      "primary_answer": "If the loss stops decreasing after a few epochs, possible causes include an inappropriate learning rate, poor weight initialization, vanishing gradients, or insufficient model capacity. To debug, I would monitor training and validation loss curves, adjust the learning rate, normalize inputs, check gradient values, and experiment with different optimizers or network architectures.",
+      "answer_variants": [
+        "A stalled loss curve may occur due to a high learning rate causing oscillation, a very low learning rate slowing updates, or issues like vanishing gradients. Debugging steps include lowering the learning rate, inspecting gradients, checking data preprocessing, and trying techniques like batch normalization or different optimizers.",
+        "Loss stagnation can result from poor hyperparameter choices, unscaled input data, or model underfitting. I would first visualize training metrics, verify the data pipeline, adjust the learning rate, apply normalization, and test alternative architectures or activation functions to ensure effective gradient flow."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "loss plateau",
+          "learning rate"
+        ],
+        "supporting": [
+          "capacity",
+          "gradient"
+        ],
+        "bonus": [
+          "optimizer",
+          "debugging",
+          "epoch"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 52
+    },
+    "candidate": "If the loss plateau the model may be stuck. Try lowering the learning rate.",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.2,
+      "question_relevance": 0.15,
+      "keyword_coverage": 0.05,
+      "length_appropriateness": 0.2,
+      "discourse_quality": 0.1,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 0.3,
+      "answer_completeness": 0.1
+    },
+    "score": 0.186,
+    "scoring_rationale": "Auto-generated from weak quality and concise type."
+  },
+  {
+    "sample_id": "ml_interview_0031",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_31",
+      "topic": "Model Evaluation",
+      "question": "Given a model where training accuracy is 98% but test accuracy is 62%, how would you diagnose and fix it?",
+      "primary_answer": "A training accuracy of 98% and test accuracy of 62% indicates severe overfitting. The model has memorized the training data but fails to generalize. I would diagnose this by comparing training and validation curves. Fixes include adding regularization, applying dropout, reducing model complexity, collecting more data, and using cross-validation.",
+      "answer_variants": [
+        "This large gap between training and test accuracy suggests overfitting. The model is too complex or the dataset is too small. I would check for data leakage, verify preprocessing, and apply techniques like regularization, dropout, data augmentation, or reducing model parameters to improve generalization.",
+        "The model likely suffers from overfitting because it performs very well on training data but poorly on unseen data. To address this, I would introduce regularization, simplify the model architecture, increase training data through augmentation, and validate performance using cross-validation."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "overfitting",
+          "learning curve"
+        ],
+        "supporting": [
+          "regularization",
+          "dropout"
+        ],
+        "bonus": [
+          "L2",
+          "data augmentation",
+          "train-test split"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 49
+    },
+    "candidate": "so a big gap between training and test accuracy is like a classic overfitting sign right and um i would first look at the learning curves and then try regularization like dropout or l2 and reduce model complexity and uh increasing the training data or using data augmentation can help and um i'd also double check that the train test split was done correctly to rule out data leakage",
+    "stt_realistic": true,
+    "labels": {
+      "semantic_similarity": 0.75,
+      "question_relevance": 0.7,
+      "keyword_coverage": 0.6,
+      "length_appropriateness": 0.75,
+      "discourse_quality": 0.45,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 0.85,
+      "answer_completeness": 0.65
+    },
+    "score": 0.698,
+    "scoring_rationale": "Auto-generated from good quality and stt type."
+  },
+  {
+    "sample_id": "ml_interview_0032",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_32",
+      "topic": "ML Systems",
+      "question": "How would you design a machine learning pipeline that handles 10 million samples efficiently?",
+      "primary_answer": "For 10 million samples, I would design a scalable pipeline using distributed data processing and efficient storage formats. Data preprocessing would be handled using batch processing frameworks, followed by feature engineering and model training using mini-batch training. I would also use parallel computing, efficient data loaders, and possibly distributed training to handle the large dataset efficiently.",
+      "answer_variants": [
+        "To handle 10 million samples efficiently, I would build a pipeline with scalable data ingestion, preprocessing, and training stages. Techniques include distributed data processing, chunk-based loading, feature caching, and mini-batch gradient training. I would also ensure efficient memory management and parallel processing to maintain speed and scalability.",
+        "A large-scale ML pipeline requires efficient data storage, streaming or batch processing, and scalable training. I would use distributed data processing tools, perform feature engineering in parallel, and train models using mini-batch or distributed learning. Monitoring, logging, and pipeline automation would ensure reliability and reproducibility."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "pipeline",
+          "distributed"
+        ],
+        "supporting": [
+          "Spark",
+          "Dask"
+        ],
+        "bonus": [
+          "streaming",
+          "preprocessing",
+          "checkpointing",
+          "scalable"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 56
+    },
+    "candidate": "For a pipeline handling 10 million samples, I would design modular stages for ingestion, preprocessing, feature engineering, and training. I would use Apache Spark or Dask for distributed preprocessing and PyTorch DataLoader with streaming for training. Approximate feature selection reduces dimensionality early. I would implement checkpointing, experiment logging, and monitoring throughout.",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.9,
+      "question_relevance": 0.85,
+      "keyword_coverage": 0.75,
+      "length_appropriateness": 0.9,
+      "discourse_quality": 0.8,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 1,
+      "answer_completeness": 0.8
+    },
+    "score": 0.851,
+    "scoring_rationale": "Auto-generated from strong quality and correct type."
+  },
+  {
+    "sample_id": "ml_interview_0033",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_33",
+      "topic": "Model Evaluation",
+      "question": "How would you verify that feature importance from a tree model is reliable and not misleading?",
+      "primary_answer": "Feature importance from tree models can be misleading due to bias toward high-cardinality features. To verify reliability, I would use permutation importance to measure the effect of shuffling each feature on model performance. I would also compare results across cross-validation folds and check consistency. Additionally, using SHAP values helps understand the true contribution of features.",
+      "answer_variants": [
+        "Tree-based feature importance may be biased, especially toward features with many splits. I would validate it using permutation importance, which measures performance drop when a feature is shuffled. I would also check stability across different training runs and use interpretability tools like SHAP to ensure the importance rankings are consistent.",
+        "To ensure feature importance is reliable, I would test stability across cross-validation folds and multiple model runs. I would also apply permutation importance to see how much model performance changes when a feature is randomly shuffled. Model interpretation tools such as SHAP can further confirm whether the identified features genuinely influence predictions."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "feature importance",
+          "permutation importance"
+        ],
+        "supporting": [
+          "SHAP",
+          "bias"
+        ],
+        "bonus": [
+          "tree model",
+          "cross-validation",
+          "domain knowledge"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 55
+    },
+    "candidate": "Feature importance from tree models can be biased toward high-cardinality features. To verify reliability, I would cross-validate using permutation importance and apply SHAP values for both local and global explanations. Comparing across multiple model types adds further confidence. Domain knowledge should always be used to sanity-check the results.",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.9,
+      "question_relevance": 0.85,
+      "keyword_coverage": 0.75,
+      "length_appropriateness": 0.9,
+      "discourse_quality": 0.8,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 1,
+      "answer_completeness": 0.8
+    },
+    "score": 0.851,
+    "scoring_rationale": "Auto-generated from strong quality and correct type."
+  },
+  {
+    "sample_id": "ml_interview_0034",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_34",
+      "topic": "ML Systems",
+      "question": "Your production data distribution changes compared to training data.\nHow would you detect data drift and handle it?",
+      "primary_answer": "Data drift occurs when the distribution of production data differs from training data. I would detect it by monitoring feature distributions and comparing statistical metrics such as mean, variance, or KL divergence between datasets. Tools like drift dashboards and model monitoring can help. To handle it, I would retrain the model with updated data and implement continuous monitoring.",
+      "answer_variants": [
+        "To detect data drift, I would compare training and production feature distributions using statistical tests or drift detection metrics. Monitoring model performance metrics over time can also reveal drift. If drift is detected, I would retrain the model with new data, update features, and implement automated monitoring pipelines.",
+        "Data drift can be identified by tracking feature distributions, statistical differences, and sudden drops in model performance. I would use drift detection metrics and monitoring tools to identify changes. Once detected, solutions include retraining the model with fresh data, adjusting preprocessing steps, and setting up periodic model updates."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "data drift",
+          "distribution shift"
+        ],
+        "supporting": [
+          "KS test",
+          "PSI"
+        ],
+        "bonus": [
+          "monitoring",
+          "retraining",
+          "alert"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 58
+    },
+    "candidate": "Data drift is when the distribution of production data shifts away from the training data. You should monitor it using statistical tests. Retraining helps. Alerts should be set up for when drift exceeds a threshold.",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.55,
+      "question_relevance": 0.5,
+      "keyword_coverage": 0.4,
+      "length_appropriateness": 0.55,
+      "discourse_quality": 0.45,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 0.65,
+      "answer_completeness": 0.45
+    },
+    "score": 0.518,
+    "scoring_rationale": "Auto-generated from partial quality and concise type."
+  },
+  {
+    "sample_id": "ml_interview_0035",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_35",
+      "topic": "ML Systems",
+      "question": "How would you explain predictions of a complex deep learning model to stakeholders?",
+      "primary_answer": "To explain predictions from a complex deep learning model, I would use model interpretability techniques that highlight which features influenced the prediction. Methods like SHAP or LIME help quantify feature contributions. I would present visual explanations, simple examples, and business-focused summaries so stakeholders understand the reasoning without needing deep technical knowledge.",
+      "answer_variants": [
+        "For stakeholder communication, I would translate model behavior into simple feature-level explanations. Using interpretability methods such as LIME, I can show which variables contributed most to a prediction. Visualizations and real-world examples help explain results in a transparent and intuitive way.",
+        "I would explain predictions by combining global and local interpretability methods. Global explanations show which features generally influence the model, while local explanations clarify why a specific prediction occurred. Techniques like SHAP help produce visual feature contribution charts that stakeholders can easily understand."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "explainability",
+          "SHAP"
+        ],
+        "supporting": [
+          "LIME",
+          "saliency map"
+        ],
+        "bonus": [
+          "interpretability",
+          "stakeholder",
+          "feature attribution"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 51
+    },
+    "candidate": "um so to explain deep learning predictions to non technical stakeholders i would use tools like lime or shap right to generate local explanations and um visualize which features or pixels drove the prediction and uh i'd also create summary dashboards and explain the model in terms of business outcomes and yeah saliency maps and attention visualizations work well for images and text",
+    "stt_realistic": true,
+    "labels": {
+      "semantic_similarity": 0.75,
+      "question_relevance": 0.7,
+      "keyword_coverage": 0.6,
+      "length_appropriateness": 0.75,
+      "discourse_quality": 0.45,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 0.85,
+      "answer_completeness": 0.65
+    },
+    "score": 0.698,
+    "scoring_rationale": "Auto-generated from good quality and stt type."
+  },
+  {
+    "sample_id": "ml_interview_0036",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_36",
+      "topic": "ML Systems",
+      "question": "Your training pipeline crashes due to memory issues with large datasets.\nWhat techniques would you apply to optimize memory usage?",
+      "primary_answer": "If the training pipeline crashes due to memory limits, I would switch to batch or mini-batch processing instead of loading the full dataset into memory. I would also use data generators, memory-efficient data formats, and reduce feature dimensionality if needed. Distributed processing frameworks like Apache Spark can also help handle large-scale datasets efficiently.",
+      "answer_variants": [
+        "To optimize memory usage, I would process data in chunks rather than loading everything at once. Techniques include using data generators, streaming pipelines, and memory-efficient formats such as Parquet. I would also reduce unnecessary features and ensure intermediate objects are cleared during training.",
+        "Memory issues can be addressed by using mini-batch training, efficient data loaders, and lazy data loading. I would also compress datasets, reduce precision (e.g., float32 instead of float64), and monitor memory usage during preprocessing to avoid unnecessary copies of large datasets."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "memory",
+          "streaming"
+        ],
+        "supporting": [
+          "generator",
+          "mixed precision"
+        ],
+        "bonus": [
+          "gradient checkpointing",
+          "distributed",
+          "profiling"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 53
+    },
+    "candidate": "I would use gradient checkpointing and mixed precision training to reduce memory. Data should be streamed in chunks using generators rather than loaded all at once. Distributed training across multiple GPUs and profiling to find the bottleneck are also important steps.",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.75,
+      "question_relevance": 0.7,
+      "keyword_coverage": 0.6,
+      "length_appropriateness": 0.75,
+      "discourse_quality": 0.65,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 0.85,
+      "answer_completeness": 0.65
+    },
+    "score": 0.708,
+    "scoring_rationale": "Auto-generated from good quality and correct type."
+  },
+  {
+    "sample_id": "ml_interview_0037",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_37",
+      "topic": "Model Evaluation",
+      "question": "Why can accuracy be misleading in many real-world ML problems?",
+      "primary_answer": "Accuracy can be misleading when datasets are imbalanced. A model might predict the majority class most of the time and still achieve high accuracy while failing to detect the minority class. In real-world problems like fraud detection or disease diagnosis, metrics such as precision, recall, and F1-score provide a more reliable evaluation.",
+      "answer_variants": [
+        "Accuracy only measures the proportion of correct predictions, which can hide poor performance on minority classes. For example, if 95% of samples belong to one class, predicting that class always yields high accuracy but poor usefulness. Therefore, metrics like precision, recall, and F1-score are often more informative.",
+        "In many practical applications, class distributions are highly imbalanced. Accuracy may appear high even when the model ignores rare but important events. Evaluating models with precision, recall, F1-score, or ROC-AUC provides deeper insight into classification performance."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "accuracy",
+          "imbalanced"
+        ],
+        "supporting": [
+          "precision",
+          "recall"
+        ],
+        "bonus": [
+          "F1",
+          "AUC",
+          "false positive",
+          "false negative"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 52
+    },
+    "candidate": "Accuracy is misleading because it does not account for class imbalance. A model that always predicts the majority class can achieve very high accuracy while being completely useless. Metrics like precision, recall, F1, and AUC-ROC provide a more complete picture. The choice of metric should reflect the relative cost of false positives versus false negatives in the specific application.",
+    "stt_realistic": true,
+    "labels": {
+      "semantic_similarity": 0.9,
+      "question_relevance": 0.85,
+      "keyword_coverage": 0.75,
+      "length_appropriateness": 0.9,
+      "discourse_quality": 0.8,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 1,
+      "answer_completeness": 0.8
+    },
+    "score": 0.851,
+    "scoring_rationale": "Auto-generated from strong quality and correct type."
+  },
+  {
+    "sample_id": "ml_interview_0038",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_38",
+      "topic": "ML Systems",
+      "question": "Your deployed model starts giving unexpected predictions in production.\nHow would you debug this issue?",
+      "primary_answer": "If a deployed model gives unexpected predictions, I would first verify the input data pipeline to ensure preprocessing and feature transformations match the training setup. Next, I would check for data drift and monitor feature distributions. I would also review logs, validate model inputs and outputs, and run test samples through the model to reproduce the issue.",
+      "answer_variants": [
+        "Debugging unexpected predictions starts with checking whether production inputs match the training schema. I would validate preprocessing steps, feature encoding, and scaling. Then I would monitor model performance metrics and investigate potential data drift. Re-running the model with known test cases can help identify inconsistencies.",
+        "I would begin by inspecting logs and validating incoming data to ensure no missing or corrupted features exist. Then I would compare training and production data distributions to detect drift. If the issue persists, I would test the model with controlled inputs and verify preprocessing consistency."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "production",
+          "data drift"
+        ],
+        "supporting": [
+          "pipeline",
+          "debugging"
+        ],
+        "bonus": [
+          "monitoring",
+          "rollback",
+          "feature mismatch"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 57
+    },
+    "candidate": "I'm not sure how to debug a model giving wrong predictions in production. Maybe retrain it?",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.2,
+      "question_relevance": 0.15,
+      "keyword_coverage": 0.05,
+      "length_appropriateness": 0.2,
+      "discourse_quality": 0.1,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 0.3,
+      "answer_completeness": 0.1
+    },
+    "score": 0.186,
+    "scoring_rationale": "Auto-generated from weak quality and refusal type."
+  },
+  {
+    "sample_id": "ml_interview_0039",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_39",
+      "topic": "Deep Learning",
+      "question": "Why do deep neural networks sometimes fail to train, and how do techniques like batch normalization or residual connections help?",
+      "primary_answer": "Deep neural networks sometimes fail to train due to vanishing or exploding gradients, poor initialization, or unstable activations. Batch Normalization stabilizes training by normalizing layer inputs, which improves gradient flow. Residual Connections help by allowing gradients to bypass layers through shortcut paths, making it easier to train very deep networks.",
+      "answer_variants": [
+        "Training deep networks can be difficult because gradients may vanish or explode as they propagate through many layers. Batch Normalization reduces internal covariate shift by normalizing activations, improving stability. Residual Connections create shortcut paths that help gradients flow directly through the network.",
+        "Deep models may fail to train due to unstable gradients, poor weight initialization, or optimization difficulties. Batch Normalization stabilizes activations and accelerates convergence. Residual Connections reduce degradation in deep networks by allowing information and gradients to pass through shortcut connections."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "deep network",
+          "vanishing gradient"
+        ],
+        "supporting": [
+          "batch normalization",
+          "residual connection"
+        ],
+        "bonus": [
+          "skip connection",
+          "training stability"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 50
+    },
+    "candidate": "Deep networks fail to train because gradients vanish or explode as they pass through many layers. Batch normalization stabilizes layer inputs by normalizing activations during training. Residual connections allow gradients to flow directly through skip connections, bypassing the problem of vanishing gradients in very deep networks. Both techniques are now standard in modern architectures.",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.9,
+      "question_relevance": 0.85,
+      "keyword_coverage": 0.75,
+      "length_appropriateness": 0.9,
+      "discourse_quality": 0.8,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 1,
+      "answer_completeness": 0.8
+    },
+    "score": 0.851,
+    "scoring_rationale": "Auto-generated from strong quality and correct type."
+  },
+  {
+    "sample_id": "ml_interview_0040",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_40",
+      "topic": "NLP / Transformers",
+      "question": "What is tokenization and why is it important?",
+      "primary_answer": "Tokenization is the process of breaking text into smaller units called tokens, such as words, subwords, or characters. These tokens become the input for NLP models. It is important because machine learning models cannot process raw text directly, so tokenization converts text into structured units that algorithms can analyze and learn from.",
+      "answer_variants": [
+        "Tokenization is a preprocessing step in Natural Language Processing where text is divided into smaller components like words, phrases, or subwords. This step is essential because it converts raw text into tokens that can be mapped to numerical representations and used as input for machine learning models.",
+        "In NLP, tokenization splits a sentence into meaningful pieces called tokens. These tokens may represent words, characters, or subwords depending on the model. This process is important because it prepares textual data for further processing such as embedding, feature extraction, or language modeling."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "tokenization",
+          "token"
+        ],
+        "supporting": [
+          "subword",
+          "BPE"
+        ],
+        "bonus": [
+          "vocabulary",
+          "NLP",
+          "character",
+          "word"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 52
+    },
+    "candidate": "um tokenization basically splits raw text into smaller units called tokens right and uh these can be words subwords or characters depending on the tokenizer and um subword tokenization like bpe used in gpt handles rare words by breaking them into common subword pieces and uh without tokenization the model can't process text and yeah the vocabulary size and tokenizer choice affect model performance",
+    "stt_realistic": true,
+    "labels": {
+      "semantic_similarity": 0.75,
+      "question_relevance": 0.7,
+      "keyword_coverage": 0.6,
+      "length_appropriateness": 0.75,
+      "discourse_quality": 0.45,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 0.85,
+      "answer_completeness": 0.65
+    },
+    "score": 0.698,
+    "scoring_rationale": "Auto-generated from good quality and stt type."
+  },
+  {
+    "sample_id": "ml_interview_0041",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_41",
+      "topic": "NLP / Transformers",
+      "question": "Explain word embeddings and how they capture semantic relationships.",
+      "primary_answer": "Word embeddings are dense vector representations of words that capture semantic meaning. Instead of sparse one-hot vectors, words are mapped into a continuous vector space where similar words have closer vectors. Models like Word2Vec learn these representations by analyzing word context, allowing relationships such as “king − man + woman ≈ queen” to emerge.",
+      "answer_variants": [
+        "Word embeddings convert words into dense numerical vectors that encode semantic similarity. Words appearing in similar contexts receive similar vector representations. Algorithms such as GloVe learn these vectors from large text corpora, enabling models to capture relationships like similarity, analogy, and contextual meaning between words.",
+        "In Natural Language Processing, word embeddings represent words as continuous vectors rather than discrete symbols. By learning from surrounding word contexts, embedding models position semantically related words close together in vector space. This structure allows models to understand relationships such as synonyms, analogies, and semantic similarity."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "word embedding",
+          "dense vector"
+        ],
+        "supporting": [
+          "semantic",
+          "Word2Vec"
+        ],
+        "bonus": [
+          "BERT",
+          "contextual",
+          "similarity",
+          "analogy"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 54
+    },
+    "candidate": "Word embeddings map words to dense numerical vectors. Words with similar meanings are positioned close together in vector space. Word2Vec and GloVe are classic approaches. BERT produces contextual embeddings where the same word gets different vectors depending on context. This is more powerful for tasks like question answering and NER.",
+    "stt_realistic": true,
+    "labels": {
+      "semantic_similarity": 0.75,
+      "question_relevance": 0.7,
+      "keyword_coverage": 0.6,
+      "length_appropriateness": 0.75,
+      "discourse_quality": 0.65,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 0.85,
+      "answer_completeness": 0.65
+    },
+    "score": 0.708,
+    "scoring_rationale": "Auto-generated from good quality and correct type."
+  },
+  {
+    "sample_id": "ml_interview_0042",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_42",
+      "topic": "NLP / Transformers",
+      "question": "How does self-attention work in Transformers?",
+      "primary_answer": "Self-attention allows each word in a sentence to consider all other words when forming its representation. For every token, the model creates Query, Key, and Value vectors. The Query compares with Keys to compute attention scores, which are normalized with softmax. These weights are applied to the Values to produce a context-aware representation.",
+      "answer_variants": [
+        "In the Transformer, self-attention computes relationships between words in a sequence. Each token generates Query, Key, and Value vectors. The Query of one token is compared with Keys of others to calculate attention weights. A weighted combination of Value vectors then produces a context-aware representation.",
+        "Self-attention enables a model to capture dependencies between words regardless of their position. It computes similarity scores between tokens using Query and Key vectors. These scores determine how much attention a token should give to others. The final representation is obtained by combining Value vectors based on these attention weights."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "self-attention",
+          "query"
+        ],
+        "supporting": [
+          "key",
+          "value"
+        ],
+        "bonus": [
+          "dot product",
+          "softmax",
+          "attention weight",
+          "context-aware"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 53
+    },
+    "candidate": "Self attention is computed using three matrices query key and value. The query from one token is multiplied with the key of every other token to get attention scores. These are softmaxed and used to weight the value vectors. The result is a context-aware representation of each token. Scaled dot product attention divides scores by the square root of the key dimension to stabilize gradients.",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.9,
+      "question_relevance": 0.85,
+      "keyword_coverage": 0.75,
+      "length_appropriateness": 0.9,
+      "discourse_quality": 0.8,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 1,
+      "answer_completeness": 0.8
+    },
+    "score": 0.851,
+    "scoring_rationale": "Auto-generated from strong quality and correct type."
+  },
+  {
+    "sample_id": "ml_interview_0043",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_43",
+      "topic": "NLP / Transformers",
+      "question": "What problem does positional encoding solve?",
+      "primary_answer": "In Transformer models, self-attention processes all tokens in parallel and does not inherently capture word order. Positional encoding solves this by adding position-based information to token embeddings. This allows the model to understand the sequence structure of the input, such as which word comes before or after another.",
+      "answer_variants": [
+        "Positional encoding provides information about the order of tokens in a sequence. Since self-attention treats inputs as a set rather than a sequence, positional encodings are added to embeddings to represent the position of each token. This enables the model to capture sequential relationships in text.",
+        "In Natural Language Processing, positional encoding helps models understand word order. Because self-attention processes tokens simultaneously, it lacks inherent sequence awareness. Positional encoding injects position information into embeddings so the model can differentiate between different token orders."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "positional encoding",
+          "sequence order"
+        ],
+        "supporting": [
+          "sine",
+          "cosine"
+        ],
+        "bonus": [
+          "token position",
+          "transformer",
+          "embedding"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 48
+    },
+    "candidate": "Positional encoding is added to token embeddings so the model knows the order of tokens. Without it attention treats all positions equally. Sine and cosine functions of different frequencies are used to encode each position uniquely.",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.75,
+      "question_relevance": 0.7,
+      "keyword_coverage": 0.6,
+      "length_appropriateness": 0.75,
+      "discourse_quality": 0.65,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 0.85,
+      "answer_completeness": 0.65
+    },
+    "score": 0.708,
+    "scoring_rationale": "Auto-generated from good quality and concise type."
+  },
+  {
+    "sample_id": "ml_interview_0044",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_44",
+      "topic": "Generative AI",
+      "question": "How does RLHF align large language models with human preferences?",
+      "primary_answer": "RLHF (Reinforcement Learning from Human Feedback) aligns large language models with human preferences by incorporating human judgments into training. First, the model is fine-tuned on human-written examples. Then a reward model is trained using ranked responses from humans. Finally, reinforcement learning optimizes the model to maximize this reward, guiding outputs toward helpful and safe responses.",
+      "answer_variants": [
+        "In Reinforcement Learning from Human Feedback, humans evaluate multiple model responses and rank them based on quality. A reward model learns these preferences and assigns scores. The language model is then optimized using reinforcement learning to generate responses that receive higher reward scores.",
+        "RLHF works by combining supervised learning with reinforcement learning. The model is first fine-tuned using human-labeled examples. Next, a reward model is trained to predict which outputs humans prefer. The main model is then optimized using reinforcement learning to produce responses aligned with human expectations."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "RLHF",
+          "reward model"
+        ],
+        "supporting": [
+          "PPO",
+          "human preference"
+        ],
+        "bonus": [
+          "alignment",
+          "fine-tuning",
+          "ranking"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 55
+    },
+    "candidate": "so rlhf aligns language models with human preferences by training a reward model on human comparisons right and uh humans rank model outputs and the reward model learns to predict these rankings and um then reinforcement learning specifically ppo is used to fine tune the language model to maximize the reward and yeah this helps the model produce outputs that are more helpful and less harmful",
+    "stt_realistic": true,
+    "labels": {
+      "semantic_similarity": 0.75,
+      "question_relevance": 0.7,
+      "keyword_coverage": 0.6,
+      "length_appropriateness": 0.75,
+      "discourse_quality": 0.45,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 0.85,
+      "answer_completeness": 0.65
+    },
+    "score": 0.698,
+    "scoring_rationale": "Auto-generated from good quality and stt type."
+  },
+  {
+    "sample_id": "ml_interview_0045",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_45",
+      "topic": "ML Systems",
+      "question": "What is feature store architecture in ML pipelines?",
+      "primary_answer": "A feature store is a centralized system that manages, stores, and serves machine learning features for both training and inference. It ensures feature consistency across the pipeline and avoids duplication. Typically, it includes an offline store for training data and an online store for real-time predictions, enabling scalable and reusable feature management.",
+      "answer_variants": [
+        "In modern ML pipelines, a feature store provides a structured way to store and reuse engineered features. It separates feature engineering from model training and serves features to different models consistently. Systems like Feast enable both batch and real-time feature access.",
+        "Feature store architecture centralizes feature computation, storage, and retrieval. It typically consists of an offline store for historical features used in training and an online store optimized for low-latency inference. This architecture improves reproducibility, reduces feature duplication, and ensures consistent feature definitions across models."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "feature store",
+          "offline store"
+        ],
+        "supporting": [
+          "online store",
+          "training-serving consistency"
+        ],
+        "bonus": [
+          "feature skew",
+          "versioning",
+          "latency"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 52
+    },
+    "candidate": "A feature store is a centralized platform that manages ML features throughout their lifecycle. It includes an offline store for batch training and an online store for low-latency real-time serving. It ensures training-serving consistency and eliminates feature skew between teams. Feature stores also support versioning, monitoring, and feature reuse across multiple models. Common implementations include Feast, Tecton, and Vertex AI Feature Store.",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.9,
+      "question_relevance": 0.85,
+      "keyword_coverage": 0.75,
+      "length_appropriateness": 0.9,
+      "discourse_quality": 0.8,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 1,
+      "answer_completeness": 0.8
+    },
+    "score": 0.851,
+    "scoring_rationale": "Auto-generated from strong quality and verbose type."
+  },
+  {
+    "sample_id": "ml_interview_0046",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_46",
+      "topic": "Optimization",
+      "question": "Why does Adam sometimes generalize worse than SGD?",
+      "primary_answer": "Although Adam converges faster, it sometimes generalizes worse than Stochastic Gradient Descent because adaptive learning rates can lead to sharper minima. These minima fit training data well but may not generalize to unseen data. SGD, especially with momentum, tends to move toward flatter minima that usually produce better generalization.",
+      "answer_variants": [
+        "Adaptive optimizers like Adam adjust learning rates per parameter, which helps fast convergence but can cause overfitting to training data. In contrast, Stochastic Gradient Descent uses a uniform learning rate and often finds flatter minima, which typically improves generalization on unseen datasets.",
+        "One reason Adam may generalize worse is that its adaptive updates can aggressively minimize training loss, leading to sharp local minima. Stochastic Gradient Descent, especially with momentum, explores the loss landscape more gradually and often converges to flatter solutions that generalize better."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "Adam",
+          "SGD"
+        ],
+        "supporting": [
+          "sharp minima",
+          "flat minima"
+        ],
+        "bonus": [
+          "generalization",
+          "adaptive learning rate",
+          "momentum"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 49
+    },
+    "candidate": "Adam uses adaptive per-parameter learning rates which help it converge quickly but can lead to sharp minima. SGD with momentum tends to find flatter minima that generalize better. This is why some practitioners switch from Adam to SGD in the final phase of training.",
+    "stt_realistic": true,
+    "labels": {
+      "semantic_similarity": 0.75,
+      "question_relevance": 0.7,
+      "keyword_coverage": 0.6,
+      "length_appropriateness": 0.75,
+      "discourse_quality": 0.65,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 0.85,
+      "answer_completeness": 0.65
+    },
+    "score": 0.708,
+    "scoring_rationale": "Auto-generated from good quality and correct type."
+  },
+  {
+    "sample_id": "ml_interview_0047",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_47",
+      "topic": "Regularization",
+      "question": "What is the difference between L1 and L2 regularization and when would you use each?",
+      "primary_answer": "L1 Regularization adds the absolute value of weights to the loss function, encouraging sparsity and often driving some weights to zero, which helps with feature selection. L2 Regularization adds the squared value of weights, shrinking them smoothly without eliminating them. L1 is useful when many features are irrelevant, while L2 works better when most features contribute slightly.",
+      "answer_variants": [
+        "In Machine Learning, L1 and L2 regularization prevent overfitting by penalizing large weights. L1 Regularization promotes sparse models by pushing some weights to zero. L2 Regularization reduces weight magnitudes smoothly. L1 is preferred for feature selection, while L2 is commonly used for stable and balanced models.",
+        "L1 Regularization penalizes the sum of absolute weights, often producing sparse solutions by eliminating less important features. L2 Regularization penalizes the sum of squared weights, reducing weight size but rarely making them exactly zero. L1 is useful in high-dimensional datasets, whereas L2 works well for general model stability."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "L1",
+          "L2"
+        ],
+        "supporting": [
+          "regularization",
+          "sparsity"
+        ],
+        "bonus": [
+          "weight penalty",
+          "overfitting",
+          "Lasso",
+          "Ridge"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 57
+    },
+    "candidate": "um l1 and l2 are both regularization techniques that penalize large weights right and uh l1 adds the absolute value of weights to the loss and produces sparse models by pushing some weights to zero and l2 adds the squared weights and shrinks all weights but doesn't zero them out and um l1 is better for feature selection and l2 is better when all features are relevant and yeah both reduce overfitting",
+    "stt_realistic": true,
+    "labels": {
+      "semantic_similarity": 0.75,
+      "question_relevance": 0.7,
+      "keyword_coverage": 0.6,
+      "length_appropriateness": 0.75,
+      "discourse_quality": 0.45,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 0.85,
+      "answer_completeness": 0.65
+    },
+    "score": 0.698,
+    "scoring_rationale": "Auto-generated from good quality and stt type."
+  },
+  {
+    "sample_id": "ml_interview_0048",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_48",
+      "topic": "Deep Learning",
+      "question": "Why do deep neural networks require careful weight initialization?",
+      "primary_answer": "Deep neural networks require careful weight initialization to ensure stable gradient flow during training. Poor initialization can cause vanishing or exploding gradients, making optimization difficult. Proper initialization methods such as Xavier Initialization or He Initialization maintain balanced activation variance across layers, enabling faster and more stable convergence.",
+      "answer_variants": [
+        "If weights are initialized too large, gradients may explode; if too small, they may vanish. This disrupts learning in deep networks. Initialization techniques like Xavier Initialization help maintain consistent signal flow across layers, ensuring effective training.",
+        "Proper weight initialization prevents unstable activations and gradients in deep models. Without it, signals may shrink or grow exponentially as they pass through layers. Methods such as He Initialization are designed to keep variance balanced, improving training stability and convergence speed."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "weight initialization",
+          "activation"
+        ],
+        "supporting": [
+          "vanishing gradient",
+          "Glorot"
+        ],
+        "bonus": [
+          "He initialization",
+          "training stability"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 47
+    },
+    "candidate": "Deep learning requires weight initialization. You should initialize weights randomly. This is important for training.",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.2,
+      "question_relevance": 0.15,
+      "keyword_coverage": 0.05,
+      "length_appropriateness": 0.2,
+      "discourse_quality": 0.1,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 0.3,
+      "answer_completeness": 0.1
+    },
+    "score": 0.186,
+    "scoring_rationale": "Auto-generated from weak quality and concise type."
+  },
+  {
+    "sample_id": "ml_interview_0049",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_49",
+      "topic": "Feature Engineering",
+      "question": "How do you detect multicollinearity in features?",
+      "primary_answer": "Multicollinearity occurs when two or more features are highly correlated, which can destabilize model coefficients. I would detect it by computing correlation matrices and checking for strong correlations between variables. Another common approach is calculating the Variance Inflation Factor, where a high VIF value indicates significant multicollinearity.",
+      "answer_variants": [
+        "To detect multicollinearity, I would examine feature correlation using a heatmap or correlation matrix to identify highly correlated variables. I would also calculate the Variance Inflation Factor, which measures how much the variance of a coefficient increases due to correlated predictors.",
+        "Multicollinearity can be identified by analyzing pairwise correlations between features and computing diagnostic metrics such as Variance Inflation Factor. If VIF values are high, it suggests that predictors share redundant information, which can make model coefficients unstable and harder to interpret."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "multicollinearity",
+          "VIF"
+        ],
+        "supporting": [
+          "correlation",
+          "regression"
+        ],
+        "bonus": [
+          "PCA",
+          "feature selection",
+          "unstable coefficients"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 47
+    },
+    "candidate": "Multicollinearity occurs when two or more features are highly correlated. This makes regression coefficients unstable and difficult to interpret. Detection methods include the Variance Inflation Factor and the correlation matrix. Solutions include removing one of the correlated features or applying PCA to project features into an uncorrelated space.",
+    "stt_realistic": false,
+    "labels": {
+      "semantic_similarity": 0.9,
+      "question_relevance": 0.85,
+      "keyword_coverage": 0.75,
+      "length_appropriateness": 0.9,
+      "discourse_quality": 0.8,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 1,
+      "answer_completeness": 0.8
+    },
+    "score": 0.851,
+    "scoring_rationale": "Auto-generated from strong quality and correct type."
+  },
+  {
+    "sample_id": "ml_interview_0050",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_50",
+      "topic": "Data Preprocessing",
+      "question": "When should you use standardization vs normalization?",
+      "primary_answer": "Standardization rescales data so that it has a mean of 0 and a standard deviation of 1. It is commonly used when features follow a normal distribution or when models assume standardized inputs. Normalization scales data into a fixed range, usually 0–1. It is useful when features have different ranges or when algorithms depend on bounded input values.",
+      "answer_variants": [
+        "In Machine Learning, normalization and standardization are used for feature scaling. Standardization transforms data using mean and standard deviation, making it suitable for algorithms like linear regression or SVM. Normalization rescales features into a fixed range and is useful for distance-based models such as k-nearest neighbors.",
+        "Standardization is preferred when the dataset contains outliers or when algorithms assume Gaussian-distributed inputs. It keeps the distribution shape while adjusting scale. Normalization compresses values into a small range like 0–1, making it ideal for neural networks or models sensitive to feature magnitude."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "standardization",
+          "normalization"
+        ],
+        "supporting": [
+          "zero mean",
+          "unit variance"
+        ],
+        "bonus": [
+          "min-max",
+          "scaling",
+          "outlier"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 58
+    },
+    "candidate": "Standardization rescales data to zero mean and unit variance and is suited to Gaussian-distributed features and gradient-based models. Normalization scales values to a fixed range like 0 to 1 and works well for neural networks and distance-based algorithms. Use standardization when data has outliers and normalization when you need bounded inputs.",
+    "stt_realistic": true,
+    "labels": {
+      "semantic_similarity": 0.75,
+      "question_relevance": 0.7,
+      "keyword_coverage": 0.6,
+      "length_appropriateness": 0.75,
+      "discourse_quality": 0.65,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 0.85,
+      "answer_completeness": 0.65
+    },
+    "score": 0.708,
+    "scoring_rationale": "Auto-generated from good quality and correct type."
+  },
+  {
+    "sample_id": "ml_interview_0051",
+    "schema_version": "2.0",
+    "module": "ml_interview",
+    "split": "train",
+    "question_data": {
+      "id": "q_51",
+      "topic": "Ensemble Methods",
+      "question": "Explain how Random Forest reduces overfitting.",
+      "primary_answer": "Random Forest reduces overfitting by combining predictions from multiple decision trees instead of relying on a single tree. Each tree is trained on a random subset of the data using bootstrap sampling and considers a random subset of features at each split. This randomness decorrelates the trees, and averaging their predictions reduces variance and improves generalization.",
+      "answer_variants": [
+        "Random Forest combats overfitting through ensemble learning. Multiple decision trees are trained on different bootstrap samples of the dataset, and each tree uses a random subset of features for splitting. Because individual trees make different errors, aggregating their predictions (via averaging or voting) reduces model variance and improves robustness.",
+        "Overfitting in a single decision tree occurs because it can perfectly fit training data. Random Forest solves this by building many trees using random samples of data and features. The final prediction is obtained by aggregating outputs from all trees, which smooths out noise and reduces overfitting."
+      ],
+      "expected_keywords": {
+        "critical": [
+          "random forest",
+          "bootstrap"
+        ],
+        "supporting": [
+          "bagging",
+          "decorrelated"
+        ],
+        "bonus": [
+          "variance",
+          "ensemble",
+          "feature subset"
+        ]
+      },
+      "scoring_weights": {
+        "semantic": 0.5,
+        "question_relevance": 0.15,
+        "keyword": 0.18,
+        "length": 0.07,
+        "discourse": 0.05,
+        "lexical": 0.05
+      },
+      "ideal_length_words": 56
+    },
+    "candidate": "um random forest reduces overfitting basically by training many decision trees on different bootstrapped samples right and at each split only a random subset of features is considered and uh this decorrelates the trees so they make different errors and averaging their predictions reduces variance and um a single decision tree overfits easily but the ensemble is much more robust and yeah it's like one of the most reliable ml algorithms",
+    "stt_realistic": true,
+    "labels": {
+      "semantic_similarity": 0.75,
+      "question_relevance": 0.7,
+      "keyword_coverage": 0.6,
+      "length_appropriateness": 0.75,
+      "discourse_quality": 0.45,
+      "lexical_diversity": 0.7,
+      "factual_accuracy": 0.85,
+      "answer_completeness": 0.65
+    },
+    "score": 0.698,
+    "scoring_rationale": "Auto-generated from good quality and stt type."
+  }
+]

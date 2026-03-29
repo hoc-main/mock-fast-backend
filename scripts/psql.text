@@ -38,3 +38,5 @@ SELECT
     'ai-mock-1',
     '/modules/ai-mock-1.json'
 FROM new_subdomain;
+
+python3 ./services/train_enhanced_model.py --dataset data/upsc_gs_training_v2.json
