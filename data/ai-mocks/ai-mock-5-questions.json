@@ -1,0 +1,72 @@
+[
+  {
+    "module_id": 9,
+    "topic": "NLP / Transformers",
+    "question_text": "How does self-attention work in Transformers?",
+    "expected_answer": "Self-attention allows each word in a sentence to consider all other words when forming its representation. For every token, the model creates Query, Key, and Value vectors. The Query compares with Keys to compute attention scores, which are normalized with softmax. These weights are applied to the Values to produce a context-aware representation.",
+    "order": 1
+  },
+  {
+    "module_id": 9,
+    "topic": "NLP / Transformers",
+    "question_text": "What problem does positional encoding solve?",
+    "expected_answer": "In Transformer models, self-attention processes all tokens in parallel and does not inherently capture word order. Positional encoding solves this by adding position-based information to token embeddings. This allows the model to understand the sequence structure of the input, such as which word comes before or after another.",
+    "order": 2
+  },
+  {
+    "module_id": 9,
+    "topic": "Generative AI",
+    "question_text": "How does RLHF align large language models with human preferences?",
+    "expected_answer": "RLHF (Reinforcement Learning from Human Feedback) aligns large language models with human preferences by incorporating human judgments into training. First, the model is fine-tuned on human-written examples. Then a reward model is trained using ranked responses from humans. Finally, reinforcement learning optimizes the model to maximize this reward, guiding outputs toward helpful and safe responses.",
+    "order": 3
+  },
+  {
+    "module_id": 9,
+    "topic": "ML Systems",
+    "question_text": "What is feature store architecture in ML pipelines?",
+    "expected_answer": "A feature store is a centralized system that manages, stores, and serves machine learning features for both training and inference. It ensures feature consistency across the pipeline and avoids duplication. Typically, it includes an offline store for training data and an online store for real-time predictions, enabling scalable and reusable feature management.",
+    "order": 4
+  },
+  {
+    "module_id": 9,
+    "topic": "Optimization",
+    "question_text": "Why does Adam sometimes generalize worse than SGD?",
+    "expected_answer": "Although Adam converges faster, it sometimes generalizes worse than Stochastic Gradient Descent because adaptive learning rates can lead to sharper minima. These minima fit training data well but may not generalize to unseen data. SGD, especially with momentum, tends to move toward flatter minima that usually produce better generalization.",
+    "order": 5
+  },
+  {
+    "module_id": 9,
+    "topic": "Regularization",
+    "question_text": "What is the difference between L1 and L2 regularization and when would you use each?",
+    "expected_answer": "L1 Regularization adds the absolute value of weights to the loss function, encouraging sparsity and often driving some weights to zero, which helps with feature selection. L2 Regularization adds the squared value of weights, shrinking them smoothly without eliminating them. L1 is useful when many features are irrelevant, while L2 works better when most features contribute slightly.",
+    "order": 6
+  },
+  {
+    "module_id": 9,
+    "topic": "Deep Learning",
+    "question_text": "Why do deep neural networks require careful weight initialization?",
+    "expected_answer": "Deep neural networks require careful weight initialization to ensure stable gradient flow during training. Poor initialization can cause vanishing or exploding gradients, making optimization difficult. Proper initialization methods such as Xavier Initialization or He Initialization maintain balanced activation variance across layers, enabling faster and more stable convergence.",
+    "order": 7
+  },
+  {
+    "module_id": 9,
+    "topic": "Feature Engineering",
+    "question_text": "How do you detect multicollinearity in features?",
+    "expected_answer": "Multicollinearity occurs when two or more features are highly correlated, which can destabilize model coefficients. I would detect it by computing correlation matrices and checking for strong correlations between variables. Another common approach is calculating the Variance Inflation Factor, where a high VIF value indicates significant multicollinearity.",
+    "order": 8
+  },
+  {
+    "module_id": 9,
+    "topic": "Data Preprocessing",
+    "question_text": "When should you use standardization vs normalization?",
+    "expected_answer": "Standardization rescales data so that it has a mean of 0 and a standard deviation of 1. It is commonly used when features follow a normal distribution or when models assume standardized inputs. Normalization scales data into a fixed range, usually 0–1. It is useful when features have different ranges or when algorithms depend on bounded input values.",
+    "order": 9
+  },
+  {
+    "module_id": 9,
+    "topic": "Ensemble Methods",
+    "question_text": "Explain how Random Forest reduces overfitting.",
+    "expected_answer": "Random Forest reduces overfitting by combining predictions from multiple decision trees instead of relying on a single tree. Each tree is trained on a random subset of the data using bootstrap sampling and considers a random subset of features at each split. This randomness decorrelates the trees, and averaging their predictions reduces variance and improves generalization.",
+    "order": 10
+  }
+]
