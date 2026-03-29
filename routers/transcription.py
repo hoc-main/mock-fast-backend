@@ -190,7 +190,7 @@ async def transcribe_websocket(session_id: int, websocket: WebSocket, prior: str
                 model="flux-general-en",
                 encoding="linear16",
                 sample_rate="16000",
-                eot_timeout_ms="4000",   # ✅ generous pause tolerance
+                eot_timeout_ms="5000",   # ✅ generous pause tolerance
             ) as dg_conn:
 
                 def on_message(message) -> None:
@@ -207,9 +207,11 @@ async def transcribe_websocket(session_id: int, websocket: WebSocket, prior: str
 
                     if event == "Update":
                         last_partial = transcript
+                        print("update: ", transcript)
                     elif event == "EndOfTurn":
                         final_transcript = transcript
                         last_partial = ""
+                        print("end of turn: ", transcript)
                         asyncio.create_task(handle_end_of_turn(transcript))
 
                 def on_error(error) -> None:
