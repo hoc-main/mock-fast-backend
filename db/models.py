@@ -35,8 +35,6 @@ class Domain(Base):
     name: Mapped[str] = mapped_column(String(255))
     slug: Mapped[str] = mapped_column(String(255), unique=True)
 
-    is_free: Mapped[bool] = mapped_column(Boolean, default=True)
-
     subdomains: Mapped[List["Subdomain"]] = relationship(back_populates="domain")
 
 
@@ -62,6 +60,7 @@ class Module(Base):
     module_json_path: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     model_pkl_path: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     dataset_json_path: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    is_free: Mapped[bool] = mapped_column(Boolean, default=True)
 
     subdomain: Mapped["Subdomain"] = relationship(back_populates="modules")
     questions: Mapped[List["Question"]] = relationship(back_populates="module")
