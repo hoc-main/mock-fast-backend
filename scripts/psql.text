@@ -40,3 +40,12 @@ SELECT
 FROM new_subdomain;
 
 python3 ./services/train_enhanced_model.py --dataset data/upsc_gs_training_v2.json
+
+
+INSERT INTO modules (subdomain_id, module_name, slug, module_json_path)
+VALUES (
+    3,
+    'AI Mock 2',
+    'ai-mock-2',
+    '/ai-mocks/ai-mock-2-questions.json'
+);

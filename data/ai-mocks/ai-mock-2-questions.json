@@ -1,0 +1,72 @@
+[
+  {
+    "module_id": 6,
+    "topic": "Model Evaluation",
+    "question_text": "Explain the bias-variance tradeoff.",
+    "expected_answer": "The bias–variance tradeoff explains the balance between underfitting and overfitting in machine learning models. High bias models are too simple and miss patterns in the data, while high variance models are too complex and fit noise. The goal is to find a model complexity that minimizes both errors.",
+    "order": 1
+  },
+  {
+    "module_id": 6,
+    "topic": "Classical ML",
+    "question_text": "Describe how a decision tree works.",
+    "expected_answer": "A decision tree works by recursively splitting data based on feature values to create decision rules. At each node, the algorithm selects the feature that best separates the data using metrics like information gain or Gini impurity, forming branches until reaching leaf nodes that represent the final prediction.",
+    "order": 2
+  },
+  {
+    "module_id": 6,
+    "topic": "Ensemble Methods",
+    "question_text": "Discuss the difference between bagging and boosting.",
+    "expected_answer": "Bagging and boosting are ensemble learning techniques but differ in training strategy. Bagging trains multiple models independently on random bootstrap samples and averages their predictions to reduce variance. Boosting trains models sequentially, where each new model focuses on correcting the errors made by previous ones.",
+    "order": 3
+  },
+  {
+    "module_id": 6,
+    "topic": "Optimization",
+    "question_text": "What the importance of the learning rate in training neural networks.",
+    "expected_answer": "The learning rate controls how much model weights are updated during training. If it is too high, the model may overshoot the optimal solution and fail to converge. If it is too low, training becomes very slow. Choosing an appropriate learning rate ensures stable and efficient convergence.",
+    "order": 4
+  },
+  {
+    "module_id": 6,
+    "topic": "Deep Learning",
+    "question_text": "What are recurrent neural networks (RNNs), and when are they useful?",
+    "expected_answer": "Recurrent Neural Networks (RNNs) are neural networks designed to process sequential data by maintaining a hidden state that carries information from previous inputs. This allows the model to capture temporal dependencies across time steps. RNNs are useful for tasks where the order of data matters, such as language modeling, speech recognition, machine translation, and time-series forecasting.",
+    "order": 5
+  },
+  {
+    "module_id": 6,
+    "topic": "Deep Learning",
+    "question_text": "Explain the concept of transfer learning in neural networks.",
+    "expected_answer": "Transfer learning is a technique where a neural network trained on one task is reused as the starting point for a related task. Instead of training a model from scratch, knowledge learned from a large dataset is transferred and fine-tuned on a smaller dataset. This approach reduces training time, improves performance, and is especially useful when labeled data is limited.",
+    "order": 6
+  },
+  {
+    "module_id": 6,
+    "topic": "Model Evaluation",
+    "question_text": "What metrics would you use to evaluate a binary classification model?",
+    "expected_answer": "To evaluate a binary classification model, common metrics include accuracy, precision, recall, and F1-score. Accuracy measures overall correctness, while precision evaluates how many predicted positives are actually correct. Recall measures how well the model identifies actual positives. The F1-score balances precision and recall, making it useful when classes are imbalanced.",
+    "order": 7
+  },
+  {
+    "module_id": 6,
+    "topic": "Model Evaluation",
+    "question_text": "Explain the confusion matrix and its components.",
+    "expected_answer": "A confusion matrix is a table used to evaluate the performance of a classification model. It compares predicted labels with actual labels and consists of four components: True Positives, True Negatives, False Positives, and False Negatives. These values help calculate important metrics like accuracy, precision, recall, and F1-score to better understand model performance.",
+    "order": 8
+  },
+  {
+    "module_id": 6,
+    "topic": "Data Preprocessing",
+    "question_text": "Discuss techniques for handling missing data.",
+    "expected_answer": "Handling missing data is important for building reliable machine learning models. Common techniques include removing rows or columns with many missing values, imputing missing values using mean, median, or mode, and using more advanced methods like KNN or model-based imputation. Another approach is to add a missing indicator feature so the model can learn patterns related to missingness.",
+    "order": 9
+  },
+  {
+    "module_id": 6,
+    "topic": "Feature Engineering",
+    "question_text": "What is one-hot encoding, and when would you use it?",
+    "expected_answer": "One-hot encoding is a technique used to convert categorical variables into a numerical format suitable for machine learning models. Each category is represented as a binary vector where one element is 1 and the rest are 0. It is commonly used when categorical features have no ordinal relationship, such as colors, countries, or product categories.",
+    "order": 10
+  }
+]
