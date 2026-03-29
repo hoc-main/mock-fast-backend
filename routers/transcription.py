@@ -270,7 +270,6 @@ async def transcribe_websocket(session_id: int, websocket: WebSocket, prior: str
 async def intent_websocket(session_id: int, websocket: WebSocket):
     await websocket.accept()
     logger.info(f"[intent session={session_id}] connected")
-
     last_partial: str = ""
     intent_sent = False
 
@@ -281,11 +280,14 @@ async def intent_websocket(session_id: int, websocket: WebSocket):
         intent_sent = True
         intent = classify_confirmation_intent(transcript)
         logger.info(f"[intent session={session_id}] transcript='{transcript}' intent={intent}")
-        await websocket.send_text(json.dumps({
-            "session_id": session_id,
-            "intent": intent,
-            "transcript": transcript,
-        }))
+        try:
+            await websocket.send_text(json.dumps({
+                "session_id": session_id,
+                "intent": intent,
+                "transcript": transcript,
+            }))
+        except Exception:
+            pass  # client may have already disconnected
 
     try:
         async with _dg_client.listen.v2.connect(
@@ -316,24 +318,29 @@ async def intent_websocket(session_id: int, websocket: WebSocket):
 
             listen_task = asyncio.create_task(dg_conn.start_listening())
 
-            while True:
-                message = await websocket.receive()
+            try:
+                while True:
+                    message = await websocket.receive()
 
-                if "bytes" in message:
-                    pcm = message["bytes"]
-                    if len(pcm) >= 2:
-                        await dg_conn._send(pcm)
+                    if "bytes" in message:
+                        pcm = message["bytes"]
+                        if len(pcm) >= 2:
+                            await dg_conn._send(pcm)
 
-                elif "text" in message:
-                    if message["text"].strip().upper() == "STOP":
-                        listen_task.cancel()
-                        if not intent_sent:
-                            await handle_intent_end_of_turn(last_partial)
-                        await websocket.close()
-                        break
+                    elif "text" in message:
+                        if message["text"].strip().upper() == "STOP":
+                            listen_task.cancel()
+                            if not intent_sent:
+                                await handle_intent_end_of_turn(last_partial)
+                            await websocket.close()
+                            break
 
-    except WebSocketDisconnect:
-        logger.info(f"[intent session={session_id}] disconnected")
+            except (WebSocketDisconnect, RuntimeError) as exc:
+                if isinstance(exc, RuntimeError) and "disconnect" not in str(exc).lower():
+                    raise
+                logger.info(f"[intent session={session_id}] client disconnected (normal)")
+                listen_task.cancel()
+
     except Exception as exc:
         logger.exception(f"[intent session={session_id}] error: {exc}")
         try:
