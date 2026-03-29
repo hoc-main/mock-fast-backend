@@ -1,0 +1,72 @@
+[
+  {
+    "module_id": 8,
+    "topic": "ML Systems",
+    "question_text": "How would you design a machine learning pipeline that handles 10 million samples efficiently?",
+    "expected_answer": "For 10 million samples, I would design a scalable pipeline using distributed data processing and efficient storage formats. Data preprocessing would be handled using batch processing frameworks, followed by feature engineering and model training using mini-batch training. I would also use parallel computing, efficient data loaders, and possibly distributed training to handle the large dataset efficiently.",
+    "order": 1
+  },
+  {
+    "module_id": 8,
+    "topic": "Model Evaluation",
+    "question_text": "How would you verify that feature importance from a tree model is reliable and not misleading?",
+    "expected_answer": "Feature importance from tree models can be misleading due to bias toward high-cardinality features. To verify reliability, I would use permutation importance to measure the effect of shuffling each feature on model performance. I would also compare results across cross-validation folds and check consistency. Additionally, using SHAP values helps understand the true contribution of features.",
+    "order": 2
+  },
+  {
+    "module_id": 8,
+    "topic": "ML Systems",
+    "question_text": "Your production data distribution changes compared to training data.\nHow would you detect data drift and handle it?",
+    "expected_answer": "Data drift occurs when the distribution of production data differs from training data. I would detect it by monitoring feature distributions and comparing statistical metrics such as mean, variance, or KL divergence between datasets. Tools like drift dashboards and model monitoring can help. To handle it, I would retrain the model with updated data and implement continuous monitoring.",
+    "order": 3
+  },
+  {
+    "module_id": 8,
+    "topic": "ML Systems",
+    "question_text": "How would you explain predictions of a complex deep learning model to stakeholders?",
+    "expected_answer": "To explain predictions from a complex deep learning model, I would use model interpretability techniques that highlight which features influenced the prediction. Methods like SHAP or LIME help quantify feature contributions. I would present visual explanations, simple examples, and business-focused summaries so stakeholders understand the reasoning without needing deep technical knowledge.",
+    "order": 4
+  },
+  {
+    "module_id": 8,
+    "topic": "ML Systems",
+    "question_text": "Your training pipeline crashes due to memory issues with large datasets.\nWhat techniques would you apply to optimize memory usage?",
+    "expected_answer": "If the training pipeline crashes due to memory limits, I would switch to batch or mini-batch processing instead of loading the full dataset into memory. I would also use data generators, memory-efficient data formats, and reduce feature dimensionality if needed. Distributed processing frameworks like Apache Spark can also help handle large-scale datasets efficiently.",
+    "order": 5
+  },
+  {
+    "module_id": 8,
+    "topic": "Model Evaluation",
+    "question_text": "Why can accuracy be misleading in many real-world ML problems?",
+    "expected_answer": "Accuracy can be misleading when datasets are imbalanced. A model might predict the majority class most of the time and still achieve high accuracy while failing to detect the minority class. In real-world problems like fraud detection or disease diagnosis, metrics such as precision, recall, and F1-score provide a more reliable evaluation.",
+    "order": 6
+  },
+  {
+    "module_id": 8,
+    "topic": "ML Systems",
+    "question_text": "Your deployed model starts giving unexpected predictions in production.\nHow would you debug this issue?",
+    "expected_answer": "If a deployed model gives unexpected predictions, I would first verify the input data pipeline to ensure preprocessing and feature transformations match the training setup. Next, I would check for data drift and monitor feature distributions. I would also review logs, validate model inputs and outputs, and run test samples through the model to reproduce the issue.",
+    "order": 7
+  },
+  {
+    "module_id": 8,
+    "topic": "Deep Learning",
+    "question_text": "Why do deep neural networks sometimes fail to train, and how do techniques like batch normalization or residual connections help?",
+    "expected_answer": "Deep neural networks sometimes fail to train due to vanishing or exploding gradients, poor initialization, or unstable activations. Batch Normalization stabilizes training by normalizing layer inputs, which improves gradient flow. Residual Connections help by allowing gradients to bypass layers through shortcut paths, making it easier to train very deep networks.",
+    "order": 8
+  },
+  {
+    "module_id": 8,
+    "topic": "NLP / Transformers",
+    "question_text": "What is tokenization and why is it important?",
+    "expected_answer": "Tokenization is the process of breaking text into smaller units called tokens, such as words, subwords, or characters. These tokens become the input for NLP models. It is important because machine learning models cannot process raw text directly, so tokenization converts text into structured units that algorithms can analyze and learn from.",
+    "order": 9
+  },
+  {
+    "module_id": 8,
+    "topic": "NLP / Transformers",
+    "question_text": "Explain word embeddings and how they capture semantic relationships.",
+    "expected_answer": "Word embeddings are dense vector representations of words that capture semantic meaning. Instead of sparse one-hot vectors, words are mapped into a continuous vector space where similar words have closer vectors. Models like Word2Vec learn these representations by analyzing word context, allowing relationships such as “king − man + woman ≈ queen” to emerge.",
+    "order": 10
+  }
+]
