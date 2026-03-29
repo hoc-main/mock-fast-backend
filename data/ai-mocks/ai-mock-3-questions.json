@@ -1,72 +1,72 @@
 [
   {
     "module_id": 7,
-    "topic": "Model Evaluation",
-    "question_text": "Explain the bias-variance tradeoff.",
-    "expected_answer": "The bias–variance tradeoff explains the balance between underfitting and overfitting in machine learning models. High bias models are too simple and miss patterns in the data, while high variance models are too complex and fit noise. The goal is to find a model complexity that minimizes both errors.",
+    "topic": "Data Preprocessing",
+    "question_text": "Explain the importance of data normalization.",
+    "expected_answer": "Data normalization is the process of scaling numerical features to a common range so that no single feature dominates the learning process. It improves model performance and training stability, especially for algorithms that rely on distance or gradient-based optimization. Normalization helps ensure faster convergence and more balanced influence of features.",
     "order": 1
   },
   {
     "module_id": 7,
-    "topic": "Classical ML",
-    "question_text": "Describe how a decision tree works.",
-    "expected_answer": "A decision tree works by recursively splitting data based on feature values to create decision rules. At each node, the algorithm selects the feature that best separates the data using metrics like information gain or Gini impurity, forming branches until reaching leaf nodes that represent the final prediction.",
+    "topic": "Data Preprocessing",
+    "question_text": "How do you handle imbalanced datasets?",
+    "expected_answer": "Imbalanced datasets occur when one class significantly outnumbers another. To handle this, techniques such as oversampling the minority class, undersampling the majority class, and generating synthetic samples using methods like SMOTE can be used. Additionally, choosing appropriate evaluation metrics like F1-score or ROC-AUC instead of accuracy helps better assess model performance.",
     "order": 2
   },
   {
     "module_id": 7,
-    "topic": "Ensemble Methods",
-    "question_text": "Discuss the difference between bagging and boosting.",
-    "expected_answer": "Bagging and boosting are ensemble learning techniques but differ in training strategy. Bagging trains multiple models independently on random bootstrap samples and averages their predictions to reduce variance. Boosting trains models sequentially, where each new model focuses on correcting the errors made by previous ones.",
+    "topic": "Data Preprocessing",
+    "question_text": "What is data augmentation, and when is it useful?",
+    "expected_answer": "Data augmentation is a technique used to increase the size and diversity of a training dataset by creating modified versions of existing data. In image tasks, this may include rotations, flips, scaling, or cropping. It helps improve model generalization and reduces overfitting, especially when the available dataset is small.",
     "order": 3
   },
   {
     "module_id": 7,
-    "topic": "Optimization",
-    "question_text": "What the importance of the learning rate in training neural networks.",
-    "expected_answer": "The learning rate controls how much model weights are updated during training. If it is too high, the model may overshoot the optimal solution and fail to converge. If it is too low, training becomes very slow. Choosing an appropriate learning rate ensures stable and efficient convergence.",
+    "topic": "Deep Learning",
+    "question_text": "How does batch normalization work, and what are its benefits?",
+    "expected_answer": "Batch normalization is a technique used in neural networks to normalize the inputs of each layer during training. It standardizes activations by adjusting them to have zero mean and unit variance within a mini-batch. This stabilizes the learning process, speeds up training, and allows the use of higher learning rates while reducing sensitivity to initialization.",
     "order": 4
   },
   {
     "module_id": 7,
-    "topic": "Deep Learning",
-    "question_text": "What are recurrent neural networks (RNNs), and when are they useful?",
-    "expected_answer": "Recurrent Neural Networks (RNNs) are neural networks designed to process sequential data by maintaining a hidden state that carries information from previous inputs. This allows the model to capture temporal dependencies across time steps. RNNs are useful for tasks where the order of data matters, such as language modeling, speech recognition, machine translation, and time-series forecasting.",
+    "topic": "NLP / Transformers",
+    "question_text": "Explain the concept of word embeddings.",
+    "expected_answer": "Word embeddings are numerical vector representations of words used in NLP models. Instead of treating words as discrete symbols, embeddings map them into continuous vector spaces where semantically similar words are located closer together. This allows models to capture relationships and contextual similarities between words, improving performance in tasks like sentiment analysis, translation, and text classification.",
     "order": 5
   },
   {
     "module_id": 7,
-    "topic": "Deep Learning",
-    "question_text": "Explain the concept of transfer learning in neural networks.",
-    "expected_answer": "Transfer learning is a technique where a neural network trained on one task is reused as the starting point for a related task. Instead of training a model from scratch, knowledge learned from a large dataset is transferred and fine-tuned on a smaller dataset. This approach reduces training time, improves performance, and is especially useful when labeled data is limited.",
+    "topic": "Optimization",
+    "question_text": "What situations can cause gradient descent to fail to converge, and how would you debug or fix them in code?",
+    "expected_answer": "Gradient descent may fail to converge when the learning rate is too high or too low. A very high learning rate causes the algorithm to overshoot the minimum and oscillate, while a very small one makes training extremely slow. I would debug this by plotting the loss curve, reducing the learning rate, or using adaptive optimizers like Adam optimizer or RMSProp to stabilize updates.",
     "order": 6
   },
   {
     "module_id": 7,
-    "topic": "Model Evaluation",
-    "question_text": "What metrics would you use to evaluate a binary classification model?",
-    "expected_answer": "To evaluate a binary classification model, common metrics include accuracy, precision, recall, and F1-score. Accuracy measures overall correctness, while precision evaluates how many predicted positives are actually correct. Recall measures how well the model identifies actual positives. The F1-score balances precision and recall, making it useful when classes are imbalanced.",
+    "topic": "ML Systems",
+    "question_text": "How would you detect and prevent data leakage in a machine learning pipeline?",
+    "expected_answer": "Data leakage occurs when information from the test set or future data unintentionally influences the training process, leading to overly optimistic performance. To detect it, monitor unusually high validation accuracy and review the data pipeline. Prevention methods include proper train–test splitting, applying preprocessing only on training data, and using cross-validation to ensure models do not access unseen information.",
     "order": 7
   },
   {
     "module_id": 7,
-    "topic": "Model Evaluation",
-    "question_text": "Explain the confusion matrix and its components.",
-    "expected_answer": "A confusion matrix is a table used to evaluate the performance of a classification model. It compares predicted labels with actual labels and consists of four components: True Positives, True Negatives, False Positives, and False Negatives. These values help calculate important metrics like accuracy, precision, recall, and F1-score to better understand model performance.",
+    "topic": "Data Preprocessing",
+    "question_text": "If your dataset has 0.5% positive class, what techniques would you apply and how would you evaluate the model properly?",
+    "expected_answer": "With only 0.5% positive samples, the dataset is highly imbalanced. I would apply techniques such as oversampling the minority class, undersampling the majority class, or synthetic sampling like SMOTE. I would also use class-weighted loss functions. For evaluation, accuracy would be misleading, so I would rely on precision, recall, F1-score, and PR-AUC to properly assess performance.",
     "order": 8
   },
   {
     "module_id": 7,
-    "topic": "Data Preprocessing",
-    "question_text": "Discuss techniques for handling missing data.",
-    "expected_answer": "Handling missing data is important for building reliable machine learning models. Common techniques include removing rows or columns with many missing values, imputing missing values using mean, median, or mode, and using more advanced methods like KNN or model-based imputation. Another approach is to add a missing indicator feature so the model can learn patterns related to missingness.",
+    "topic": "Optimization",
+    "question_text": "Your neural network loss stops decreasing after a few epochs.\nWhat are the possible causes and how would you debug it?",
+    "expected_answer": "If the loss stops decreasing after a few epochs, possible causes include an inappropriate learning rate, poor weight initialization, vanishing gradients, or insufficient model capacity. To debug, I would monitor training and validation loss curves, adjust the learning rate, normalize inputs, check gradient values, and experiment with different optimizers or network architectures.",
     "order": 9
   },
   {
     "module_id": 7,
-    "topic": "Feature Engineering",
-    "question_text": "What is one-hot encoding, and when would you use it?",
-    "expected_answer": "One-hot encoding is a technique used to convert categorical variables into a numerical format suitable for machine learning models. Each category is represented as a binary vector where one element is 1 and the rest are 0. It is commonly used when categorical features have no ordinal relationship, such as colors, countries, or product categories.",
+    "topic": "Model Evaluation",
+    "question_text": "Given a model where training accuracy is 98% but test accuracy is 62%, how would you diagnose and fix it?",
+    "expected_answer": "A training accuracy of 98% and test accuracy of 62% indicates severe overfitting. The model has memorized the training data but fails to generalize. I would diagnose this by comparing training and validation curves. Fixes include adding regularization, applying dropout, reducing model complexity, collecting more data, and using cross-validation.",
     "order": 10
   }
 ]
