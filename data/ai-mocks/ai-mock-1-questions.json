@@ -1,0 +1,72 @@
+[
+  {
+    "module_id": 3,
+    "topic": "Classification",
+    "question_text": "Why can’t you use Linear Regression for a classification task?",
+    "expected_answer": "Linear regression is designed for continuous targets, not discrete classes. Its predictions can be negative or greater than one, which makes them invalid probabilities. Logistic regression solves this by converting outputs into probabilities.",
+    "order": 1
+  },
+  {
+    "module_id": 3,
+    "topic": "Neural Networks",
+    "question_text": "Can you explain Backpropagation simply?",
+    "expected_answer": "Backpropagation is the learning algorithm used in neural networks. It computes the prediction error and sends it backward through the network to calculate gradients and update weights to minimize the loss.",
+    "order": 2
+  },
+  {
+    "module_id": 3,
+    "topic": "Neural Networks",
+    "question_text": "What are vanishing and exploding gradients?",
+    "expected_answer": "During backpropagation, gradients can shrink or grow exponentially due to repeated multiplications. This causes vanishing or exploding gradients. Techniques like ReLU, better weight initialization, batch normalization, and gradient clipping help stabilize training.",
+    "order": 3
+  },
+  {
+    "module_id": 3,
+    "topic": "Deep Learning",
+    "question_text": "Why are Convolutional Neural Networks (CNNs) so effective for images?",
+    "expected_answer": "CNNs work well on images because they exploit spatial structure. They use parameter sharing with filters across the image and pooling layers for spatial invariance, reducing parameters and learning hierarchical visual features.",
+    "order": 4
+  },
+  {
+    "module_id": 3,
+    "topic": "NLP / Transformers",
+    "question_text": "Why have Transformers largely replaced RNNs in NLP?",
+    "expected_answer": "Transformers outperform RNNs due to self-attention, which allows parallel computation of all tokens and creates direct relationships between words, enabling faster training and better handling of long-range dependencies.",
+    "order": 5
+  },
+  {
+    "module_id": 3,
+    "topic": "NLP / Transformers",
+    "question_text": "What is the self-attention mechanism?",
+    "expected_answer": "It allows the model to weigh the importance of different words in a sentence when processing a particular word.",
+    "order": 6
+  },
+  {
+    "module_id": 3,
+    "topic": "Generative AI",
+    "question_text": "What is Retrieval-Augmented Generation (RAG)?",
+    "expected_answer": "Retrieval-Augmented Generation (RAG) improves LLM reliability by combining retrieval with generation. First, a retriever searches a knowledge base, often a vector database, to find relevant documents. Then the generator LLM uses the query and retrieved context to produce the answer, reducing hallucinations and enabling factual, up-to-date responses.",
+    "order": 7
+  },
+  {
+    "module_id": 3,
+    "topic": "Generative AI",
+    "question_text": "What is Reinforcement Learning from Human Feedback (RLHF)?",
+    "expected_answer": "It's a three-step process to align a model with nuanced human preferences. First, you start with a base LLM and do supervised fine-tuning on a small set of high-quality, human-written examples. Second, you train a separate reward model. To do this, you have the model generate several responses to a prompt, and a human ranks them from best to worst. The reward model learns to predict which response a human would prefer. Finally, you use reinforcement learning (specifically an algorithm like PPO) to fine-tune your LLM, using the reward model's score as the reward signal. This directly optimizes the LLM to generate outputs that humans will find helpful, harmless, and honest.",
+    "order": 8
+  },
+  {
+    "module_id": 3,
+    "topic": "ML Systems",
+    "question_text": "What is Federated Learning?",
+    "expected_answer": "That's the core privacy-preserving benefit. The process works by having a central server send a global model to a set of client devices. Each device then trains the model on its own local data. Instead of sending the raw data back, the devices only send their updated model parameters (the weights and biases) to the server. The server then aggregates these updates to improve the global model. This is a powerful paradigm for privacy, but it comes with unique challenges, like managing communication overhead and dealing with statistical heterogeneity, since the data on each device is non-IID (not independently and identically distributed)",
+    "order": 9
+  },
+  {
+    "module_id": 3,
+    "topic": "Optimization",
+    "question_text": "What's the difference between the Adam and RMSprop optimizers?",
+    "expected_answer": "Both are adaptive learning rate optimizers, meaning they compute individual learning rates for different parameters. RMSprop maintains a moving average of the squared gradients for each parameter and divides the learning rate by this average. This helps it handle non-stationary objectives. Adam (Adaptive Moment Estimation) takes this a step further. It not only keeps a moving average of the squared gradients (like RMSprop) but also keeps a moving average of the gradients themselves (the first moment), which is like momentum. This helps Adam accelerate in the relevant direction and often leads to faster convergence, which is why it's such a popular default choice.",
+    "order": 10
+  }
+]
