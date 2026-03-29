@@ -9,7 +9,7 @@ from datetime import datetime
 from typing import List, Optional
 from sqlalchemy import (
     BigInteger, Boolean, Column, DateTime, Float, ForeignKey,
-    Integer, JSON, String, Text, func,
+    Integer, JSON, String, Text, func, Boolean
 )
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from .database import Base
@@ -34,6 +34,8 @@ class Domain(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(255))
     slug: Mapped[str] = mapped_column(String(255), unique=True)
+
+    is_free: Mapped[bool] = mapped_column(Boolean, default=True)
 
     subdomains: Mapped[List["Subdomain"]] = relationship(back_populates="domain")
 
