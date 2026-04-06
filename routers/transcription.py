@@ -193,7 +193,8 @@ async def transcribe_websocket(session_id: int, websocket: WebSocket, prior: str
                 model="flux-general-en",
                 encoding="linear16",
                 sample_rate="16000",
-                eot_timeout_ms="10000",
+                eot_timeout_ms="8000",
+                eot_threshold="0.8"
             ) as dg_conn:
 
                 def on_message(message) -> None:

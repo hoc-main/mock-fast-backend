@@ -153,7 +153,7 @@ def train(config: TrainConfig) -> Dict[str, Any]:
         warmup_ratio=config.warmup_ratio,
         num_train_epochs=config.num_train_epochs,
         predict_with_generate=True,
-        evaluation_strategy="epoch",
+        # evaluation_strategy="epoch",
         save_strategy="epoch",
         logging_strategy="steps",
         logging_steps=25,
