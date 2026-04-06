@@ -16,3 +16,5 @@ spacy
 tqdm
 pandas
 deepgram-sdk
+sentencepiece>=0.2.0
+accelerate>=0.30.0

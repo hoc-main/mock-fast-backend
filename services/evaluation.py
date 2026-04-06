@@ -30,6 +30,7 @@ from .nlp_features import (
     normalize,
     WEAK_PATTERNS,
 )
+from .feedback_generator import generate_question_feedback
 
 BASE_DIR    = os.path.dirname(__file__)
 BACKEND_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", ".."))
@@ -196,14 +197,28 @@ def evaluate_answer(transcript: str, question_data: Dict[str, Any], model_path: 
 
     final_score = float(np.clip(final_score, 0.0, 1.0))
 
-    feedback = classify_feedback(final_score, meta["missing_keywords"], transcript)
-    tip = generate_tip(
-        transcript=transcript, truth=meta["truth"],
-        missing_keywords=meta["missing_keywords"],
-        semantic_score_value=meta["semantic_score"],
-        length_score_value=meta["length_score"],
-        question_relevance=meta["question_relevance"],
+    feedback_payload = generate_question_feedback(
+        question_text=question_data.get("question", ""),
+        expected_answer=meta["truth"],
+        candidate_answer=transcript,
+        evaluation={
+            "final_score": final_score,
+            "semantic_score": meta["semantic_score"],
+            "keyword_score": meta["keyword_score"],
+            "question_relevance": meta["question_relevance"],
+            "lexical_diversity": meta["lexical_diversity"],
+            "discourse_score": meta["discourse_score"],
+            "length_score": meta["length_score"],
+            "missing_keywords": meta["missing_keywords"],
+            "matched_keywords": meta["matched_keywords"],
+        },
+        answer_variants=question_data.get("answer_variants", []),
+        scoring_rationale=question_data.get("scoring_rationale", ""),
+        force_template=False,
     )
+
+    feedback = feedback_payload["feedback_paragraph"]
+    tip = "\n".join(f"- {item}" for item in feedback_payload["improvement_bullets"])
 
     return {
         "scoring_mode":       scoring_mode,
@@ -220,6 +235,9 @@ def evaluate_answer(transcript: str, question_data: Dict[str, Any], model_path: 
         "final_score":        round(final_score,   4),
         "feedback":           feedback,
         "tip":                tip,
+        "question_summary":   feedback_payload["question_summary"],
+        "feedback_bullets":   feedback_payload["improvement_bullets"],
+        "session_summary_hint": feedback_payload["session_summary_hint"],
         "matched_keywords":   meta["matched_keywords"],
         "missing_keywords":   meta["missing_keywords"],
     }

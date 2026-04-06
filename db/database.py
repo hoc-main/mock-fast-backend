@@ -37,7 +37,7 @@ engine = create_async_engine(
         "timeout": 10,
     },
 
-    echo=(os.getenv("APP_ENV") == "development"),
+    # echo=(os.getenv("APP_ENV") == "development"),
 )
 
 AsyncSessionLocal = async_sessionmaker(

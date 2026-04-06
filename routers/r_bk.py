@@ -215,6 +215,9 @@ async def transcribe_websocket(session_id: int, websocket: WebSocket):
                                 "keyword_score":   evaluation["keyword_score"],
                                 "feedback":        evaluation["feedback"],
                                 "tip":             evaluation["tip"],
+                                "question_summary": evaluation.get("question_summary"),
+                                "feedback_bullets": evaluation.get("feedback_bullets", []),
+                                "session_summary_hint": evaluation.get("session_summary_hint"),
                                 "missing_keywords": evaluation["missing_keywords"],
                             },
                         }))

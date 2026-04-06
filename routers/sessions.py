@@ -10,6 +10,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..db.database import get_db
 from ..db.models import InterviewAnswer, InterviewSession, Module, Question, User
 from ..schemas import NextQuestionResponse, QuestionOut, StartInterviewRequest, StartInterviewResponse
+from ..services.feedback_generator import generate_question_feedback, generate_session_summary
+from ..services.nlp_features import tokenize
 
 logger = logging.getLogger(__name__)
 
@@ -84,6 +86,55 @@ async def _question_count(module_id: int, db: AsyncSession) -> int:
         select(func.count()).select_from(Question).where(Question.module_id == module_id)
     )
     return result.scalar()
+
+
+def _build_evaluation_payload(answer: InterviewAnswer, question: Question) -> dict:
+    cand_tokens = len(tokenize(answer.transcript))
+    ref_tokens = len(tokenize(question.expected_answer)) or 1
+    evaluation = {
+        "final_score": answer.final_score,
+        "semantic_score": answer.semantic_score,
+        "keyword_score": answer.keyword_score,
+        "question_relevance": answer.question_relevance,
+        "lexical_diversity": answer.lexical_diversity,
+        "discourse_score": answer.discourse_score,
+        "length_score": min(1.0, cand_tokens / ref_tokens),
+        "missing_keywords": answer.missing_keywords or [],
+    }
+    return generate_question_feedback(
+        question_text=question.question_text,
+        expected_answer=question.expected_answer,
+        candidate_answer=answer.transcript,
+        evaluation=evaluation,
+        answer_variants=[question.expected_answer] if question.expected_answer else [],
+        scoring_rationale="",
+        force_template=False,
+    )
+
+
+def _serialize_answer(answer: InterviewAnswer, question: Question) -> dict:
+    payload = _build_evaluation_payload(answer, question)
+    return {
+        "question_id": question.id,
+        "question_text": question.question_text,
+        "transcript": answer.transcript,
+        "final_score": answer.final_score,
+        "semantic_score": answer.semantic_score,
+        "keyword_score": answer.keyword_score,
+        "question_relevance": answer.question_relevance,
+        "lexical_diversity": answer.lexical_diversity,
+        "discourse_score": answer.discourse_score,
+        "penalty": answer.penalty,
+        "feedback": answer.feedback,
+        "tip": answer.tip,
+        "question_summary": payload.get("question_summary"),
+        "improvement_bullets": payload.get("improvement_bullets", []),
+        "missing_keywords": answer.missing_keywords or [],
+    }
+
+
+def _serialize_session_summary(results: list[dict]) -> dict:
+    return generate_session_summary(results)
 
 
 # POST /api/interview/start/
@@ -169,18 +220,9 @@ async def next_question(session_id: int, db: AsyncSession = Depends(get_db)):
             .order_by(Question.order)
         )
         rows = answers_result.all()
-        summary = [
-            {
-                "question_id": q.id,
-                "question_text": q.question_text,
-                "transcript": a.transcript,
-                "final_score": a.final_score,
-                "feedback": a.feedback,
-                "tip": a.tip,
-            }
-            for a, q in rows
-        ]
-        return NextQuestionResponse(session_id=session_id, completed=True, summary=summary)
+        summary = [_serialize_answer(a, q) for a, q in rows]
+        session_summary = _serialize_session_summary(summary)
+        return NextQuestionResponse(session_id=session_id, completed=True, summary={"results": summary, **session_summary})
 
     next_q = await _get_question_at(session, db)
     return NextQuestionResponse(
@@ -215,21 +257,9 @@ async def terminate_session(session_id: int, db: AsyncSession = Depends(get_db))
         .order_by(Question.order)
     )
     rows = answers_result.all()
-    results = [
-        {
-            "question_id": q.id,
-            "question_text": q.question_text,
-            "transcript": a.transcript,
-            "final_score": a.final_score,
-            "semantic_score": a.semantic_score,
-            "keyword_score": a.keyword_score,
-            "feedback": a.feedback,
-            "tip": a.tip,
-            "missing_keywords": a.missing_keywords,
-        }
-        for a, q in rows
-    ]
-    return {"session_id": session_id, "terminated": True, "results": results}
+    results = [_serialize_answer(a, q) for a, q in rows]
+    session_summary = _serialize_session_summary(results)
+    return {"session_id": session_id, "terminated": True, "results": results, **session_summary}
 
 
 # GET /api/interview/{session_id}/summary/
@@ -252,25 +282,16 @@ async def get_summary(session_id: int, db: AsyncSession = Depends(get_db)):
         select(func.count()).select_from(Question).where(Question.module_id == session.module_id)
     )
 
-    results = [
-        {
-            "question_id": q.id,
-            "question_text": q.question_text,
-            "transcript": a.transcript,
-            "final_score": a.final_score,
-            "semantic_score": a.semantic_score,
-            "keyword_score": a.keyword_score,
-            "feedback": a.feedback,
-            "tip": a.tip,
-            "missing_keywords": a.missing_keywords or [],
-        }
-        for a, q in rows
-    ]
+    results = [_serialize_answer(a, q) for a, q in rows]
+    session_summary = _serialize_session_summary(results)
 
     return {
         "session_id": session_id,
         "completed_questions": len(results),
         "total_questions": total_result.scalar(),
+        "session_summary": session_summary.get("session_summary"),
+        "overall_strengths": session_summary.get("overall_strengths", []),
+        "overall_improvements": session_summary.get("overall_improvements", []),
         "results": results,
     }
 
@@ -304,20 +325,8 @@ async def get_session_detail(session_id: int, db: AsyncSession = Depends(get_db)
         "created_at": session.created_at,
         "module_name": module.module_name if module else "Unknown",
         "total_score": round(avg_result.scalar() or 0.0, 1),
-        "results": [
-            {
-                "question_id": q.id,
-                "question_text": q.question_text,
-                "transcript": a.transcript,
-                "final_score": a.final_score,
-                "semantic_score": a.semantic_score,
-                "keyword_score": a.keyword_score,
-                "feedback": a.feedback,
-                "tip": a.tip,
-                "missing_keywords": a.missing_keywords or [],
-            }
-            for a, q in rows
-        ],
+        "session_summary": _serialize_session_summary([_serialize_answer(a, q) for a, q in rows]).get("session_summary"),
+        "results": [_serialize_answer(a, q) for a, q in rows],
     }
 
 

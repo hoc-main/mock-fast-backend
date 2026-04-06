@@ -22,6 +22,9 @@ class EvaluationOut(BaseModel):
     penalty: float
     feedback: str
     tip: str
+    question_summary: Optional[str] = None
+    feedback_bullets: List[str] = []
+    session_summary_hint: Optional[str] = None
     missing_keywords: List[str]
 
 
@@ -45,7 +48,7 @@ class NextQuestionResponse(BaseModel):
     question: Optional[QuestionOut] = None
     question_index: Optional[int] = None
     total_questions: Optional[int] = None
-    summary: Optional[List[Any]] = None
+    summary: Optional[Any] = None
 
 
 # ── Transcription WebSocket messages ─────────────────────────────────────────
@@ -95,6 +98,8 @@ class AnswerResult(BaseModel):
     penalty: float = 0.0
     feedback: str
     tip: str
+    question_summary: Optional[str] = None
+    improvement_bullets: List[str] = []
     missing_keywords: List[Any]
 
 
@@ -102,6 +107,7 @@ class SummaryResponse(BaseModel):
     session_id: int
     completed_questions: int
     total_questions: int
+    session_summary: Optional[str] = None
     results: List[AnswerResult]
 
 
@@ -118,6 +124,7 @@ class SessionDetailResponse(BaseModel):
     created_at: datetime
     module_name: str
     total_score: float
+    session_summary: Optional[str] = None
     results: List[AnswerResult]
 
 
