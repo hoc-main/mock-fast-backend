@@ -1,584 +1,771 @@
-"""Feedback generation utilities.
-
-This module keeps the backend backward compatible while adding a richer
-question-level feedback payload and a session-level summary.
-
-Design:
-- If a fine-tuned seq2seq model exists in services/feedback_model/, it is used.
-- Otherwise the generator falls back to a deterministic rubric-driven template.
-- The same heuristic generator is also used to build synthetic training targets.
 """
-from __future__ import annotations
+feedback_generator.py
+======================
+Rich, per-question feedback and session-summary generator for mock interviews.
 
-import json
-import os
-import re
-from collections import Counter
-from pathlib import Path
-from statistics import mean
-from typing import Any, Dict, Iterable, List, Optional, Sequence
+Inputs per question
+-------------------
+- transcript     : str   — raw STT candidate answer
+- metrics        : dict  — output of evaluation.evaluate_answer()
+- question_data  : dict  — question record from dataset (with answer_variants, keywords, etc.)
 
-from .nlp_features import normalize, split_sentences, tokenize
-
-BASE_DIR = Path(__file__).resolve().parent
-DEFAULT_MODEL_DIR = Path(os.getenv("FEEDBACK_MODEL_DIR", BASE_DIR / "feedback_model"))
-DEFAULT_MODEL_NAME = os.getenv("FEEDBACK_BASE_MODEL", "google/flan-t5-small")
-
-FILLER_WORDS = {
-    "um", "uh", "erm", "like", "you know", "actually", "basically",
-    "sort of", "kind of", "i mean", "right", "well",
+Per-question output
+-------------------
+{
+  "question_id"      : str,
+  "question_text"    : str,
+  "score"            : float,
+  "score_tier"       : "strong" | "good" | "partial" | "weak",
+  "narrative"        : str,          # 3-4 sentences: balanced pros + cons
+  "improvement_tips" : list[str],    # 3-4 actionable bullet points
+  "grammar_notes"    : dict,         # filler counts, repetitions, sentence stats
+  "content_analysis" : dict,         # present / missing keywords per tier
+  "stt_flags"        : list[str],    # spoken artifacts detected
 }
 
+Session summary output
+-----------------------
+{
+  "session_score"       : float,      # weighted average across questions
+  "score_trend"         : list[float],
+  "strengths"           : list[str],
+  "improvement_areas"   : list[str],
+  "grammar_summary"     : dict,
+  "summary_paragraph"   : str,        # 3-4 sentence holistic summary
+  "per_question_scores" : list[dict],
+}
+"""
 
-def _unique_nonempty(values: Iterable[str]) -> List[str]:
-    seen: List[str] = []
-    for value in values:
-        value = (value or "").strip()
-        if value and value not in seen:
-            seen.append(value)
-    return seen
+import re
+from collections import Counter
+from typing import Any, Dict, List, Optional, Tuple
 
+# ── Constants ──────────────────────────────────────────────────────────────────
 
-def _merge_texts(*parts: Optional[str]) -> str:
-    return " ".join(_unique_nonempty(p for p in parts if p))
+FILLER_WORDS = {
+    "um", "uh", "like", "basically", "right", "okay", "so", "you know",
+    "kind of", "sort of", "actually", "literally", "honestly", "just",
+    "i mean", "i guess", "well", "yeah", "yep", "hmm",
+}
 
+# STT self-correction patterns  e.g. "the the", "it is it is"
+_REPEATED_WORD_RE = re.compile(r"\b(\w{3,})\s+\1\b", re.IGNORECASE)
 
-def _safe_percent(value: float) -> int:
-    return max(0, min(100, int(round((value or 0.0) * 100))))
+# Run-on detector: sentences joined by 3+ "and/so/but" connectives without punctuation
+_RUNON_RE = re.compile(
+    r"(?<![.!?])\s+(?:and|so|but|then|also)\s+(?:and|so|but|then|also)\s+(?:and|so|but|then|also)",
+    re.IGNORECASE,
+)
 
+SCORE_TIERS = [
+    (0.85, "strong"),
+    (0.68, "good"),
+    (0.45, "partial"),
+    (0.00, "weak"),
+]
 
-def _score_band(score: float) -> str:
-    if score >= 0.85:
-        return "strong"
-    if score >= 0.70:
-        return "good"
-    if score >= 0.50:
-        return "partial"
+# Narrative sentence templates keyed by (tier, dimension)
+# Each slot has multiple variants so text is less robotic.
+_NARRATIVE_TEMPLATES = {
+    # Opening sentence — overall impression
+    "open_strong":   [
+        "Your answer demonstrated a solid grasp of the topic and addressed the question clearly.",
+        "You provided a well-structured and accurate response that covered the core idea effectively.",
+        "The answer reflected genuine understanding and was largely on point for what was asked.",
+    ],
+    "open_good":     [
+        "Your answer showed a reasonable understanding of the topic, though there is room to sharpen it further.",
+        "The response was generally relevant and correct in its direction, but fell short in a few key areas.",
+        "You covered the main idea adequately, even if some important details were left out.",
+    ],
+    "open_partial":  [
+        "Your answer touched on the topic but lacked the depth and accuracy needed for a complete response.",
+        "The response was partially on track, but it missed several important aspects of the question.",
+        "You demonstrated some familiarity with the subject, yet the answer felt incomplete overall.",
+    ],
+    "open_weak":     [
+        "The answer did not adequately address what was being asked and requires significant improvement.",
+        "Your response was quite vague or off-topic, making it difficult to assess your understanding.",
+        "The answer lacked substance and did not reflect a clear command of the subject matter.",
+    ],
+
+    # Positive observation (pros sentence)
+    "pro_semantic":  "Your explanation aligned well with the expected answer on a conceptual level.",
+    "pro_keywords":  "You successfully incorporated several key terms that are central to this topic.",
+    "pro_discourse": "The response had good structural flow, with clear sequencing and logical connectives.",
+    "pro_length":    "The length of your answer was appropriate and proportional to the question's scope.",
+    "pro_lexical":   "You used a varied vocabulary, which added depth and precision to your response.",
+    "pro_relevance": "You stayed focused on the question and did not wander into unrelated territory.",
+
+    # Constructive observation (cons sentence)
+    "con_semantic":  "However, the core concept was not explained with sufficient accuracy or completeness.",
+    "con_keywords":  "Key terms and concepts that define this topic were either missing or only partially mentioned.",
+    "con_discourse": "The answer lacked structured reasoning — it would benefit from clearer sequencing (e.g., definition → explanation → example).",
+    "con_length_short": "The response was too brief to demonstrate full understanding; more elaboration was needed.",
+    "con_length_long":  "The answer was somewhat verbose, with ideas repeated rather than developed further.",
+    "con_relevance": "Portions of the answer drifted away from the specific question, reducing its overall relevance.",
+    "con_grammar":   "There were noticeable spoken artifacts — filler words and repetitions — that reduced clarity.",
+
+    # Closing observation
+    "close_strong":  "Overall, this was a commendable response that would leave a positive impression in an interview.",
+    "close_good":    "With a bit more precision and completeness, this answer could easily reach a strong level.",
+    "close_partial": "Focusing on the missing keywords and adding a concrete example would significantly improve this answer.",
+    "close_weak":    "Revisiting the fundamentals of this topic and practising a structured 'define → explain → example' approach will help greatly.",
+}
+
+# ── Helpers ────────────────────────────────────────────────────────────────────
+
+def _score_tier(score: float) -> str:
+    for threshold, label in SCORE_TIERS:
+        if score >= threshold:
+            return label
     return "weak"
 
 
-def _keyword_preview(items: Sequence[str], limit: int = 3) -> str:
-    items = [str(x).strip() for x in items if str(x).strip()]
-    if not items:
-        return ""
-    items = items[:limit]
-    if len(items) == 1:
-        return items[0]
-    return ", ".join(items[:-1]) + f" and {items[-1]}"
+def _pick(templates: List[str], seed: int = 0) -> str:
+    """Deterministic pick from a list to avoid random variation on retries."""
+    return templates[seed % len(templates)]
 
 
-def _detect_repetition(text: str) -> Dict[str, Any]:
-    tokens = tokenize(text)
-    repeated_consecutive = re.findall(r"\b(\w+)(?:\s+\1\b)+", normalize(text))
-    repeated_ratio = 0.0
-    if tokens:
-        repeated_ratio = 1.0 - (len(set(tokens)) / len(tokens))
-    filler_hits = []
-    lower = normalize(text)
-    for filler in FILLER_WORDS:
-        if filler in lower:
-            filler_hits.append(filler)
-    return {
-        "repeated_consecutive": _unique_nonempty(repeated_consecutive),
-        "repeated_ratio": round(repeated_ratio, 3),
-        "filler_hits": filler_hits,
+def _normalize(text: str) -> str:
+    text = (text or "").lower()
+    text = re.sub(r"[^a-zA-Z0-9\s\-]", " ", text)
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def _tokenize(text: str) -> List[str]:
+    stopwords = {
+        "a","an","the","is","are","was","were","to","of","and","or","in","on",
+        "for","with","that","this","it","as","by","be","at","from","can","i",
+        "me","my","we","our","you","your","he","she","they","them","will","would",
+        "should","may","might","could","do","did","does","have","has","had","been",
+        "also","very","just","but","if","so","than","then","not","no","am","about",
     }
+    return [
+        w for w in _normalize(text).split()
+        if len(w) > 2 and w not in stopwords
+    ]
 
 
-def _detect_structure(text: str) -> Dict[str, Any]:
-    sentences = split_sentences(text)
-    tokens = tokenize(text)
-    punctuation = len(re.findall(r"[.,;:!?]", text or ""))
-    long_response = len(tokens) >= 30
-    no_punctuation = punctuation == 0 and long_response
-    too_short = len(tokens) < 8
-    avg_sentence_length = mean([len(s.split()) for s in sentences]) if sentences else 0.0
-    return {
-        "sentence_count": len(sentences),
-        "avg_sentence_length": round(avg_sentence_length, 2),
-        "no_punctuation": no_punctuation,
-        "too_short": too_short,
+# ── Grammar & STT Analysis ─────────────────────────────────────────────────────
+
+def analyse_grammar_and_stt(transcript: str) -> Dict[str, Any]:
+    """
+    Returns a structured grammar/STT analysis dict:
+    {
+      "filler_count"       : int,
+      "filler_words_found" : list[str],
+      "filler_rate"        : float,        # fillers per 100 words
+      "word_repetitions"   : list[str],    # "the the", "it is it is"
+      "phrase_repetitions" : list[str],    # repeated 3-4 word phrases
+      "sentence_count"     : int,
+      "avg_words_per_sent" : float,
+      "run_on_detected"    : bool,
+      "capitalization_ok"  : bool,         # False if text is all lower (common STT)
+      "severity"           : "clean"|"minor"|"moderate"|"heavy",
     }
-
-
-def _compose_question_feedback(
-    *,
-    question_text: str,
-    expected_answer: str,
-    candidate_answer: str,
-    evaluation: Dict[str, Any],
-    answer_variants: Optional[Sequence[str]] = None,
-    scoring_rationale: str = "",
-) -> Dict[str, Any]:
-    score = float(evaluation.get("final_score", evaluation.get("score", 0.0)) or 0.0)
-    semantic_score = float(evaluation.get("semantic_score", 0.0) or 0.0)
-    keyword_score = float(evaluation.get("keyword_score", 0.0) or 0.0)
-    question_relevance = float(evaluation.get("question_relevance", 0.0) or 0.0)
-    lexical_diversity = float(evaluation.get("lexical_diversity", 0.0) or 0.0)
-    discourse_score = float(evaluation.get("discourse_score", 0.0) or 0.0)
-    length_score = float(evaluation.get("length_score", 0.0) or evaluation.get("answer_length_ratio", 0.0) or 0.0)
-    missing_keywords = _unique_nonempty(evaluation.get("missing_keywords", []) or [])
-    matched_keywords = _unique_nonempty(evaluation.get("matched_keywords", []) or [])
-
-    repetition = _detect_repetition(candidate_answer)
-    structure = _detect_structure(candidate_answer)
-    band = _score_band(score)
-
-    positives: List[str] = []
-    negatives: List[str] = []
-    bullets: List[str] = []
-
-    if semantic_score >= 0.75:
-        positives.append("the core idea is clearly related to the expected answer")
-    elif semantic_score >= 0.5:
-        positives.append("the response is in the right topic area")
-    else:
-        negatives.append("the answer is only loosely connected to the target concept")
-
-    if keyword_score >= 0.65 or matched_keywords:
-        preview = _keyword_preview(matched_keywords, 3)
-        if preview:
-            positives.append(f"it includes useful terminology such as {preview}")
-        else:
-            positives.append("it uses some of the expected subject language")
-
-    if question_relevance >= 0.70:
-        positives.append("it stays focused on the asked question")
-    elif question_relevance < 0.40:
-        negatives.append("parts of the response drift away from the question")
-
-    if discourse_score >= 0.40:
-        positives.append("the explanation shows some structure and flow")
-    else:
-        negatives.append("the response needs a clearer structure")
-
-    if lexical_diversity >= 0.60:
-        positives.append("the vocabulary is varied enough to keep the answer natural")
-    elif lexical_diversity < 0.40:
-        negatives.append("the wording feels limited or repetitive")
-
-    if length_score < 0.45:
-        negatives.append("the answer is too short to fully develop the idea")
-    elif length_score > 0.90:
-        positives.append("the answer gives enough detail to be informative")
-
-    if repetition["repeated_consecutive"] or repetition["repeated_ratio"] > 0.35:
-        negatives.append("there are repeated words or phrases that reduce clarity")
-
-    if repetition["filler_hits"]:
-        negatives.append("filler expressions make the answer sound less confident")
-
-    if structure["no_punctuation"]:
-        negatives.append("the response would read better with shorter, punctuated sentences")
-
-    if structure["too_short"]:
-        negatives.append("the answer needs at least one more supporting point")
-
-    if not positives:
-        positives.append("the answer shows some awareness of the topic")
-    if not negatives:
-        negatives.append("the response can still be sharpened with a more polished structure")
-
-    if band in {"strong", "good"}:
-        first_sentence = (
-            f"You gave a relevant answer and showed a solid grasp of the concept, especially where you used {' and '.join(positives[:2]).rstrip('.')}"
-        )
-        second_sentence = (
-            f"The main gap is that {'; '.join(negatives[:2]).rstrip('.')}."
-        )
-        third_sentence = (
-            "A stronger version would start with a direct definition, add one or two supporting points, and finish with a short example or consequence."
-        )
-    else:
-        first_sentence = (
-            f"Your answer shows partial understanding, but it does not yet fully capture the expected concept."
-        )
-        second_sentence = (
-            f"It does better on {' and '.join(positives[:1]).rstrip('.')} while still being limited because {'; '.join(negatives[:2]).rstrip('.')}."
-        )
-        third_sentence = (
-            "Focus on the core definition first, then add the missing facts, and keep the structure more direct and concise."
-        )
-
-    feedback_paragraph = " ".join([first_sentence, second_sentence, third_sentence]).strip()
-
-    if missing_keywords:
-        bullets.append(f"Add the missing points: {_keyword_preview(missing_keywords, 3)}.")
-    elif answer_variants:
-        bullets.append("Compare your response against the reference answer and include the most important missing idea.")
-    else:
-        bullets.append("Include one more concrete point to complete the explanation.")
-
-    if structure["too_short"] or length_score < 0.55:
-        bullets.append("Expand the answer with a definition, one supporting detail, and a brief example.")
-    else:
-        bullets.append("Keep the answer focused and remove any unnecessary drift.")
-
-    if repetition["repeated_consecutive"] or repetition["repeated_ratio"] > 0.25:
-        bullets.append("Remove repeated words or repeated phrases to make the answer cleaner.")
-
-    if repetition["filler_hits"]:
-        bullets.append("Reduce filler words such as um, like, or basically so the delivery sounds more confident.")
-
-    if structure["no_punctuation"]:
-        bullets.append("Break the answer into shorter sentences so the grammar and flow are easier to follow.")
-
-    if discourse_score < 0.35:
-        bullets.append("Use a clearer sequence: definition → explanation → example.")
-    elif discourse_score < 0.55:
-        bullets.append("Add a linking phrase such as ‘for example’ or ‘therefore’ to improve flow.")
-
-    bullets = _unique_nonempty(bullets)[:4]
-
-    if score >= 0.80:
-        question_summary = "Strong answer overall, with only minor improvements needed for polish and completeness."
-    elif score >= 0.60:
-        question_summary = "Mostly on track, but the answer needs more detail and a cleaner structure."
-    elif score >= 0.40:
-        question_summary = "Partially correct, though the explanation is still incomplete and needs clearer support."
-    else:
-        question_summary = "The response is too weak or too vague to show solid understanding yet."
-
-    if scoring_rationale:
-        session_summary_hint = "The answer fits the current quality band, but the synthetic dataset rationale still suggests human review for edge cases."
-    else:
-        session_summary_hint = "Across this answer, focus on clarity, completeness, and a tighter structure."
-
-    return {
-        "feedback_paragraph": feedback_paragraph,
-        "improvement_bullets": bullets,
-        "question_summary": question_summary,
-        "session_summary_hint": session_summary_hint,
-        "pros": positives[:3],
-        "cons": negatives[:3],
-        "bands": {
-            "score_band": band,
-            "score_percent": _safe_percent(score),
-        },
-        "signals": {
-            "repetition": repetition,
-            "structure": structure,
-        },
-    }
-
-
-class FeedbackGenerator:
-    """Optional transformer-backed feedback generator with template fallback."""
-
-    def __init__(self, model_dir: Optional[Path | str] = None, base_model: Optional[str] = None):
-        self.model_dir = Path(model_dir or DEFAULT_MODEL_DIR)
-        self.base_model = base_model or DEFAULT_MODEL_NAME
-        self._tokenizer = None
-        self._model = None
-        self._pipeline = None
-
-    @property
-    def available(self) -> bool:
-        if self.model_dir.exists() and (self.model_dir / "config.json").exists():
-            return True
-        return False
-
-    def _load(self) -> None:
-        if self._model is not None or self._tokenizer is not None:
-            return
-        if not self.available:
-            return
-        try:
-            from transformers import AutoModelForSeq2SeqLM, AutoTokenizer, pipeline
-
-            self._tokenizer = AutoTokenizer.from_pretrained(self.model_dir)
-            self._model = AutoModelForSeq2SeqLM.from_pretrained(self.model_dir)
-            self._pipeline = pipeline(
-                "text2text-generation",
-                model=self._model,
-                tokenizer=self._tokenizer,
-            )
-        except Exception:
-            self._tokenizer = None
-            self._model = None
-            self._pipeline = None
-
-    def build_prompt(
-        self,
-        *,
-        question_text: str,
-        expected_answer: str,
-        candidate_answer: str,
-        evaluation: Dict[str, Any],
-        answer_variants: Optional[Sequence[str]] = None,
-        scoring_rationale: str = "",
-    ) -> str:
-        variants_text = "\n".join(f"- {v}" for v in _unique_nonempty(answer_variants or [])) or "-"
-        payload = {
-            "question": question_text,
-            "reference_answer": expected_answer,
-            "answer_variants": variants_text,
-            "candidate_answer": candidate_answer,
-            "evaluation": evaluation,
-            "scoring_rationale": scoring_rationale,
+    """
+    if not transcript:
+        return {
+            "filler_count": 0, "filler_words_found": [], "filler_rate": 0.0,
+            "word_repetitions": [], "phrase_repetitions": [],
+            "sentence_count": 0, "avg_words_per_sent": 0.0,
+            "run_on_detected": False, "capitalization_ok": True,
+            "severity": "clean",
         }
-        return (
-            "Write a coaching response in strict JSON with the keys "
-            "feedback_paragraph, improvement_bullets, question_summary, session_summary_hint, pros, cons. "
-            "The feedback_paragraph must be 3 to 4 sentences long and include both positives and negatives. "
-            "The improvement_bullets must contain 3 to 4 short bullet points. "
-            f"INPUT: {json.dumps(payload, ensure_ascii=False)}"
+
+    norm = transcript.lower()
+    words = norm.split()
+    total_words = max(len(words), 1)
+
+    # Filler detection
+    found_fillers: List[str] = []
+    for filler in FILLER_WORDS:
+        pattern = r"\b" + re.escape(filler) + r"\b"
+        matches = re.findall(pattern, norm)
+        found_fillers.extend(matches)
+    filler_count = len(found_fillers)
+    filler_types = list(dict.fromkeys(found_fillers))  # unique, order preserved
+    filler_rate = (filler_count / total_words) * 100
+
+    # Word-level repetitions ("the the", "was was")
+    word_reps = list(set(_REPEATED_WORD_RE.findall(norm)))
+
+    # Phrase-level repetitions (3-gram repeated)
+    phrase_reps: List[str] = []
+    trigrams = [" ".join(words[i:i+3]) for i in range(len(words) - 2)]
+    seen_ngrams: set = set()
+    for ng in trigrams:
+        if trigrams.count(ng) > 1 and ng not in seen_ngrams:
+            phrase_reps.append(ng)
+            seen_ngrams.add(ng)
+
+    # Sentence stats
+    sentences = [s.strip() for s in re.split(r"[.!?]+", transcript) if s.strip()]
+    sentence_count = max(len(sentences), 1)
+    avg_words = total_words / sentence_count
+
+    run_on = bool(_RUNON_RE.search(norm))
+    cap_ok = transcript[0].isupper() if transcript else True
+
+    # Severity
+    issues = (
+        (1 if filler_rate > 15 else 0) +
+        (1 if filler_rate > 8 else 0) +
+        (1 if word_reps else 0) +
+        (1 if len(phrase_reps) > 1 else 0) +
+        (1 if run_on else 0)
+    )
+    severity = {0: "clean", 1: "minor", 2: "moderate"}.get(issues, "heavy")
+
+    return {
+        "filler_count":       filler_count,
+        "filler_words_found": filler_types[:8],
+        "filler_rate":        round(filler_rate, 1),
+        "word_repetitions":   word_reps[:5],
+        "phrase_repetitions": phrase_reps[:3],
+        "sentence_count":     sentence_count,
+        "avg_words_per_sent": round(avg_words, 1),
+        "run_on_detected":    run_on,
+        "capitalization_ok":  cap_ok,
+        "severity":           severity,
+    }
+
+
+# ── Content Analysis ───────────────────────────────────────────────────────────
+
+def analyse_content(transcript: str, question_data: Dict[str, Any],
+                    metrics: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Compares transcript against all answer variants and keyword tiers.
+    Returns:
+    {
+      "present_keywords"  : {"critical": [...], "supporting": [...], "bonus": [...]},
+      "missing_keywords"  : {"critical": [...], "supporting": [...], "bonus": [...]},
+      "variant_scores"    : [float, float, float],  # similarity to each variant
+      "best_variant_idx"  : int,
+      "concepts_covered"  : list[str],   # high-level points matched
+      "concepts_missing"  : list[str],   # high-level points absent
+    }
+    """
+    norm_transcript = _normalize(transcript)
+    cand_tokens = set(_tokenize(transcript))
+
+    # Keyword tiers — support both dict format and flat list format
+    raw_kw = question_data.get("expected_keywords", {})
+    if isinstance(raw_kw, dict):
+        critical   = [k.lower() for k in raw_kw.get("critical", [])]
+        supporting = [k.lower() for k in raw_kw.get("supporting", [])]
+        bonus      = [k.lower() for k in raw_kw.get("bonus", [])]
+    else:
+        # flat list — treat all as supporting
+        critical   = []
+        supporting = [k.lower() for k in (raw_kw or [])]
+        bonus      = []
+
+    def _check_kw(kw_list: List[str]) -> Tuple[List[str], List[str]]:
+        present, absent = [], []
+        for kw in kw_list:
+            # Check either as a phrase or as individual tokens
+            if kw in norm_transcript or all(t in cand_tokens for t in kw.split()):
+                present.append(kw)
+            else:
+                absent.append(kw)
+        return present, absent
+
+    crit_present,   crit_missing   = _check_kw(critical)
+    supp_present,   supp_missing   = _check_kw(supporting)
+    bonus_present,  bonus_missing  = _check_kw(bonus)
+
+    # Variant similarity (embedding-free: Jaccard on token sets as proxy)
+    variants: List[str] = []
+    if question_data.get("primary_answer"):
+        variants.append(question_data["primary_answer"])
+    for key in ("answer_variant_1", "answer_variant_2"):
+        if question_data.get(key):
+            variants.append(question_data[key])
+    for v in question_data.get("answer_variants", []):
+        if v and v not in variants:
+            variants.append(v)
+
+    variant_scores: List[float] = []
+    for var in variants:
+        var_tokens = set(_tokenize(var))
+        if not var_tokens:
+            variant_scores.append(0.0)
+            continue
+        intersection = cand_tokens & var_tokens
+        union = cand_tokens | var_tokens
+        variant_scores.append(len(intersection) / len(union) if union else 0.0)
+
+    best_idx = variant_scores.index(max(variant_scores)) if variant_scores else 0
+
+    # High-level concepts: sentences from the best variant not matched
+    best_variant = variants[best_idx] if variants else ""
+    best_sentences = [s.strip() for s in re.split(r"[.!?]", best_variant) if s.strip()]
+    concepts_covered, concepts_missing = [], []
+    for sent in best_sentences:
+        sent_tokens = set(_tokenize(sent))
+        if not sent_tokens:
+            continue
+        overlap = len(cand_tokens & sent_tokens) / len(sent_tokens)
+        if overlap >= 0.40:
+            # Summarise as the first 6 words
+            concepts_covered.append(" ".join(sent.split()[:7]).rstrip(",;"))
+        else:
+            concepts_missing.append(" ".join(sent.split()[:7]).rstrip(",;"))
+
+    return {
+        "present_keywords":  {"critical": crit_present, "supporting": supp_present, "bonus": bonus_present},
+        "missing_keywords":  {"critical": crit_missing,  "supporting": supp_missing,  "bonus": bonus_missing},
+        "variant_scores":    [round(s, 3) for s in variant_scores],
+        "best_variant_idx":  best_idx,
+        "concepts_covered":  concepts_covered[:5],
+        "concepts_missing":  concepts_missing[:5],
+    }
+
+
+# ── Narrative Builder ──────────────────────────────────────────────────────────
+
+def _build_narrative(
+    score: float,
+    tier: str,
+    metrics: Dict[str, Any],
+    grammar: Dict[str, Any],
+    content: Dict[str, Any],
+    seed: int = 0,
+) -> str:
+    """
+    Builds a 3-4 sentence narrative paragraph covering pros and cons.
+    """
+    T = _NARRATIVE_TEMPLATES
+    sentences: List[str] = []
+
+    # 1. Opening sentence
+    sentences.append(_pick(T[f"open_{tier}"], seed))
+
+    # 2. Positive observation (pick the strongest metric as the 'pro')
+    semantic  = metrics.get("semantic_score", 0.0)
+    kw_score  = metrics.get("keyword_score", 0.0)
+    discourse = metrics.get("discourse_score", 0.0)
+    length    = metrics.get("length_score", 0.0)
+    lexical   = metrics.get("lexical_diversity", 0.0)
+    relevance = metrics.get("question_relevance", 0.0)
+
+    pro_scores = [
+        (semantic,  T["pro_semantic"]),
+        (kw_score,  T["pro_keywords"]),
+        (discourse, T["pro_discourse"]),
+        (length,    T["pro_length"]),
+        (lexical,   T["pro_lexical"]),
+        (relevance, T["pro_relevance"]),
+    ]
+    # Only add a pro sentence if the best metric is genuinely good (>= 0.55)
+    pro_scores_good = [(v, s) for v, s in pro_scores if v >= 0.55]
+    if pro_scores_good:
+        pro_scores_good.sort(reverse=True)
+        sentences.append(pro_scores_good[0][1])
+
+    # 3. Constructive/con observation (pick the weakest metric)
+    con_scores = [
+        (semantic,  T["con_semantic"]),
+        (kw_score,  T["con_keywords"]),
+        (discourse, T["con_discourse"]),
+        (relevance, T["con_relevance"]),
+    ]
+    # Length-specific cons
+    # word count unused after refactor — kept as placeholder
+    if length < 0.45:
+        con_scores.append((length, T["con_length_short"]))
+    elif lexical < 0.45:
+        con_scores.append((lexical, T["con_length_long"]))
+
+    con_scores_bad = [(v, s) for v, s in con_scores if v < 0.60]
+    if con_scores_bad:
+        con_scores_bad.sort()   # ascending — weakest first
+        sentences.append(con_scores_bad[0][1])
+    elif grammar["severity"] in ("moderate", "heavy"):
+        sentences.append(T["con_grammar"])
+
+    # 4. Closing sentence
+    sentences.append(T[f"close_{tier}"])
+
+    # Ensure 3-4 sentences
+    return " ".join(sentences[:4])
+
+
+# ── Improvement Tips Builder ───────────────────────────────────────────────────
+
+def _build_improvement_tips(
+    score: float,
+    tier: str,
+    metrics: Dict[str, Any],
+    grammar: Dict[str, Any],
+    content: Dict[str, Any],
+) -> List[str]:
+    """
+    Returns 3-4 actionable bullet-point tips.
+    """
+    tips: List[str] = []
+
+    semantic  = metrics.get("semantic_score", 0.0)
+    kw_score  = metrics.get("keyword_score", 0.0)
+    discourse = metrics.get("discourse_score", 0.0)
+    length    = metrics.get("length_score", 0.0)
+    relevance = metrics.get("question_relevance", 0.0)
+    lexical   = metrics.get("lexical_diversity", 0.0)
+
+    missing_critical   = content["missing_keywords"]["critical"]
+    missing_supporting = content["missing_keywords"]["supporting"]
+    concepts_missing   = content["concepts_missing"]
+
+    # Tip 1 — critical missing keywords
+    if missing_critical:
+        kws = ", ".join(f'"{k}"' for k in missing_critical[:3])
+        tips.append(
+            f"Make sure to include critical keywords: {kws}. "
+            "These are the core terms evaluators expect in a strong answer."
+        )
+    elif missing_supporting:
+        kws = ", ".join(f'"{k}"' for k in missing_supporting[:3])
+        tips.append(
+            f"Strengthen your answer by weaving in supporting terms like {kws} "
+            "to show breadth of knowledge."
         )
 
-    def generate(
-        self,
-        *,
-        question_text: str,
-        expected_answer: str,
-        candidate_answer: str,
-        evaluation: Dict[str, Any],
-        answer_variants: Optional[Sequence[str]] = None,
-        scoring_rationale: str = "",
-        force_template: bool = False,
-    ) -> Dict[str, Any]:
-        fallback = _compose_question_feedback(
-            question_text=question_text,
-            expected_answer=expected_answer,
-            candidate_answer=candidate_answer,
-            evaluation=evaluation,
-            answer_variants=answer_variants,
-            scoring_rationale=scoring_rationale,
+    # Tip 2 — content depth
+    if concepts_missing:
+        point = concepts_missing[0]
+        tips.append(
+            f"Your answer missed the idea around '{point}...'. "
+            "Covering this point would make the response more complete."
+        )
+    elif semantic < 0.60:
+        tips.append(
+            "Focus on explaining the concept more precisely — "
+            "start with a clear one-line definition, then add the mechanism or process, "
+            "and finish with a real-world example."
         )
 
-        if force_template:
-            fallback["model_used"] = False
-            return fallback
-
-        self._load()
-        if not self._pipeline:
-            fallback["model_used"] = False
-            return fallback
-
-        prompt = self.build_prompt(
-            question_text=question_text,
-            expected_answer=expected_answer,
-            candidate_answer=candidate_answer,
-            evaluation=evaluation,
-            answer_variants=answer_variants,
-            scoring_rationale=scoring_rationale,
+    # Tip 3 — structure / discourse
+    if discourse < 0.40:
+        tips.append(
+            "Improve structure by using signposting phrases like "
+            "'Firstly...', 'This is because...', 'For example...', and 'In summary...'. "
+            "Structured answers score higher on clarity."
         )
-        try:
-            result = self._pipeline(
-                prompt,
-                max_new_tokens=220,
-                do_sample=False,
-                temperature=0.0,
-                truncation=True,
-            )[0]["generated_text"]
-            parsed = _parse_generated_json(result)
-            if parsed:
-                parsed.setdefault("model_used", True)
-                return parsed
-        except Exception:
-            pass
 
-        fallback["model_used"] = False
-        return fallback
+    # Tip 4 — grammar / STT
+    if grammar["severity"] in ("moderate", "heavy"):
+        fillers = grammar["filler_words_found"]
+        if fillers:
+            top_fillers = ", ".join(f'"{f}"' for f in fillers[:3])
+            tips.append(
+                f"Reduce spoken filler words such as {top_fillers}. "
+                "Pausing silently for 1-2 seconds is far more effective than filling with verbal crutches."
+            )
+        if grammar["word_repetitions"]:
+            reps = ", ".join(f'"{r}"' for r in grammar["word_repetitions"][:2])
+            tips.append(
+                f"Avoid word repetitions like {reps}. "
+                "Speak more slowly and deliberately to prevent inadvertent doubling."
+            )
+    elif grammar["severity"] == "minor" and len(tips) < 3:
+        tips.append(
+            "Minor filler words were detected. Practising answers out loud with a timer "
+            "will naturally reduce hesitation sounds over time."
+        )
+
+    # Tip 5 — length
+    if length < 0.40 and len(tips) < 4:
+        tips.append(
+            "The answer was too short. Aim for 40-60 words that include: "
+            "(1) a one-line definition, (2) two key points, (3) one short real-world example."
+        )
+    elif lexical < 0.40 and len(tips) < 4:
+        tips.append(
+            "The answer felt repetitive in its vocabulary. Try using synonyms and related concepts "
+            "to demonstrate a richer command of the subject."
+        )
+
+    # Ensure at least 3 tips, at most 4
+    if len(tips) == 0:
+        tips.append("Review the ideal answer and identify which structural elements made it effective.")
+    if len(tips) < 3:
+        tips.append(
+            "Practice articulating your answer in 3 layers: "
+            "what it is → how it works → why it matters."
+        )
+    if len(tips) < 3:
+        tips.append(
+            "After answering, ask yourself: "
+            "'Did I define the term, explain the mechanism, and give one example?' "
+            "If any is missing, add it."
+        )
+
+    return tips[:4]
 
 
-@staticmethod
-def _parse_generated_json(text: str) -> Optional[Dict[str, Any]]:
-    if not text:
-        return None
-    stripped = text.strip()
-    if stripped.startswith("```"):
-        stripped = re.sub(r"^```(?:json)?|```$", "", stripped, flags=re.IGNORECASE | re.MULTILINE).strip()
-    try:
-        return json.loads(stripped)
-    except Exception:
-        pass
+# ── STT Flags ──────────────────────────────────────────────────────────────────
 
-    match = re.search(r"\{.*\}", stripped, flags=re.DOTALL)
-    if not match:
-        return None
-    try:
-        return json.loads(match.group(0))
-    except Exception:
-        return None
+def _build_stt_flags(grammar: Dict[str, Any]) -> List[str]:
+    flags: List[str] = []
+    if grammar["filler_rate"] > 8:
+        flags.append(
+            f"High filler-word density ({grammar['filler_rate']}% of words): "
+            + ", ".join(grammar["filler_words_found"][:4])
+        )
+    if grammar["word_repetitions"]:
+        flags.append(
+            "Immediate word repetitions detected (typical STT artifact): "
+            + ", ".join(f'"{r}"' for r in grammar["word_repetitions"][:3])
+        )
+    if grammar["phrase_repetitions"]:
+        flags.append(
+            "Repeated phrases found: "
+            + "; ".join(f'"{p}"' for p in grammar["phrase_repetitions"][:2])
+        )
+    if grammar["run_on_detected"]:
+        flags.append(
+            "Run-on sentence detected — multiple clauses joined without punctuation. "
+            "Break into shorter, clearer sentences."
+        )
+    if not grammar["capitalization_ok"]:
+        flags.append(
+            "Text appears to be all lowercase (common in raw STT output). "
+            "Verify punctuation and capitalisation before final review."
+        )
+    return flags
 
+
+# ── Main per-question entry point ──────────────────────────────────────────────
 
 def generate_question_feedback(
-    *,
-    question_text: str,
-    expected_answer: str,
-    candidate_answer: str,
-    evaluation: Dict[str, Any],
-    answer_variants: Optional[Sequence[str]] = None,
-    scoring_rationale: str = "",
-    force_template: bool = False,
+    transcript: str,
+    metrics: Dict[str, Any],
+    question_data: Dict[str, Any],
+    question_id: Optional[str] = None,
+    seed: int = 0,
 ) -> Dict[str, Any]:
-    generator = FeedbackGenerator()
-    return generator.generate(
-        question_text=question_text,
-        expected_answer=expected_answer,
-        candidate_answer=candidate_answer,
-        evaluation=evaluation,
-        answer_variants=answer_variants,
-        scoring_rationale=scoring_rationale,
-        force_template=force_template,
+    """
+    Generate rich feedback for a single interview question.
+
+    Parameters
+    ----------
+    transcript    : The raw STT text of the candidate's answer.
+    metrics       : Output dict from evaluation.evaluate_answer().
+    question_data : The question record (from dataset JSON).
+    question_id   : Optional explicit ID override.
+    seed          : Deterministic template selection seed (e.g. question index).
+
+    Returns
+    -------
+    Full feedback dict (see module docstring).
+    """
+    score = float(metrics.get("final_score", 0.0))
+    tier  = _score_tier(score)
+
+    # Question metadata
+    q_id   = question_id or question_data.get("id", "unknown")
+    q_text = (
+        question_data.get("question")
+        or question_data.get("question_text")
+        or question_data.get("text", "")
     )
 
+    # Sub-analyses
+    grammar = analyse_grammar_and_stt(transcript)
+    content = analyse_content(transcript, question_data, metrics)
 
-def generate_session_summary(question_results: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
-    """Aggregate the results from one session into a session-level summary."""
-    if not question_results:
-        return {
-            "session_summary": "No answers were recorded for this session.",
-            "overall_strengths": [],
-            "overall_improvements": ["Record at least one answer so the session summary can be generated."],
-        }
-
-    scores = [float(item.get("final_score", 0.0) or 0.0) for item in question_results]
-    semantic_scores = [float(item.get("semantic_score", 0.0) or 0.0) for item in question_results]
-    keyword_scores = [float(item.get("keyword_score", 0.0) or 0.0) for item in question_results]
-    question_relevance_scores = [float(item.get("question_relevance", 0.0) or 0.0) for item in question_results]
-
-    all_missing_keywords = []
-    all_feedback = []
-    all_tips = []
-    for item in question_results:
-        all_missing_keywords.extend(item.get("missing_keywords", []) or [])
-        if item.get("feedback"):
-            all_feedback.append(item["feedback"])
-        if item.get("tip"):
-            all_tips.append(item["tip"])
-
-    counter = Counter([normalize(x) for x in all_missing_keywords if x])
-    most_common_missing = [item for item, _count in counter.most_common(4)]
-
-    avg_score = mean(scores)
-    avg_semantic = mean(semantic_scores)
-    avg_keyword = mean(keyword_scores)
-    avg_relevance = mean(question_relevance_scores)
-
-    strong_points: List[str] = []
-    improvement_points: List[str] = []
-
-    if avg_semantic >= 0.7:
-        strong_points.append("the answers stayed reasonably close to the expected concepts")
-    if avg_keyword >= 0.6:
-        strong_points.append("several answers used the right domain-specific terminology")
-    if avg_relevance >= 0.65:
-        strong_points.append("most responses stayed on topic")
-    if any("definition" in normalize(x) for x in all_feedback):
-        strong_points.append("some responses already had a clear definition-first structure")
-
-    if avg_score < 0.8:
-        improvement_points.append("answers need more completeness and stronger supporting detail")
-    if avg_relevance < 0.65:
-        improvement_points.append("some responses should stay closer to the exact question")
-    if most_common_missing:
-        improvement_points.append(f"repeat the missing concepts more consistently, especially {_keyword_preview(most_common_missing, 3)}")
-    if any("repeat" in normalize(x) for x in all_tips):
-        improvement_points.append("reduce repetition and filler words across answers")
-
-    if not strong_points:
-        strong_points.append("the session showed partial understanding of the material")
-    if not improvement_points:
-        improvement_points.append("keep refining structure, clarity, and answer depth")
-
-    session_summary = (
-        f"Across the session, the average score was {_safe_percent(avg_score)}%, which suggests a { _score_band(avg_score) } overall performance. "
-        f"The strongest area was the conceptual alignment with the reference answers, while the biggest opportunity is to make answers more complete and better structured. "
-        f"To improve further, keep the response focused, add missing key terms, and finish each answer with a clear concluding line."
-    )
+    # Narrative and tips
+    narrative = _build_narrative(score, tier, metrics, grammar, content, seed)
+    tips      = _build_improvement_tips(score, tier, metrics, grammar, content)
+    stt_flags = _build_stt_flags(grammar)
 
     return {
-        "session_summary": session_summary,
-        "overall_strengths": strong_points[:4],
-        "overall_improvements": improvement_points[:4],
-        "average_score": round(avg_score, 4),
-        "average_semantic_score": round(avg_semantic, 4),
-        "average_keyword_score": round(avg_keyword, 4),
-        "average_relevance_score": round(avg_relevance, 4),
-        "common_missing_keywords": most_common_missing,
+        "question_id":      q_id,
+        "question_text":    q_text,
+        "score":            round(score, 4),
+        "score_tier":       tier,
+        "narrative":        narrative,
+        "improvement_tips": tips,
+        "grammar_notes":    grammar,
+        "content_analysis": content,
+        "stt_flags":        stt_flags,
+        # Raw metric snapshot for frontend display
+        "metric_snapshot":  {
+            "semantic_similarity": round(metrics.get("semantic_score", 0.0), 3),
+            "keyword_coverage":    round(metrics.get("keyword_score", 0.0), 3),
+            "question_relevance":  round(metrics.get("question_relevance", 0.0), 3),
+            "discourse_quality":   round(metrics.get("discourse_score", 0.0), 3),
+            "lexical_diversity":   round(metrics.get("lexical_diversity", 0.0), 3),
+            "length_score":        round(metrics.get("length_score", 0.0), 3),
+        },
     }
 
 
-def build_training_example(
-    sample: Dict[str, Any],
-    *,
-    force_template: bool = True,
+# ── Session Summary ────────────────────────────────────────────────────────────
+
+def generate_session_summary(
+    question_feedbacks: List[Dict[str, Any]],
 ) -> Dict[str, Any]:
-    """Convert a raw dataset row into a supervised generation example."""
-    q = sample.get("question_data", {})
-    evaluation = {
-        "final_score": sample.get("score", 0.0),
-        "semantic_score": sample.get("labels", {}).get("semantic_similarity", 0.0),
-        "keyword_score": sample.get("labels", {}).get("keyword_coverage", 0.0),
-        "question_relevance": sample.get("labels", {}).get("question_relevance", 0.0),
-        "lexical_diversity": sample.get("labels", {}).get("lexical_diversity", 0.0),
-        "discourse_score": sample.get("labels", {}).get("discourse_quality", 0.0),
-        "length_score": sample.get("labels", {}).get("answer_completeness", 0.0),
-        "missing_keywords": _extract_missing_keywords(q, sample.get("candidate", "")),
-        "matched_keywords": _extract_matched_keywords(q, sample.get("candidate", "")),
+    """
+    Aggregate feedback across all questions in a session.
+
+    Parameters
+    ----------
+    question_feedbacks : List of dicts returned by generate_question_feedback().
+
+    Returns
+    -------
+    Session-level summary dict.
+    """
+    if not question_feedbacks:
+        return {
+            "session_score": 0.0,
+            "score_trend": [],
+            "strengths": [],
+            "improvement_areas": [],
+            "grammar_summary": {},
+            "summary_paragraph": "No questions were answered in this session.",
+            "per_question_scores": [],
+        }
+
+    scores     = [fb["score"] for fb in question_feedbacks]
+    tiers      = [fb["score_tier"] for fb in question_feedbacks]
+    n          = len(scores)
+    avg_score  = sum(scores) / n
+    session_tier = _score_tier(avg_score)
+
+    # Per-question score summary for display
+    per_q_scores = [
+        {
+            "question_id":   fb["question_id"],
+            "question_text": fb["question_text"][:80] + "..." if len(fb["question_text"]) > 80 else fb["question_text"],
+            "score":         fb["score"],
+            "score_tier":    fb["score_tier"],
+        }
+        for fb in question_feedbacks
+    ]
+
+    # Score trend (is the candidate improving across the session?)
+    trend_direction = "improving" if (n > 1 and scores[-1] > scores[0]) else \
+                      "declining"  if (n > 1 and scores[-1] < scores[0]) else \
+                      "consistent"
+
+    # Grammar aggregation
+    total_fillers    = sum(fb["grammar_notes"]["filler_count"] for fb in question_feedbacks)
+    total_words_est  = sum(
+        fb["grammar_notes"]["sentence_count"] * max(fb["grammar_notes"]["avg_words_per_sent"], 1)
+        for fb in question_feedbacks
+    )
+    overall_filler_rate = round((total_fillers / max(total_words_est, 1)) * 100, 1)
+    run_ons_detected    = sum(1 for fb in question_feedbacks if fb["grammar_notes"]["run_on_detected"])
+    all_fillers = []
+    for fb in question_feedbacks:
+        all_fillers.extend(fb["grammar_notes"]["filler_words_found"])
+    top_fillers = [w for w, _ in Counter(all_fillers).most_common(5)]
+
+    grammar_summary = {
+        "total_filler_words":   total_fillers,
+        "overall_filler_rate":  overall_filler_rate,
+        "run_on_sentences":     run_ons_detected,
+        "most_used_fillers":    top_fillers,
+        "grammar_tier":         "clean" if overall_filler_rate < 4 else
+                                 "minor" if overall_filler_rate < 9 else
+                                 "moderate" if overall_filler_rate < 16 else "heavy",
     }
-    payload = generate_question_feedback(
-        question_text=q.get("question", ""),
-        expected_answer=q.get("primary_answer", q.get("answer", "")),
-        candidate_answer=sample.get("candidate", ""),
-        evaluation=evaluation,
-        answer_variants=q.get("answer_variants", []),
-        scoring_rationale=sample.get("scoring_rationale", ""),
-        force_template=force_template,
+
+    # Recurring strengths and improvement areas
+    all_metrics = [fb["metric_snapshot"] for fb in question_feedbacks]
+
+    def avg_metric(key: str) -> float:
+        vals = [m.get(key, 0.0) for m in all_metrics]
+        return sum(vals) / len(vals)
+
+    strengths: List[str] = []
+    improvements: List[str] = []
+
+    avg_semantic  = avg_metric("semantic_similarity")
+    avg_kw        = avg_metric("keyword_coverage")
+    avg_relevance = avg_metric("question_relevance")
+    avg_discourse = avg_metric("discourse_quality")
+    avg_lexical   = avg_metric("lexical_diversity")
+    avg_length    = avg_metric("length_score")
+
+    if avg_semantic  >= 0.65: strengths.append("Strong conceptual understanding — answers aligned well with expected content.")
+    if avg_kw        >= 0.60: strengths.append("Good keyword coverage — you consistently used domain-specific terminology.")
+    if avg_relevance >= 0.70: strengths.append("Excellent question focus — answers were relevant to what was actually asked.")
+    if avg_discourse >= 0.50: strengths.append("Structured reasoning — you used logical connectives and organised your thoughts well.")
+    if avg_lexical   >= 0.65: strengths.append("Rich vocabulary — varied word choice added precision to your answers.")
+
+    if avg_semantic  < 0.55:  improvements.append("Conceptual accuracy — focus on understanding core definitions and mechanisms, not just topic area.")
+    if avg_kw        < 0.45:  improvements.append("Keyword recall — practise identifying and including the 3-5 essential terms for each topic.")
+    if avg_relevance < 0.55:  improvements.append("Question focus — ensure each answer directly addresses the question before expanding.")
+    if avg_discourse < 0.35:  improvements.append("Answer structure — adopt a consistent format: define → explain → example → conclude.")
+    if avg_length    < 0.40:  improvements.append("Answer depth — most answers were too brief; aim for 40-70 words covering key sub-points.")
+    if grammar_summary["grammar_tier"] in ("moderate", "heavy"):
+        improvements.append(
+            f"Spoken delivery — reduce filler words (rate: {overall_filler_rate}% of words). "
+            "Practise pausing instead of filling."
+        )
+
+    # Fallbacks if nothing qualifies
+    if not strengths:
+        strengths.append("You completed the session and engaged with each question.")
+    if not improvements:
+        improvements.append("Continue practising to reinforce and refine your already solid foundations.")
+
+    # Summary paragraph (3-4 sentences)
+    tier_phrases = {
+        "strong":  ("excellent", "highly competitive"),
+        "good":    ("solid", "promising"),
+        "partial": ("developing", "needs further work"),
+        "weak":    ("foundational", "requires significant preparation"),
+    }
+    adj, readiness = tier_phrases.get(session_tier, ("mixed", "variable"))
+
+    sent1 = (
+        f"Across {n} question{'s' if n != 1 else ''}, your overall session score was "
+        f"{avg_score:.0%}, placing you in the {session_tier!r} tier."
+    )
+    sent2 = (
+        f"Your strongest dimension was "
+        f"{'semantic accuracy' if avg_semantic == max(avg_semantic, avg_kw, avg_relevance) else 'question relevance' if avg_relevance == max(avg_semantic, avg_kw, avg_relevance) else 'keyword coverage'}, "
+        f"while "
+        f"{'answer structure' if avg_discourse < min(avg_semantic, avg_kw) else 'keyword recall' if avg_kw < avg_semantic else 'conceptual depth'} "
+        f"was the area that dragged your score down most."
+    )
+    sent3_trend = {
+        "improving":  "Your scores improved as the session progressed, suggesting you warm up well — try to bring that energy earlier.",
+        "declining":  "Your scores trended downward across the session, which may indicate fatigue or unfamiliar later questions — pacing and preparation are key.",
+        "consistent": "Your performance was broadly consistent across questions, which shows stable but uniform preparation.",
+    }[trend_direction]
+    sent4 = (
+        f"To move to the next tier, prioritise: "
+        + "; ".join(improvements[:2]) + "."
+        if improvements else
+        "Continue building on your strengths with increasingly complex questions and timed practice."
     )
 
-    input_text = json.dumps(
-        {
-            "question": q.get("question", ""),
-            "reference_answers": q.get("answer_variants", []),
-            "candidate_answer": sample.get("candidate", ""),
-            "metrics": evaluation,
-            "original_quality": sample.get("_migration_notes", {}).get("original_quality"),
+    summary_paragraph = " ".join([sent1, sent2, sent3_trend, sent4])
+
+    return {
+        "session_score":       round(avg_score, 4),
+        "score_tier":          session_tier,
+        "score_trend":         scores,
+        "trend_direction":     trend_direction,
+        "strengths":           strengths[:4],
+        "improvement_areas":   improvements[:4],
+        "grammar_summary":     grammar_summary,
+        "summary_paragraph":   summary_paragraph,
+        "per_question_scores": per_q_scores,
+        "metric_averages":     {
+            "semantic_similarity": round(avg_semantic,  3),
+            "keyword_coverage":    round(avg_kw,        3),
+            "question_relevance":  round(avg_relevance, 3),
+            "discourse_quality":   round(avg_discourse, 3),
+            "lexical_diversity":   round(avg_lexical,   3),
+            "length_score":        round(avg_length,    3),
         },
-        ensure_ascii=False,
-    )
-
-    target_text = json.dumps(
-        {
-            "feedback_paragraph": payload["feedback_paragraph"],
-            "improvement_bullets": payload["improvement_bullets"],
-            "question_summary": payload["question_summary"],
-            "session_summary_hint": payload["session_summary_hint"],
-        },
-        ensure_ascii=False,
-    )
-
-    return {"input_text": input_text, "target_text": target_text, "payload": payload}
-
-
-def _extract_missing_keywords(question_data: Dict[str, Any], candidate: str) -> List[str]:
-    expected = question_data.get("expected_keywords", {}) or {}
-    if isinstance(expected, dict):
-        keywords = []
-        for group in ["critical", "supporting", "bonus"]:
-            keywords.extend(expected.get(group, []) or [])
-    else:
-        keywords = list(expected)
-    cand = normalize(candidate)
-    missing = []
-    for kw in keywords:
-        if normalize(str(kw)) not in cand:
-            missing.append(str(kw))
-    return _unique_nonempty(missing)
-
-
-def _extract_matched_keywords(question_data: Dict[str, Any], candidate: str) -> List[str]:
-    expected = question_data.get("expected_keywords", {}) or {}
-    if isinstance(expected, dict):
-        keywords = []
-        for group in ["critical", "supporting", "bonus"]:
-            keywords.extend(expected.get(group, []) or [])
-    else:
-        keywords = list(expected)
-    cand = normalize(candidate)
-    matched = []
-    for kw in keywords:
-        if normalize(str(kw)) in cand:
-            matched.append(str(kw))
-    return _unique_nonempty(matched)
+    }

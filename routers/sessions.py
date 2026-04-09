@@ -1,7 +1,20 @@
+"""
+routers/sessions.py
+====================
+Interview session management endpoints.
+
+POST /api/interview/start/
+POST /api/interview/{id}/next/
+POST /api/interview/{id}/terminate/
+GET  /api/interview/{id}/summary/
+GET  /api/interview/{id}/detail/
+GET  /api/interview/user-sessions/?user_id=
+"""
 import json
 import logging
 import os
 from pathlib import Path
+from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select, func
@@ -14,12 +27,11 @@ from ..services.feedback_generator import generate_question_feedback, generate_s
 from ..services.nlp_features import tokenize
 
 logger = logging.getLogger(__name__)
-
-# Routes under /api/interview/ — matches frontend patterns exactly
 router = APIRouter(prefix="/api/interview", tags=["Sessions"])
-
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
+
+# ── question loading ───────────────────────────────────────────────────────────
 
 async def _ensure_questions_loaded(module: Module, db: AsyncSession) -> None:
     count_result = await db.execute(
@@ -56,7 +68,6 @@ async def _ensure_questions_loaded(module: Module, db: AsyncSession) -> None:
         if not text or text in seen_texts:
             continue
         seen_texts.add(text)
-        
         questions.append(Question(
             module_id=module.id,
             topic=q_data.get("topic"),
@@ -88,56 +99,87 @@ async def _question_count(module_id: int, db: AsyncSession) -> int:
     return result.scalar()
 
 
-def _build_evaluation_payload(answer: InterviewAnswer, question: Question) -> dict:
-    cand_tokens = len(tokenize(answer.transcript))
-    ref_tokens = len(tokenize(question.expected_answer)) or 1
-    evaluation = {
-        "final_score": answer.final_score,
-        "semantic_score": answer.semantic_score,
-        "keyword_score": answer.keyword_score,
-        "question_relevance": answer.question_relevance,
-        "lexical_diversity": answer.lexical_diversity,
-        "discourse_score": answer.discourse_score,
-        "length_score": min(1.0, cand_tokens / ref_tokens),
-        "missing_keywords": answer.missing_keywords or [],
+# ── feedback helpers ───────────────────────────────────────────────────────────
+
+def _get_feedback_dict(answer: InterviewAnswer, question: Question) -> dict:
+    """
+    Build the full feedback dict from the new feedback_generator.
+    Uses DB-stored scores + re-runs grammar/content analysis on the transcript.
+    """
+    cand_tokens = len(tokenize(answer.transcript or ""))
+    ref_tokens  = len(tokenize(question.expected_answer or "")) or 1
+
+    metrics = {
+        "final_score":        float(answer.final_score        or 0.0),
+        "semantic_score":     float(answer.semantic_score     or 0.0),
+        "keyword_score":      float(answer.keyword_score      or 0.0),
+        "question_relevance": float(answer.question_relevance or 0.0),
+        "lexical_diversity":  float(answer.lexical_diversity  or 0.0),
+        "discourse_score":    float(answer.discourse_score    or 0.0),
+        "length_score":       min(1.0, cand_tokens / ref_tokens),
+        "missing_keywords":   list(answer.missing_keywords    or []),
+        "matched_keywords":   [],
     }
+
+    question_data = {
+        "id":             str(question.id),
+        "question":       question.question_text,
+        "answer":         question.expected_answer,
+        "primary_answer": question.expected_answer,
+    }
+
     return generate_question_feedback(
-        question_text=question.question_text,
-        expected_answer=question.expected_answer,
-        candidate_answer=answer.transcript,
-        evaluation=evaluation,
-        answer_variants=[question.expected_answer] if question.expected_answer else [],
-        scoring_rationale="",
-        force_template=False,
+        transcript=answer.transcript or "",
+        metrics=metrics,
+        question_data=question_data,
+        question_id=str(question.id),
     )
 
 
-def _serialize_answer(answer: InterviewAnswer, question: Question) -> dict:
-    payload = _build_evaluation_payload(answer, question)
+def _serialize_answer(answer: InterviewAnswer, question: Question, fb: dict) -> dict:
+    """Merge DB answer row + rich feedback dict into an API-ready dict."""
     return {
-        "question_id": question.id,
-        "question_text": question.question_text,
-        "transcript": answer.transcript,
-        "final_score": answer.final_score,
-        "semantic_score": answer.semantic_score,
-        "keyword_score": answer.keyword_score,
+        "question_id":        question.id,
+        "question_text":      question.question_text,
+        "transcript":         answer.transcript or "",
+        "final_score":        answer.final_score,
+        "semantic_score":     answer.semantic_score,
+        "keyword_score":      answer.keyword_score,
         "question_relevance": answer.question_relevance,
-        "lexical_diversity": answer.lexical_diversity,
-        "discourse_score": answer.discourse_score,
-        "penalty": answer.penalty,
-        "feedback": answer.feedback,
-        "tip": answer.tip,
-        "question_summary": payload.get("question_summary"),
-        "improvement_bullets": payload.get("improvement_bullets", []),
-        "missing_keywords": answer.missing_keywords or [],
+        "lexical_diversity":  answer.lexical_diversity,
+        "discourse_score":    answer.discourse_score,
+        "penalty":            answer.penalty,
+        # Use stored feedback/tip (written at evaluation time, may be richer)
+        "feedback":           answer.feedback or fb.get("narrative", ""),
+        "tip":                answer.tip      or "",
+        # New feedback fields from the rich generator
+        "score_tier":          fb.get("score_tier", ""),
+        "improvement_bullets": fb.get("improvement_tips", []),
+        "grammar_notes":       fb.get("grammar_notes", {}),
+        "stt_flags":           fb.get("stt_flags", []),
+        "missing_keywords":    list(answer.missing_keywords or []),
     }
 
 
-def _serialize_session_summary(results: list[dict]) -> dict:
-    return generate_session_summary(results)
+def _build_session_summary(feedback_dicts: List[dict]) -> dict:
+    """
+    Generate session-level summary from a list of feedback dicts.
+    generate_session_summary expects the same dicts returned by
+    generate_question_feedback (contains score, score_tier, grammar_notes, etc.)
+    """
+    if not feedback_dicts:
+        return {
+            "summary_paragraph":   "No answers were recorded for this session.",
+            "strengths":           [],
+            "improvement_areas":   [],
+            "metric_averages":     {},
+            "grammar_summary":     {},
+        }
+    return generate_session_summary(feedback_dicts)
 
 
-# POST /api/interview/start/
+# ── endpoints ──────────────────────────────────────────────────────────────────
+
 @router.post("/start/", response_model=StartInterviewResponse)
 async def start_interview(body: StartInterviewRequest, db: AsyncSession = Depends(get_db)):
     user_result = await db.execute(select(User).where(User.user_id == body.user_id))
@@ -158,13 +200,11 @@ async def start_interview(body: StartInterviewRequest, db: AsyncSession = Depend
 
     session_result = await db.execute(
         select(InterviewSession).where(
-            InterviewSession.user_id == body.user_id,
+            InterviewSession.user_id  == body.user_id,
             InterviewSession.module_id == body.module_id,
-            InterviewSession.status == "active",
+            InterviewSession.status   == "active",
         )
     )
-    # session = session_result.scalar_one_or_none()
-
     session = session_result.scalars().first()
 
     if not session:
@@ -195,7 +235,6 @@ async def start_interview(body: StartInterviewRequest, db: AsyncSession = Depend
     )
 
 
-# POST /api/interview/{session_id}/next/
 @router.post("/{session_id}/next/", response_model=NextQuestionResponse)
 async def next_question(session_id: int, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(InterviewSession).where(InterviewSession.id == session_id))
@@ -213,16 +252,23 @@ async def next_question(session_id: int, db: AsyncSession = Depends(get_db)):
         session.status = "completed"
         await db.commit()
 
-        answers_result = await db.execute(
+        rows_result = await db.execute(
             select(InterviewAnswer, Question)
             .join(Question, InterviewAnswer.question_id == Question.id)
             .where(InterviewAnswer.session_id == session_id)
             .order_by(Question.order)
         )
-        rows = answers_result.all()
-        summary = [_serialize_answer(a, q) for a, q in rows]
-        session_summary = _serialize_session_summary(summary)
-        return NextQuestionResponse(session_id=session_id, completed=True, summary={"results": summary, **session_summary})
+        rows = rows_result.all()
+
+        feedback_dicts = [_get_feedback_dict(a, q) for a, q in rows]
+        results        = [_serialize_answer(a, q, fb) for (a, q), fb in zip(rows, feedback_dicts)]
+        session_sum    = _build_session_summary(feedback_dicts)
+
+        return NextQuestionResponse(
+            session_id=session_id,
+            completed=True,
+            summary={"results": results, **session_sum},
+        )
 
     next_q = await _get_question_at(session, db)
     return NextQuestionResponse(
@@ -239,7 +285,6 @@ async def next_question(session_id: int, db: AsyncSession = Depends(get_db)):
     )
 
 
-# POST /api/interview/{session_id}/terminate/
 @router.post("/{session_id}/terminate/")
 async def terminate_session(session_id: int, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(InterviewSession).where(InterviewSession.id == session_id))
@@ -250,19 +295,26 @@ async def terminate_session(session_id: int, db: AsyncSession = Depends(get_db))
     session.status = "completed"
     await db.commit()
 
-    answers_result = await db.execute(
+    rows_result = await db.execute(
         select(InterviewAnswer, Question)
         .join(Question, InterviewAnswer.question_id == Question.id)
         .where(InterviewAnswer.session_id == session_id)
         .order_by(Question.order)
     )
-    rows = answers_result.all()
-    results = [_serialize_answer(a, q) for a, q in rows]
-    session_summary = _serialize_session_summary(results)
-    return {"session_id": session_id, "terminated": True, "results": results, **session_summary}
+    rows = rows_result.all()
+
+    feedback_dicts = [_get_feedback_dict(a, q) for a, q in rows]
+    results        = [_serialize_answer(a, q, fb) for (a, q), fb in zip(rows, feedback_dicts)]
+    session_sum    = _build_session_summary(feedback_dicts)
+
+    return {
+        "session_id": session_id,
+        "terminated": True,
+        "results":    results,
+        **session_sum,
+    }
 
 
-# GET /api/interview/{session_id}/summary/
 @router.get("/{session_id}/summary/")
 async def get_summary(session_id: int, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(InterviewSession).where(InterviewSession.id == session_id))
@@ -282,21 +334,21 @@ async def get_summary(session_id: int, db: AsyncSession = Depends(get_db)):
         select(func.count()).select_from(Question).where(Question.module_id == session.module_id)
     )
 
-    results = [_serialize_answer(a, q) for a, q in rows]
-    session_summary = _serialize_session_summary(results)
+    feedback_dicts = [_get_feedback_dict(a, q) for a, q in rows]
+    results        = [_serialize_answer(a, q, fb) for (a, q), fb in zip(rows, feedback_dicts)]
+    session_sum    = _build_session_summary(feedback_dicts)
 
     return {
-        "session_id": session_id,
+        "session_id":          session_id,
         "completed_questions": len(results),
-        "total_questions": total_result.scalar(),
-        "session_summary": session_summary.get("session_summary"),
-        "overall_strengths": session_summary.get("overall_strengths", []),
-        "overall_improvements": session_summary.get("overall_improvements", []),
-        "results": results,
+        "total_questions":     total_result.scalar(),
+        "summary_paragraph":   session_sum.get("summary_paragraph", ""),
+        "strengths":           session_sum.get("strengths", []),
+        "improvement_areas":   session_sum.get("improvement_areas", []),
+        "results":             results,
     }
 
 
-# GET /api/interview/{session_id}/detail/
 @router.get("/{session_id}/detail/")
 async def get_session_detail(session_id: int, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(InterviewSession).where(InterviewSession.id == session_id))
@@ -320,17 +372,22 @@ async def get_session_detail(session_id: int, db: AsyncSession = Depends(get_db)
     module_result = await db.execute(select(Module).where(Module.id == session.module_id))
     module = module_result.scalar_one_or_none()
 
+    feedback_dicts = [_get_feedback_dict(a, q) for a, q in rows]
+    results        = [_serialize_answer(a, q, fb) for (a, q), fb in zip(rows, feedback_dicts)]
+    session_sum    = _build_session_summary(feedback_dicts)
+
     return {
-        "session_id": session_id,
-        "created_at": session.created_at,
-        "module_name": module.module_name if module else "Unknown",
-        "total_score": round(avg_result.scalar() or 0.0, 1),
-        "session_summary": _serialize_session_summary([_serialize_answer(a, q) for a, q in rows]).get("session_summary"),
-        "results": [_serialize_answer(a, q) for a, q in rows],
+        "session_id":        session_id,
+        "created_at":        session.created_at,
+        "module_name":       module.module_name if module else "Unknown",
+        "total_score":       round(avg_result.scalar() or 0.0, 1),
+        "summary_paragraph": session_sum.get("summary_paragraph", ""),
+        "strengths":         session_sum.get("strengths", []),
+        "improvement_areas": session_sum.get("improvement_areas", []),
+        "results":           results,
     }
 
 
-# GET /api/interview/user-sessions/?user_id={id}
 @router.get("/user-sessions/")
 async def get_user_sessions(user_id: int, db: AsyncSession = Depends(get_db)):
     sessions_result = await db.execute(
@@ -354,10 +411,10 @@ async def get_user_sessions(user_id: int, db: AsyncSession = Depends(get_db)):
         module = module_result.scalar_one_or_none()
 
         output.append({
-            "id": s.id,
-            "created_at": s.created_at,
-            "module_name": module.module_name if module else "Unknown",
-            "total_score": round(avg_result.scalar() or 0.0, 1),
+            "id":             s.id,
+            "created_at":     s.created_at,
+            "module_name":    module.module_name if module else "Unknown",
+            "total_score":    round(avg_result.scalar() or 0.0, 1),
             "question_count": count_result.scalar(),
         })
 

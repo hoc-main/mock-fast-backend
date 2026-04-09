@@ -1,47 +1,48 @@
 """
 WebSocket transcription endpoint — Deepgram Flux backend.
 
-Flux handles end-of-turn detection natively via EndOfTurn events.
-No more manual silence timers or VAD on the backend.
-
-Protocol (client → server):  UNCHANGED
-  - binary frames : raw 16-bit PCM at 16kHz mono
+Protocol (client → server):
+  - binary frames : raw 16-bit PCM at 16 kHz mono
   - text "STOP"   : flush, evaluate, save, close
 
-Protocol (server → client):  UNCHANGED
-  - {"type": "partial",    "text": "..."}
-  - {"type": "final",      "text": "..."}
-  - {"type": "evaluation", "transcript": "...", "evaluation": {...}}
-  - {"type": "error",      "message": "..."}
+Protocol (server → client):
+  Instant messages (always available):
+    {"type": "partial",         "text": "..."}
+    {"type": "silence",         "message": "..."}
+    {"type": "still_listening", "partial_transcript": "...", "message": "..."}
+    {"type": "repeat_question", "question": "...", "topic": "..."}
+    {"type": "skipped",         "completed": bool, ...}
+    {"type": "session_ended",   "message": "..."}
+    {"type": "evaluation",      "transcript": "...", "evaluation": {...}}
+    {"type": "error",           "message": "..."}
 """
+
 import asyncio
 import json
 import logging
-import os
-from typing import Optional
 import time
+from typing import Optional
 
 from deepgram import AsyncDeepgramClient
 from deepgram.core.events import EventType
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..db.database import AsyncSessionLocal
 from ..db.models import InterviewAnswer, InterviewSession, Question
-from ..services.evaluation import classify_confirmation_intent, evaluate_answer
+from ..services.evaluation import evaluate_answer
+from ..services.voice_intent import classify_voice_intent, classify_nav_intent
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["Transcription"])
 
-# ── Deepgram client ───────────────────────────────────────────────────────────
-# AsyncDeepgramClient reads DEEPGRAM_API_KEY from env automatically
 _dg_client = AsyncDeepgramClient()
 
 
-# ── DB helpers (unchanged) ────────────────────────────────────────────────────
+# ── DB helpers ─────────────────────────────────────────────────────────────────
 
 async def _get_current_question(
     session: InterviewSession, db: AsyncSession
@@ -54,6 +55,15 @@ async def _get_current_question(
         .limit(1)
     )
     return result.scalar_one_or_none()
+
+
+async def _question_count(module_id: int, db: AsyncSession) -> int:
+    result = await db.execute(
+        select(func.count())
+        .select_from(Question)
+        .where(Question.module_id == module_id)
+    )
+    return result.scalar()
 
 
 async def _upsert_answer(
@@ -96,8 +106,14 @@ async def _upsert_answer(
     await db.commit()
 
 
+# ── transcription WebSocket ────────────────────────────────────────────────────
+
 @router.websocket("/ws/transcribe/{session_id}")
-async def transcribe_websocket(session_id: int, websocket: WebSocket, prior: str = Query(default="")):
+async def transcribe_websocket(
+    session_id: int,
+    websocket: WebSocket,
+    prior: str = Query(default=""),
+):
     await websocket.accept()
     logger.info(f"[session={session_id}] WebSocket connected")
 
@@ -110,137 +126,247 @@ async def transcribe_websocket(session_id: int, websocket: WebSocket, prior: str
         session = result.scalar_one_or_none()
 
         if not session:
-            await websocket.send_text(json.dumps({"type": "error", "message": f"Session {session_id} not found"}))
+            await websocket.send_text(json.dumps(
+                {"type": "error", "message": f"Session {session_id} not found"}
+            ))
             await websocket.close()
             return
 
         if session.status == "completed":
-            await websocket.send_text(json.dumps({"type": "error", "message": "Session already completed"}))
+            await websocket.send_text(json.dumps(
+                {"type": "error", "message": "Session already completed"}
+            ))
             await websocket.close()
             return
 
         current_question = await _get_current_question(session, db)
         if not current_question:
-            await websocket.send_text(json.dumps({"type": "error", "message": "No question at current index"}))
+            await websocket.send_text(json.dumps(
+                {"type": "error", "message": "No question at current index"}
+            ))
             await websocket.close()
             return
 
-        logger.info(f"[session={session_id}] Q#{session.current_index}: {current_question.question_text[:60]}...")
+        logger.info(
+            f"[session={session_id}] Q#{session.current_index}: "
+            f"{current_question.question_text[:60]}..."
+        )
 
         final_transcript: str = ""
-        last_partial: str = ""
-        # Mutable state accessible from nested async functions
+        last_partial:     str = ""
         state = {
-            "first_audio_at": None,   # when first PCM chunk arrived
+            "first_audio_at":  None,
             "evaluation_sent": False,
+            # Incremented on every Deepgram Update event.
+            # > 0 means user was actively speaking before this EndOfTurn —
+            # used to detect premature EndOfTurn on a mid-sentence pause.
+            "update_count": 0,
         }
 
-        async def handle_end_of_turn(transcript: str) -> None:
+        async def handle_end_of_turn(raw_transcript: str) -> None:
+            """
+            Called on Deepgram EndOfTurn or STOP command.
+
+            Step 1: classify intent (silence / repeat / skip / end / answer)
+            Step 2: act — only "answer" passes through to NLP evaluation.
+            """
             if state["evaluation_sent"]:
                 return
-
-            # ✅ Guard: reject suspiciously short transcripts
-            # Mid-sentence interruptions produce short incomplete text
-            # word_count = len(transcript.split())
-            # if word_count < 5:
-            #     logger.info(
-            #         f"[session={session_id}] EndOfTurn ignored — only {word_count} words: '{transcript}'"
-            #     )
-            #     return
-
             state["evaluation_sent"] = True
 
-            current = transcript or last_partial
+            current = (raw_transcript or last_partial).strip()
+
+            # ── classify ───────────────────────────────────────────────────────
+            intent_result = classify_voice_intent(current)
+            logger.info(
+                f"[session={session_id}] intent={intent_result.intent} "
+                f"({intent_result.confidence:.2f}) — {intent_result.reason}"
+            )
+
+            # ── silence ────────────────────────────────────────────────────────
+            if intent_result.intent == "silence":
+                await websocket.send_text(json.dumps({
+                    "type":    "silence",
+                    "message": "We didn't catch anything. Please go ahead and answer when ready.",
+                }))
+                state["evaluation_sent"] = False
+                return
+
+            # ── repeat question ────────────────────────────────────────────────
+            if intent_result.intent == "repeat":
+                logger.info(f"[session={session_id}] sending repeat_question")
+                await websocket.send_text(json.dumps({
+                    "type":     "repeat_question",
+                    "question": current_question.question_text,
+                    "topic":    current_question.topic or "",
+                }))
+                state["evaluation_sent"] = False
+                return
+
+            # ── skip question ──────────────────────────────────────────────────
+            if intent_result.intent == "skip":
+                logger.info(f"[session={session_id}] skipping question")
+                total = await _question_count(session.module_id, db)
+                session.current_index += 1
+                await db.commit()
+                await db.refresh(session)
+
+                if session.current_index >= total:
+                    session.status = "completed"
+                    await db.commit()
+                    await websocket.send_text(json.dumps({
+                        "type":      "skipped",
+                        "completed": True,
+                        "message":   "Last question skipped. Interview complete.",
+                    }))
+                else:
+                    next_q = await _get_current_question(session, db)
+                    await websocket.send_text(json.dumps({
+                        "type":            "skipped",
+                        "completed":       False,
+                        "question_index":  session.current_index,
+                        "total_questions": total,
+                        "next_question": {
+                            "id":       next_q.id,
+                            "topic":    next_q.topic or "",
+                            "question": next_q.question_text,
+                        },
+                    }))
+                return
+
+            # ── end interview ──────────────────────────────────────────────────
+            if intent_result.intent == "end":
+                logger.info(f"[session={session_id}] ending interview on user request")
+                session.status = "completed"
+                await db.commit()
+                await websocket.send_text(json.dumps({
+                    "type":    "session_ended",
+                    "message": "Interview ended at your request.",
+                }))
+                await websocket.close()
+                return
+
+            # ── premature EndOfTurn guard ──────────────────────────────────────
+            # If the user was actively speaking (update_count > 0) but the
+            # transcript is too short, Deepgram fired on a mid-sentence pause.
+            # Hold off and wait for more speech rather than evaluating a fragment.
+            # Refusals ("I don't know") bypass this gate — they are short but complete.
+            _word_count = (
+                len(intent_result.cleaned_text.split())
+                if intent_result.cleaned_text else 0
+            )
+            _is_refusal = any(
+                p in (intent_result.cleaned_text or "")
+                for p in ("don t know", "dont know", "not sure", "no idea",
+                          "cannot say", "can t say")
+            )
+            if _word_count < 8 and state["update_count"] > 0 and not _is_refusal:
+                logger.info(
+                    f"[session={session_id}] premature EndOfTurn — "
+                    f"{_word_count} words, {state['update_count']} prior updates"
+                )
+                await websocket.send_text(json.dumps({
+                    "type":               "still_listening",
+                    "partial_transcript": current,
+                    "message":            "Take your time, we're still listening...",
+                }))
+                # Reset so the next EndOfTurn can still be processed
+                # (don't zero update_count — let it keep accumulating)
+                state["evaluation_sent"] = False
+                return
+
+            # ── answer → NLP evaluation ────────────────────────────────────────
             full_transcript = (
                 f"{prior.strip()} {current}".strip()
                 if prior.strip() else current
             )
-
-            logger.info(f"[session={session_id}] EndOfTurn → evaluating: {full_transcript[:80]}")
+            logger.info(f"[session={session_id}] evaluating: {full_transcript[:80]}")
 
             question_data = {
-                "id": current_question.id,
+                "id":       current_question.id,
                 "question": current_question.question_text,
-                "answer": current_question.expected_answer,
+                "answer":   current_question.expected_answer,
             }
             evaluation = evaluate_answer(
                 transcript=full_transcript,
                 question_data=question_data,
-                model_path=(session.module.model_pkl_path if session.module else None),
+                model_path=(
+                    session.module.model_pkl_path if session.module else None
+                ),
             )
 
             await _upsert_answer(session, current_question, full_transcript, evaluation, db)
+            state["update_count"] = 0   # reset for the next question
             logger.info(f"[session={session_id}] saved. score={evaluation['final_score']}")
 
             await websocket.send_text(json.dumps({
-                "type": "evaluation",
+                "type":       "evaluation",
                 "transcript": full_transcript,
                 "evaluation": {
                     "score":            evaluation["final_score"],
                     "semantic_score":   evaluation["semantic_score"],
                     "keyword_score":    evaluation["keyword_score"],
+                    "question_relevance": evaluation.get("question_relevance", 0.0),
                     "feedback":         evaluation["feedback"],
                     "tip":              evaluation["tip"],
-                    "question_summary": evaluation.get("question_summary"),
-                    "feedback_bullets": evaluation.get("feedback_bullets", []),
-                    "session_summary_hint": evaluation.get("session_summary_hint"),
+                    "score_tier":       evaluation.get("score_tier", ""),
+                    "improvement_tips": evaluation.get("improvement_tips", []),
+                    "stt_flags":        evaluation.get("stt_flags", []),
                     "missing_keywords": evaluation["missing_keywords"],
                 },
             }))
 
+        # ── Deepgram connection ────────────────────────────────────────────────
         try:
             async with _dg_client.listen.v2.connect(
                 model="flux-general-en",
                 encoding="linear16",
                 sample_rate="16000",
                 eot_timeout_ms="8000",
-                eot_threshold="0.8"
+                eot_threshold="0.8",
             ) as dg_conn:
 
                 def on_message(message) -> None:
                     nonlocal final_transcript, last_partial
                     if getattr(message, "type", "") != "TurnInfo":
                         return
-
                     transcript = getattr(message, "transcript", "").strip()
-                    if not transcript:
-                        return
-
-                    event = getattr(message, "event", "")
-                    logger.debug(f"[session={session_id}] {event}: {transcript[:60]}")
+                    event      = getattr(message, "event", "")
 
                     if event == "Update":
                         last_partial = transcript
-                        print("update: ", transcript)
+                        state["update_count"] += 1   # user is actively speaking
+                        if transcript:
+                            asyncio.create_task(websocket.send_text(json.dumps({
+                                "type": "partial", "text": transcript,
+                            })))
                     elif event == "EndOfTurn":
                         final_transcript = transcript
-                        last_partial = ""
-                        print("end of turn: ", transcript)
+                        last_partial     = ""
+                        logger.debug(
+                            f"[session={session_id}] EndOfTurn: '{transcript[:60]}'"
+                        )
                         asyncio.create_task(handle_end_of_turn(transcript))
 
                 def on_error(error) -> None:
                     logger.error(f"[session={session_id}] Deepgram error: {error}")
-                    asyncio.create_task(
-                        websocket.send_text(json.dumps({"type": "error", "message": str(error)}))
-                    )
+                    asyncio.create_task(websocket.send_text(json.dumps({
+                        "type": "error", "message": str(error),
+                    })))
 
                 dg_conn.on(EventType.MESSAGE, on_message)
-                dg_conn.on(EventType.ERROR, on_error)
-
+                dg_conn.on(EventType.ERROR,   on_error)
                 listen_task = asyncio.create_task(dg_conn.start_listening())
 
                 try:
                     while True:
                         message = await websocket.receive()
-
                         if "bytes" in message:
                             pcm = message["bytes"]
                             if len(pcm) >= 2:
-                                # ✅ Track when first audio arrives
                                 if state["first_audio_at"] is None:
                                     state["first_audio_at"] = time.time()
                                 await dg_conn._send(pcm)
-
                         elif "text" in message:
                             if message["text"].strip().upper() == "STOP":
                                 listen_task.cancel()
@@ -250,28 +376,46 @@ async def transcribe_websocket(session_id: int, websocket: WebSocket, prior: str
                                 break
 
                 except (WebSocketDisconnect, RuntimeError) as exc:
-                    if isinstance(exc, RuntimeError) and "disconnect" not in str(exc).lower():
+                    if (
+                        isinstance(exc, RuntimeError)
+                        and "disconnect" not in str(exc).lower()
+                    ):
                         raise
                     logger.info(f"[session={session_id}] client disconnected (normal)")
                     listen_task.cancel()
+
                 except Exception as exc:
                     logger.exception(f"[session={session_id}] error: {exc}")
                     listen_task.cancel()
                     try:
-                        await websocket.send_text(json.dumps({"type": "error", "message": str(exc)}))
+                        await websocket.send_text(json.dumps({
+                            "type": "error", "message": str(exc),
+                        }))
                     except Exception:
                         pass
 
         except Exception as exc:
-            logger.exception(f"[session={session_id}] Flux connection failed: {exc}")
+            logger.exception(
+                f"[session={session_id}] Deepgram connection failed: {exc}"
+            )
             try:
-                await websocket.send_text(json.dumps({"type": "error", "message": str(exc)}))
+                await websocket.send_text(json.dumps({
+                    "type": "error", "message": str(exc),
+                }))
                 await websocket.close()
             except Exception:
                 pass
 
+
+# ── intent WebSocket (between questions) ──────────────────────────────────────
+
 @router.websocket("/ws/intent/{session_id}")
 async def intent_websocket(session_id: int, websocket: WebSocket):
+    """
+    Between-question navigation intent.
+    Returns: {"session_id": N, "intent": "next|continue|repeat|skip|end",
+              "transcript": "...", "confidence": 0.9}
+    """
     await websocket.accept()
     logger.info(f"[intent session={session_id}] connected")
     last_partial: str = ""
@@ -282,16 +426,20 @@ async def intent_websocket(session_id: int, websocket: WebSocket):
         if intent_sent:
             return
         intent_sent = True
-        intent = classify_confirmation_intent(transcript)
-        logger.info(f"[intent session={session_id}] transcript='{transcript}' intent={intent}")
+        result = classify_nav_intent(transcript)
+        logger.info(
+            f"[intent session={session_id}] intent={result.intent} "
+            f"({result.confidence:.2f}) transcript='{transcript}'"
+        )
         try:
             await websocket.send_text(json.dumps({
                 "session_id": session_id,
-                "intent": intent,
+                "intent":     result.intent,
                 "transcript": transcript,
+                "confidence": round(result.confidence, 2),
             }))
         except Exception:
-            pass  # client may have already disconnected
+            pass
 
     try:
         async with _dg_client.listen.v2.connect(
@@ -318,19 +466,16 @@ async def intent_websocket(session_id: int, websocket: WebSocket):
                 logger.error(f"[intent session={session_id}] Deepgram error: {error}")
 
             dg_conn.on(EventType.MESSAGE, on_message)
-            dg_conn.on(EventType.ERROR, on_error)
-
+            dg_conn.on(EventType.ERROR,   on_error)
             listen_task = asyncio.create_task(dg_conn.start_listening())
 
             try:
                 while True:
                     message = await websocket.receive()
-
                     if "bytes" in message:
                         pcm = message["bytes"]
                         if len(pcm) >= 2:
                             await dg_conn._send(pcm)
-
                     elif "text" in message:
                         if message["text"].strip().upper() == "STOP":
                             listen_task.cancel()
@@ -340,14 +485,22 @@ async def intent_websocket(session_id: int, websocket: WebSocket):
                             break
 
             except (WebSocketDisconnect, RuntimeError) as exc:
-                if isinstance(exc, RuntimeError) and "disconnect" not in str(exc).lower():
+                if (
+                    isinstance(exc, RuntimeError)
+                    and "disconnect" not in str(exc).lower()
+                ):
                     raise
-                logger.info(f"[intent session={session_id}] client disconnected (normal)")
+                logger.info(f"[intent session={session_id}] client disconnected")
                 listen_task.cancel()
 
     except Exception as exc:
         logger.exception(f"[intent session={session_id}] error: {exc}")
         try:
-            await websocket.send_text(json.dumps({"intent": "next"}))
+            await websocket.send_text(json.dumps({
+                "session_id": session_id,
+                "intent":     "next",
+                "transcript": "",
+                "confidence": 0.0,
+            }))
         except Exception:
             pass

@@ -2,9 +2,9 @@
 Interview FastAPI Server
 ========================
 Start:
-    uvicorn interview_fastapi.main:app --host 0.0.0.0 --port 8001 --reload
+    uvicorn mock_fast_backend.main:app --host 0.0.0.0 --port 8001 --reload
 
-Route alignment with frontend API_BASE = "http://localhost:8001/api":
+Routes:
     GET  /api/domains/
     GET  /api/domains/{id}/subdomains/
     GET  /api/subdomains/{id}/modules/
@@ -16,18 +16,20 @@ Route alignment with frontend API_BASE = "http://localhost:8001/api":
     GET  /api/interview/{id}/detail/
     GET  /api/interview/user-sessions/?user_id=
     GET  /api/performance-stats/?user_id=
+    POST /api/feedback/question
+    POST /api/feedback/session
+    POST /api/feedback/session/from-db
     WS   /ws/transcribe/{session_id}
     WS   /ws/intent/{session_id}
+    GET  /health
 """
 import logging
 import os
-from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .routers import hierarchy, sessions, stats, transcription
-from .services.transcription import load_model
+from .routers import hierarchy, sessions, stats, transcription, feedback
 
 logging.basicConfig(
     level=logging.INFO,
@@ -35,20 +37,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-
-# @asynccontextmanager
-# async def lifespan(app: FastAPI):
-#     logger.info("Starting up — loading Vosk model...")
-#     load_model()
-#     logger.info("Ready to accept connections.")
-#     yield
-#     logger.info("Shutting down.")
-
-
 app = FastAPI(
     title="Interview Transcription API",
-    version="1.0.0",
-    # lifespan=lifespan,
+    version="2.0.0",
 )
 
 app.add_middleware(
@@ -59,10 +50,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(hierarchy.router)   # /api/domains/, /api/subdomains/, /api/modules/
-app.include_router(sessions.router)   # /api/interview/...
-app.include_router(stats.router)      # /api/performance-stats/
+app.include_router(hierarchy.router)      # /api/domains/, /api/subdomains/, /api/modules/
+app.include_router(sessions.router)       # /api/interview/...
+app.include_router(stats.router)          # /api/performance-stats/
 app.include_router(transcription.router)  # /ws/transcribe/{id}, /ws/intent/{id}
+app.include_router(feedback.router)       # /api/feedback/...
 
 
 @app.get("/health")
