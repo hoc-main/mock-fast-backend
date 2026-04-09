@@ -22,10 +22,19 @@ class EvaluationOut(BaseModel):
     penalty: float
     feedback: str
     tip: str
-    question_summary: Optional[str] = None
-    feedback_bullets: List[str] = []
-    session_summary_hint: Optional[str] = None
+    score_tier: str = ""
+    improvement_tips: List[str] = []
+    stt_flags: List[str] = []
     missing_keywords: List[str]
+
+
+class EvaluationRequest(BaseModel):
+    transcript: str
+    question_id: int
+
+
+class EvaluationResponse(BaseModel):
+    evaluation: EvaluationOut
 
 
 # ── Session ───────────────────────────────────────────────────────────────────

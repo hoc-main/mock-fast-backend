@@ -22,7 +22,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..db.database import get_db
 from ..db.models import InterviewAnswer, InterviewSession, Module, Question, User
-from ..schemas import NextQuestionResponse, QuestionOut, StartInterviewRequest, StartInterviewResponse
+from ..schemas import EvaluationRequest, EvaluationResponse, EvaluationOut, NextQuestionResponse, QuestionOut, StartInterviewRequest, StartInterviewResponse
+from ..services.evaluation import evaluate_answer
 from ..services.feedback_generator import generate_question_feedback, generate_session_summary
 from ..services.nlp_features import tokenize
 
@@ -419,3 +420,105 @@ async def get_user_sessions(user_id: int, db: AsyncSession = Depends(get_db)):
         })
 
     return {"data": output}
+
+
+# ── deferred evaluation ────────────────────────────────────────────────────────
+
+async def _upsert_answer(
+    session: InterviewSession,
+    question: Question,
+    transcript: str,
+    evaluation: dict,
+    db: AsyncSession,
+) -> None:
+    result = await db.execute(
+        select(InterviewAnswer).where(
+            InterviewAnswer.session_id == session.id,
+            InterviewAnswer.question_id == question.id,
+        )
+    )
+    answer = result.scalar_one_or_none()
+    fields = dict(
+        transcript=transcript,
+        semantic_score=evaluation["semantic_score"],
+        keyword_score=evaluation["keyword_score"],
+        question_relevance=evaluation.get("question_relevance", 0.0),
+        lexical_diversity=evaluation.get("lexical_diversity", 0.0),
+        discourse_score=evaluation.get("discourse_score", 0.0),
+        penalty=evaluation.get("penalty", 0.0),
+        final_score=evaluation["final_score"],
+        feedback=evaluation["feedback"],
+        tip=evaluation["tip"],
+        missing_keywords=evaluation["missing_keywords"],
+    )
+    if answer:
+        for k, v in fields.items():
+            setattr(answer, k, v)
+    else:
+        db.add(InterviewAnswer(
+            session_id=session.id,
+            question_id=question.id,
+            raw_segments=[],
+            **fields,
+        ))
+    await db.commit()
+
+
+@router.post("/{session_id}/evaluate/", response_model=EvaluationResponse)
+async def evaluate_question(
+    session_id: int,
+    body: EvaluationRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Quality check and save an answer once the user confirms they are done.
+    """
+    from sqlalchemy.orm import selectinload
+    result = await db.execute(
+        select(InterviewSession)
+        .options(selectinload(InterviewSession.module))
+        .where(InterviewSession.id == session_id)
+    )
+    session = result.scalar_one_or_none()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    q_result = await db.execute(select(Question).where(Question.id == body.question_id))
+    question = q_result.scalar_one_or_none()
+    if not question:
+        raise HTTPException(status_code=404, detail="Question not found")
+
+    question_data = {
+        "id":       question.id,
+        "question": question.question_text,
+        "answer":   question.expected_answer,
+    }
+
+    # Run the NLP evaluation (blocking call inside to_thread to keep loop responsive)
+    import asyncio
+    evaluation = await asyncio.to_thread(
+        evaluate_answer,
+        transcript=body.transcript,
+        question_data=question_data,
+        model_path=session.module.model_pkl_path if session.module else None
+    )
+
+    await _upsert_answer(session, question, body.transcript, evaluation, db)
+
+    return EvaluationResponse(
+        evaluation=EvaluationOut(
+            score=evaluation["final_score"],
+            semantic_score=evaluation["semantic_score"],
+            keyword_score=evaluation["keyword_score"],
+            question_relevance=evaluation.get("question_relevance", 0.0),
+            lexical_diversity=evaluation.get("lexical_diversity", 0.0),
+            discourse_score=evaluation.get("discourse_score", 0.0),
+            penalty=evaluation.get("penalty", 0.0),
+            feedback=evaluation["feedback"],
+            tip=evaluation["tip"],
+            score_tier=evaluation.get("score_tier", ""),
+            improvement_tips=evaluation.get("improvement_tips", []),
+            stt_flags=evaluation.get("stt_flags", []),
+            missing_keywords=evaluation["missing_keywords"],
+        )
+    )

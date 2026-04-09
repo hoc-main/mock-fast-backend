@@ -246,74 +246,20 @@ async def transcribe_websocket(
                 await websocket.close()
                 return
 
-            # ── premature EndOfTurn guard ──────────────────────────────────────
-            # If the user was actively speaking (update_count > 0) but the
-            # transcript is too short, Deepgram fired on a mid-sentence pause.
-            # Hold off and wait for more speech rather than evaluating a fragment.
-            # Refusals ("I don't know") bypass this gate — they are short but complete.
-            _word_count = (
-                len(intent_result.cleaned_text.split())
-                if intent_result.cleaned_text else 0
-            )
-            _is_refusal = any(
-                p in (intent_result.cleaned_text or "")
-                for p in ("don t know", "dont know", "not sure", "no idea",
-                          "cannot say", "can t say")
-            )
-            if _word_count < 8 and state["update_count"] > 0 and not _is_refusal:
-                logger.info(
-                    f"[session={session_id}] premature EndOfTurn — "
-                    f"{_word_count} words, {state['update_count']} prior updates"
-                )
-                await websocket.send_text(json.dumps({
-                    "type":               "still_listening",
-                    "partial_transcript": current,
-                    "message":            "Take your time, we're still listening...",
-                }))
-                # Reset so the next EndOfTurn can still be processed
-                # (don't zero update_count — let it keep accumulating)
-                state["evaluation_sent"] = False
-                return
 
-            # ── answer → NLP evaluation ────────────────────────────────────────
+            # ── answer → non-blocking turn finish ──────────────────────────────
             full_transcript = (
                 f"{prior.strip()} {current}".strip()
                 if prior.strip() else current
             )
-            logger.info(f"[session={session_id}] evaluating: {full_transcript[:80]}")
+            logger.info(f"[session={session_id}] turn finished: {full_transcript[:80]}")
 
-            question_data = {
-                "id":       current_question.id,
-                "question": current_question.question_text,
-                "answer":   current_question.expected_answer,
-            }
-            evaluation = evaluate_answer(
-                transcript=full_transcript,
-                question_data=question_data,
-                model_path=(
-                    session.module.model_pkl_path if session.module else None
-                ),
-            )
-
-            await _upsert_answer(session, current_question, full_transcript, evaluation, db)
-            state["update_count"] = 0   # reset for the next question
-            logger.info(f"[session={session_id}] saved. score={evaluation['final_score']}")
+            # Note: evaluate_answer and _upsert_answer are DEFERRED 
+            # until the user confirms they are finished via the frontend.
 
             await websocket.send_text(json.dumps({
-                "type":       "evaluation",
+                "type":       "turn_finished",
                 "transcript": full_transcript,
-                "evaluation": {
-                    "score":            evaluation["final_score"],
-                    "semantic_score":   evaluation["semantic_score"],
-                    "keyword_score":    evaluation["keyword_score"],
-                    "question_relevance": evaluation.get("question_relevance", 0.0),
-                    "feedback":         evaluation["feedback"],
-                    "tip":              evaluation["tip"],
-                    "score_tier":       evaluation.get("score_tier", ""),
-                    "improvement_tips": evaluation.get("improvement_tips", []),
-                    "stt_flags":        evaluation.get("stt_flags", []),
-                    "missing_keywords": evaluation["missing_keywords"],
-                },
             }))
 
         # ── Deepgram connection ────────────────────────────────────────────────
@@ -323,7 +269,7 @@ async def transcribe_websocket(
                 encoding="linear16",
                 sample_rate="16000",
                 eot_timeout_ms="8000",
-                eot_threshold="0.8",
+                eot_threshold="0.9",
             ) as dg_conn:
 
                 def on_message(message) -> None:
