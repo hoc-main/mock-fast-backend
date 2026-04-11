@@ -171,6 +171,7 @@ async def transcribe_websocket(
                     "type":    "silence",
                     "message": "We didn't catch anything. Please go ahead and answer when ready.",
                 }))
+                state["evaluation_sent"] = False
                 return
 
             if intent_result.intent == "repeat":
