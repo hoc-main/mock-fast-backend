@@ -29,7 +29,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .routers import hierarchy, sessions, stats, transcription, feedback
+from .routers import hierarchy, sessions, stats, transcription, feedback, tts
 
 logging.basicConfig(
     level=logging.INFO,
@@ -55,6 +55,7 @@ app.include_router(sessions.router)       # /api/interview/...
 app.include_router(stats.router)          # /api/performance-stats/
 app.include_router(transcription.router)  # /ws/transcribe/{id}, /ws/intent/{id}
 app.include_router(feedback.router)       # /api/feedback/...
+app.include_router(tts.router)            # /api/tts/
 
 
 @app.get("/health")

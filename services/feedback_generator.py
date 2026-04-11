@@ -110,7 +110,7 @@ _NARRATIVE_TEMPLATES = {
     "close_strong":  "Overall, this was a commendable response that would leave a positive impression in an interview.",
     "close_good":    "With a bit more precision and completeness, this answer could easily reach a strong level.",
     "close_partial": "Focusing on the missing keywords and adding a concrete example would significantly improve this answer.",
-    "close_weak":    "Revisiting the fundamentals of this topic and practising a structured 'define → explain → example' approach will help greatly.",
+    "close_weak":    "Revisiting the fundamentals of this topic and practising a structured 'define it, explain it, then give an example' approach will help greatly.",
 }
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
