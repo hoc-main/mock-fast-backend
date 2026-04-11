@@ -81,3 +81,88 @@ async def get_performance_stats(user_id: int, db: AsyncSession = Depends(get_db)
         "technical_score": technical_score,
         "global_rank": rank,
     }
+
+from datetime import datetime, timedelta
+from itertools import groupby
+from pydantic import BaseModel
+from typing import List
+from ..db.models import User
+
+class LeaderboardEntry(BaseModel):
+    user_id: int
+    name: str
+    avg_score: float
+    streak: int
+    rank: int
+
+@router.get("/mock/leaderboard/", response_model=List[LeaderboardEntry])
+async def get_mock_leaderboard(limit: int = 50, db: AsyncSession = Depends(get_db)):
+    """
+    Returns the global leaderboard of users based on their average score and active streak.
+    """
+    # 1. Fetch dates of all completed sessions grouped by user, ordered descending
+    dates_query = await db.execute(
+        select(InterviewSession.user_id, func.date(InterviewSession.created_at).label("session_date"))
+        .where(InterviewSession.status == "completed")
+        .group_by(InterviewSession.user_id, func.date(InterviewSession.created_at))
+        .order_by(InterviewSession.user_id, desc("session_date"))
+    )
+    user_dates = dates_query.all()
+
+    # 2. Compute dynamic streak per user
+    today = datetime.utcnow().date()
+    yesterday = today - timedelta(days=1)
+    
+    streaks = {}
+    for user_id, items in groupby(user_dates, key=lambda x: x.user_id):
+        dates_list = [i.session_date for i in items]
+        streak = 0
+        # Streak is active if they did a session today or yesterday
+        if dates_list and dates_list[0] >= yesterday:
+            streak = 1
+            for i in range(1, len(dates_list)):
+                if (dates_list[i-1] - dates_list[i]).days == 1:
+                    streak += 1
+                else:
+                    break
+        streaks[user_id] = streak
+
+    # 3. Fetch all average scores per user
+    scores_query = await db.execute(
+        select(
+            InterviewSession.user_id,
+            func.avg(InterviewAnswer.final_score).label("avg_score")
+        )
+        .join(InterviewAnswer, InterviewAnswer.session_id == InterviewSession.id)
+        .where(InterviewSession.status == "completed")
+        .group_by(InterviewSession.user_id)
+    )
+    user_scores = {r.user_id: round(r.avg_score or 0.0, 1) for r in scores_query.all()}
+    
+    # 4. Fetch user names
+    users_query = await db.execute(select(User.user_id, User.first_name, User.last_name))
+    user_names = {u.user_id: f"{u.first_name} {u.last_name}".strip() for u in users_query.all()}
+    
+    # 5. Assemble data
+    leaderboard = []
+    for uid, score in user_scores.items():
+        name = user_names.get(uid)
+        if not name:
+            name = f"User {uid}"
+        leaderboard.append({
+            "user_id": uid,
+            "name": name,
+            "avg_score": score,
+            "streak": streaks.get(uid, 0)
+        })
+        
+    # Sort primarily by avg_score DESC, tie-breaker streak DESC
+    leaderboard.sort(key=lambda x: (x["avg_score"], x["streak"]), reverse=True)
+    
+    # Assign ranks and enforce limit
+    final_result = []
+    for rank, entry in enumerate(leaderboard[:limit], start=1):
+        entry["rank"] = rank
+        final_result.append(LeaderboardEntry(**entry))
+        
+    return final_result
