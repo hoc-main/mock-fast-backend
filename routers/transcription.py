@@ -126,143 +126,163 @@ async def transcribe_websocket(
         session = result.scalar_one_or_none()
 
         if not session:
-            await websocket.send_text(json.dumps(
-                {"type": "error", "message": f"Session {session_id} not found"}
-            ))
+            await websocket.send_text(json.dumps({"type": "error", "message": f"Session {session_id} not found"}))
             await websocket.close()
             return
 
         if session.status == "completed":
-            await websocket.send_text(json.dumps(
-                {"type": "error", "message": "Session already completed"}
-            ))
+            await websocket.send_text(json.dumps({"type": "error", "message": "Session already completed"}))
             await websocket.close()
             return
 
         current_question = await _get_current_question(session, db)
         if not current_question:
-            await websocket.send_text(json.dumps(
-                {"type": "error", "message": "No question at current index"}
-            ))
+            await websocket.send_text(json.dumps({"type": "error", "message": "No question at current index"}))
             await websocket.close()
             return
 
-        logger.info(
-            f"[session={session_id}] Q#{session.current_index}: "
-            f"{current_question.question_text[:60]}..."
-        )
+        logger.info(f"[session={session_id}] Q#{session.current_index}: {current_question.question_text[:60]}...")
 
         final_transcript: str = ""
         last_partial:     str = ""
+        
         state = {
-            "first_audio_at":  None,
-            "evaluation_sent": False,
-            # Incremented on every Deepgram Update event.
-            # > 0 means user was actively speaking before this EndOfTurn —
-            # used to detect premature EndOfTurn on a mid-sentence pause.
-            "update_count": 0,
+            "first_audio_at":   None,
+            "evaluation_sent":  False,
+            "accumulated":      [],   # list of completed turn transcripts
+            "update_count":     0,
         }
 
         async def handle_end_of_turn(raw_transcript: str) -> None:
-            """
-            Called on Deepgram EndOfTurn or STOP command.
-
-            Step 1: classify intent (silence / repeat / skip / end / answer)
-            Step 2: act — only "answer" passes through to NLP evaluation.
-            """
             if state["evaluation_sent"]:
                 return
-            state["evaluation_sent"] = True
 
             current = (raw_transcript or last_partial).strip()
 
-            # ── classify ───────────────────────────────────────────────────────
+            # classify intent
             intent_result = classify_voice_intent(current)
             logger.info(
                 f"[session={session_id}] intent={intent_result.intent} "
                 f"({intent_result.confidence:.2f}) — {intent_result.reason}"
             )
 
-            # ── silence ────────────────────────────────────────────────────────
             if intent_result.intent == "silence":
                 await websocket.send_text(json.dumps({
                     "type":    "silence",
                     "message": "We didn't catch anything. Please go ahead and answer when ready.",
                 }))
-                state["evaluation_sent"] = False
                 return
 
-            # ── repeat question ────────────────────────────────────────────────
             if intent_result.intent == "repeat":
-                logger.info(f"[session={session_id}] sending repeat_question")
                 await websocket.send_text(json.dumps({
                     "type":     "repeat_question",
                     "question": current_question.question_text,
                     "topic":    current_question.topic or "",
                 }))
-                state["evaluation_sent"] = False
                 return
 
-            # ── skip question ──────────────────────────────────────────────────
             if intent_result.intent == "skip":
-                logger.info(f"[session={session_id}] skipping question")
                 total = await _question_count(session.module_id, db)
                 session.current_index += 1
                 await db.commit()
                 await db.refresh(session)
-
                 if session.current_index >= total:
                     session.status = "completed"
                     await db.commit()
                     await websocket.send_text(json.dumps({
-                        "type":      "skipped",
-                        "completed": True,
-                        "message":   "Last question skipped. Interview complete.",
+                        "type": "skipped", "completed": True,
+                        "message": "Last question skipped. Interview complete.",
                     }))
                 else:
                     next_q = await _get_current_question(session, db)
                     await websocket.send_text(json.dumps({
-                        "type":            "skipped",
-                        "completed":       False,
-                        "question_index":  session.current_index,
+                        "type": "skipped", "completed": False,
+                        "question_index": session.current_index,
                         "total_questions": total,
                         "next_question": {
-                            "id":       next_q.id,
-                            "topic":    next_q.topic or "",
+                            "id": next_q.id, "topic": next_q.topic or "",
                             "question": next_q.question_text,
                         },
                     }))
                 return
 
-            # ── end interview ──────────────────────────────────────────────────
             if intent_result.intent == "end":
-                logger.info(f"[session={session_id}] ending interview on user request")
+                state["evaluation_sent"] = True
                 session.status = "completed"
                 await db.commit()
                 await websocket.send_text(json.dumps({
-                    "type":    "session_ended",
+                    "type": "session_ended",
                     "message": "Interview ended at your request.",
                 }))
                 await websocket.close()
                 return
 
+            # ── answer turn — accumulate, don't evaluate yet ──────────────────
+            if current:
+                state["accumulated"].append(current)
 
-            # ── answer → non-blocking turn finish ──────────────────────────────
-            full_transcript = (
-                f"{prior.strip()} {current}".strip()
-                if prior.strip() else current
+            # Build full transcript so far (prior + all accumulated turns)
+            accumulated_text = " ".join(state["accumulated"]).strip()
+            full_so_far = (
+                f"{prior.strip()} {accumulated_text}".strip()
+                if prior.strip() else accumulated_text
             )
-            logger.info(f"[session={session_id}] turn finished: {full_transcript[:80]}")
 
-            # Note: evaluate_answer and _upsert_answer are DEFERRED 
-            # until the user confirms they are finished via the frontend.
+            logger.info(
+                f"[session={session_id}] turn_finished (accumulated {len(state['accumulated'])} turns): "
+                f"{full_so_far[:80]}"
+            )
 
+            # Tell frontend: here's the turn, start your countdown timer
             await websocket.send_text(json.dumps({
-                "type":       "turn_finished",
-                "transcript": full_transcript,
+                "type":                "turn_finished",
+                "transcript":          full_so_far,      # full answer so far
+                "turn_transcript":     current,          # just this turn
+                "turn_count":          len(state["accumulated"]),
             }))
 
-        # ── Deepgram connection ────────────────────────────────────────────────
+        async def handle_final_evaluate(full_transcript: str) -> None:
+            """Called when frontend confirms user is done (sends EVALUATE)."""
+            if state["evaluation_sent"]:
+                return
+            state["evaluation_sent"] = True
+
+            if not full_transcript.strip():
+                await websocket.send_text(json.dumps({
+                    "type": "silence",
+                    "message": "No answer recorded.",
+                }))
+                return
+
+            logger.info(f"[session={session_id}] final evaluate: {full_transcript[:80]}")
+
+            question_data = {
+                "id":       current_question.id,
+                "question": current_question.question_text,
+                "answer":   current_question.expected_answer,
+            }
+            evaluation = evaluate_answer(
+                transcript=full_transcript,
+                question_data=question_data,
+                model_path=(session.module.model_pkl_path if session.module else None),
+            )
+
+            await _upsert_answer(session, current_question, full_transcript, evaluation, db)
+            logger.info(f"[session={session_id}] saved. score={evaluation['final_score']}")
+
+            await websocket.send_text(json.dumps({
+                "type":       "evaluation",
+                "transcript": full_transcript,
+                "evaluation": {
+                    "score":            evaluation["final_score"],
+                    "semantic_score":   evaluation["semantic_score"],
+                    "keyword_score":    evaluation["keyword_score"],
+                    "feedback":         evaluation["feedback"],
+                    "tip":              evaluation["tip"],
+                    "missing_keywords": evaluation["missing_keywords"],
+                },
+            }))
+
         try:
             async with _dg_client.listen.v2.connect(
                 model="flux-general-en",
@@ -281,7 +301,7 @@ async def transcribe_websocket(
 
                     if event == "Update":
                         last_partial = transcript
-                        state["update_count"] += 1   # user is actively speaking
+                        state["update_count"] += 1
                         if transcript:
                             asyncio.create_task(websocket.send_text(json.dumps({
                                 "type": "partial", "text": transcript,
@@ -289,9 +309,6 @@ async def transcribe_websocket(
                     elif event == "EndOfTurn":
                         final_transcript = transcript
                         last_partial     = ""
-                        logger.debug(
-                            f"[session={session_id}] EndOfTurn: '{transcript[:60]}'"
-                        )
                         asyncio.create_task(handle_end_of_turn(transcript))
 
                 def on_error(error) -> None:
@@ -307,51 +324,64 @@ async def transcribe_websocket(
                 try:
                     while True:
                         message = await websocket.receive()
+
                         if "bytes" in message:
                             pcm = message["bytes"]
                             if len(pcm) >= 2:
                                 if state["first_audio_at"] is None:
                                     state["first_audio_at"] = time.time()
                                 await dg_conn._send(pcm)
+
                         elif "text" in message:
-                            if message["text"].strip().upper() == "STOP":
+                            text = message["text"].strip().upper()
+
+                            if text == "STOP":
+                                # Hard stop — evaluate whatever accumulated
                                 listen_task.cancel()
-                                if not state["evaluation_sent"]:
-                                    await handle_end_of_turn(final_transcript or last_partial)
+                                accumulated_text = " ".join(state["accumulated"]).strip()
+                                full = (
+                                    f"{prior.strip()} {accumulated_text}".strip()
+                                    if prior.strip() else accumulated_text
+                                ) or final_transcript or last_partial
+                                await handle_final_evaluate(full)
                                 await websocket.close()
                                 break
 
+                            elif text == "EVALUATE":
+                                # Frontend confirmed user is done — evaluate full accumulated
+                                accumulated_text = " ".join(state["accumulated"]).strip()
+                                full = (
+                                    f"{prior.strip()} {accumulated_text}".strip()
+                                    if prior.strip() else accumulated_text
+                                )
+                                await handle_final_evaluate(full)
+                                # WS stays open until client closes it after receiving evaluation
+
+                            elif text == "CONTINUE":
+                                # User said they want to keep talking — reset for next turn
+                                state["evaluation_sent"] = False
+                                logger.info(f"[session={session_id}] user continuing answer")
+
                 except (WebSocketDisconnect, RuntimeError) as exc:
-                    if (
-                        isinstance(exc, RuntimeError)
-                        and "disconnect" not in str(exc).lower()
-                    ):
+                    if isinstance(exc, RuntimeError) and "disconnect" not in str(exc).lower():
                         raise
                     logger.info(f"[session={session_id}] client disconnected (normal)")
                     listen_task.cancel()
-
                 except Exception as exc:
                     logger.exception(f"[session={session_id}] error: {exc}")
                     listen_task.cancel()
                     try:
-                        await websocket.send_text(json.dumps({
-                            "type": "error", "message": str(exc),
-                        }))
+                        await websocket.send_text(json.dumps({"type": "error", "message": str(exc)}))
                     except Exception:
                         pass
 
         except Exception as exc:
-            logger.exception(
-                f"[session={session_id}] Deepgram connection failed: {exc}"
-            )
+            logger.exception(f"[session={session_id}] Deepgram connection failed: {exc}")
             try:
-                await websocket.send_text(json.dumps({
-                    "type": "error", "message": str(exc),
-                }))
+                await websocket.send_text(json.dumps({"type": "error", "message": str(exc)}))
                 await websocket.close()
             except Exception:
                 pass
-
 
 # ── intent WebSocket (between questions) ──────────────────────────────────────
 
