@@ -193,7 +193,7 @@ def evaluate_answer(
     # feedback_generator now returns: narrative, improvement_tips, score_tier, ...
     feedback = fb_payload.get("narrative", "")
     tips_list = fb_payload.get("improvement_tips", [])
-    tip = "\n".join(f"- {item}" for item in tips_list)
+    tip = tips_list[0] if tips_list else ""
 
     return {
         "scoring_mode":        scoring_mode,

@@ -22,6 +22,7 @@ class EvaluationOut(BaseModel):
     penalty: float
     feedback: str
     tip: str
+    tts_feedback: str = ""
     score_tier: str = ""
     improvement_tips: List[str] = []
     stt_flags: List[str] = []

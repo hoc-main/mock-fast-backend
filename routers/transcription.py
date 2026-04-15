@@ -274,8 +274,10 @@ async def transcribe_websocket(
                 model_path=(session.module.model_pkl_path if session.module else None),
             )
 
+            await _upsert_answer(session, current_question, full_transcript, evaluation, db)
+            logger.info(f"[session={session_id}] saved. score={evaluation['final_score']}")
+
             # ── LLM-first feedback: try Groq, fall back to rule-based ───────
-            # Run LLM enrichment BEFORE saving so we do a single DB write.
             eval_feedback = evaluation["feedback"]  # rule-based fallback
             eval_tip = evaluation["tip"]
 
@@ -292,18 +294,22 @@ async def transcribe_websocket(
                         eval_feedback = llm_result["feedback"]
                         eval_tip = llm_result.get("tip") or eval_tip
                         logger.info(f"[session={session_id}] using LLM feedback")
+                        # Update DB with LLM feedback
+                        result = await db.execute(
+                            select(InterviewAnswer).where(
+                                InterviewAnswer.session_id == session.id,
+                                InterviewAnswer.question_id == current_question.id,
+                            )
+                        )
+                        ans_row = result.scalar_one_or_none()
+                        if ans_row:
+                            ans_row.feedback = eval_feedback
+                            ans_row.tip = eval_tip
+                            await db.commit()
                     else:
                         logger.info(f"[session={session_id}] LLM returned empty, using rule-based")
                 except Exception as exc:
                     logger.warning(f"[session={session_id}] LLM failed, using rule-based: {exc}")
-
-            # Override evaluation feedback/tip with the enriched version before saving.
-            evaluation["feedback"] = eval_feedback
-            evaluation["tip"] = eval_tip
-
-            # Single DB write — stores all 7 float metrics + final feedback/tip.
-            await _upsert_answer(session, current_question, full_transcript, evaluation, db)
-            logger.info(f"[session={session_id}] saved. score={evaluation['final_score']}")
 
             await websocket.send_text(json.dumps({
                 "type":       "evaluation",
@@ -312,10 +318,6 @@ async def transcribe_websocket(
                     "score":            evaluation["final_score"],
                     "semantic_score":   evaluation["semantic_score"],
                     "keyword_score":    evaluation["keyword_score"],
-                    "question_relevance": evaluation["question_relevance"],
-                    "lexical_diversity":  evaluation["lexical_diversity"],
-                    "discourse_score":    evaluation["discourse_score"],
-                    "penalty":            evaluation["penalty"],
                     "feedback":         eval_feedback,
                     "tip":              eval_tip,
                     "missing_keywords": evaluation["missing_keywords"],

@@ -1,57 +1,173 @@
 """
 llm_feedback.py
 ================
-LLM-powered feedback and tip generation via Groq API.
-
-This is an ENRICHMENT layer — it runs after the NLP scorer and the
-rule-based feedback have already been produced.
-The rule-based result is always available instantly as fallback.
+LLM-powered feedback via LangChain + Groq with structured output
+and conversation buffer memory to eliminate chain-of-thought leaks.
 
 Environment variables (add to .env):
     GROQ_API_KEY     your groq api key
-    GROQ_MODEL       openai/gpt-oss-120b
+    GROQ_MODEL       openai/gpt-oss-20b
     GROQ_TIMEOUT     15
 """
 
 import asyncio
 import logging
 import os
+from collections import OrderedDict
 from typing import Optional
 
-from groq import Groq
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_groq import ChatGroq
+from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
 
-# ── availability flag ─────────────────────────────────────────────────────────
+# ── config ────────────────────────────────────────────────────────────────────
 GROQ_API_KEY: str = ""
-GROQ_MODEL:   str = "openai/gpt-oss-120b"
+GROQ_MODEL:   str = "openai/gpt-oss-20b"
 GROQ_TIMEOUT: int = 15
 llm_available: bool = False
-_groq_client: Optional[Groq] = None
+_chain = None
+
+# ── LRU cache ─────────────────────────────────────────────────────────────────
+_CACHE_MAX = 50
+_response_cache: OrderedDict[str, dict] = OrderedDict()
+
+
+def _cache_key(question: str, score: float) -> str:
+    return f"{question.strip().lower()[:80]}|{round(score, 1)}"
+
+
+def _cache_put(key: str, result: dict) -> None:
+    _response_cache[key] = result
+    _response_cache.move_to_end(key)
+    if len(_response_cache) > _CACHE_MAX:
+        _response_cache.popitem(last=False)
+
+
+def _cache_get(key: str) -> Optional[dict]:
+    if key in _response_cache:
+        _response_cache.move_to_end(key)
+        return _response_cache[key]
+    return None
+
+
+# ── structured output schema ──────────────────────────────────────────────────
+class FeedbackOutput(BaseModel):
+    feedback: str = Field(description="2-3 sentences of detailed feedback, 40-60 words. Address candidate as 'you'.")
+    tip: str = Field(description="2-3 sentences of professional improvement tip with concrete example, 30-50 words.")
+    tts_feedback: str = Field(description="One short natural sentence under 15 words summarizing how the answer went.")
+
+
+# ── few-shot examples (pre-loaded into memory) ───────────────────────────────
+_FEW_SHOT_EXAMPLES = [
+    {
+        "human": """QUESTION: What is polymorphism in OOP?
+CANDIDATE'S ANSWER: Polymorphism is when objects can take different forms.
+EVALUATION SUMMARY:
+- Overall quality: weak (score 0.25/1.00)
+- Key issues identified: the answer is too short; key concepts missing: method overriding, method overloading, interfaces.""",
+        "ai": FeedbackOutput(
+            feedback="You correctly identified that polymorphism involves objects taking different forms, which shows basic awareness. However, your answer lacks depth — you didn't explain method overriding, overloading, or how interfaces enable polymorphic behavior, which are essential to a complete answer.",
+            tip="Structure your response by first defining polymorphism, then distinguishing compile-time (overloading) from runtime (overriding) polymorphism. For example: 'A Dog and Cat class both override an Animal.speak() method, producing different outputs.'",
+            tts_feedback="Your answer was too brief and missed key polymorphism concepts.",
+        ),
+    },
+    {
+        "human": """QUESTION: Explain the event loop in Node.js.
+CANDIDATE'S ANSWER: The event loop is what makes Node.js non-blocking. It handles callbacks by checking the callback queue after the call stack is empty. This allows Node to handle many connections with a single thread using phases like timers, poll, and check.
+EVALUATION SUMMARY:
+- Overall quality: good (score 0.78/1.00)
+- The answer is mostly correct but could be more complete.""",
+        "ai": FeedbackOutput(
+            feedback="You gave a solid explanation of the event loop's role in non-blocking I/O and correctly mentioned the callback queue and call stack relationship. You also referenced specific phases, which shows deeper understanding. To strengthen this further, mention the microtask queue and how promises are prioritized.",
+            tip="Add a brief example showing how setTimeout and Promise.resolve callbacks execute in different order due to the microtask queue having higher priority than the timer phase.",
+            tts_feedback="Strong answer with good technical depth on the event loop.",
+        ),
+    },
+]
+
+# ── system prompt ─────────────────────────────────────────────────────────────
+_SYSTEM_PROMPT = """You are an expert interview coach. You evaluate mock interview answers and provide structured feedback.
+
+RULES:
+- Never think out loud, count words, or repeat instructions.
+- Never wrap output in quotes or markdown.
+- Address the candidate as "you".
+- Do not copy the reference answer.
+- Do not mention scores or metrics.
+- Be specific to the question asked."""
 
 
 def check_llm_available() -> bool:
-    """Read env vars at call time (after load_dotenv) and init client."""
-    global llm_available, _groq_client, GROQ_API_KEY, GROQ_MODEL, GROQ_TIMEOUT
+    global llm_available, _chain, GROQ_API_KEY, GROQ_MODEL, GROQ_TIMEOUT
     GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-    GROQ_MODEL   = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
+    GROQ_MODEL   = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b")
     GROQ_TIMEOUT = int(os.getenv("GROQ_TIMEOUT", "15"))
     if not GROQ_API_KEY:
         llm_available = False
         logger.warning("GROQ_API_KEY not set — LLM feedback disabled, rule-based fallback active")
         return False
     try:
-        _groq_client = Groq(api_key=GROQ_API_KEY)
+        is_reasoning = "oss" in GROQ_MODEL or "reasoning" in GROQ_MODEL
+        kwargs = dict(
+            api_key=GROQ_API_KEY,
+            model=GROQ_MODEL,
+            temperature=0.35,
+            max_tokens=800 if is_reasoning else 450,
+        )
+        if is_reasoning:
+            kwargs["reasoning_effort"] = "medium"
+
+        llm = ChatGroq(**kwargs)
+
+        # Build few-shot messages for memory buffer
+        few_shot_messages = []
+        for ex in _FEW_SHOT_EXAMPLES:
+            few_shot_messages.append(HumanMessage(content=ex["human"]))
+            ai_obj = ex["ai"]
+            few_shot_messages.append(AIMessage(content=(
+                f"FEEDBACK: {ai_obj.feedback}\n"
+                f"TIP: {ai_obj.tip}\n"
+                f"TTS: {ai_obj.tts_feedback}"
+            )))
+
+        prompt = ChatPromptTemplate.from_messages([
+            SystemMessage(content=_SYSTEM_PROMPT),
+            *few_shot_messages,
+            MessagesPlaceholder(variable_name="history", optional=True),
+            ("human", "{input}"),
+        ])
+
+        _chain = prompt | llm.with_structured_output(FeedbackOutput)
         llm_available = True
-        logger.info(f"Groq client initialized — LLM feedback enabled ({GROQ_MODEL})")
+        logger.info(f"LangChain+Groq initialized — LLM feedback enabled ({GROQ_MODEL})")
         return True
     except Exception as exc:
         llm_available = False
-        logger.warning(f"Groq client init failed — LLM feedback disabled. ({exc})")
+        logger.warning(f"LangChain init failed — LLM feedback disabled. ({exc})")
         return False
 
 
-# ── score → quality label for the prompt ──────────────────────────────────────
+# ── conversation history buffer (last N good exchanges) ──────────────────────
+_MAX_HISTORY = 6
+_history: list = []
+
+
+def _add_to_history(human_msg: str, result: dict) -> None:
+    _history.append(HumanMessage(content=human_msg))
+    _history.append(AIMessage(content=(
+        f"FEEDBACK: {result['feedback']}\n"
+        f"TIP: {result['tip']}\n"
+        f"TTS: {result['tts_feedback']}"
+    )))
+    while len(_history) > _MAX_HISTORY * 2:
+        _history.pop(0)
+        _history.pop(0)
+
+
+# ── score → quality label ─────────────────────────────────────────────────────
 def _quality_label(score: float) -> str:
     if score >= 0.85: return "strong"
     if score >= 0.70: return "good"
@@ -59,22 +175,22 @@ def _quality_label(score: float) -> str:
     return "weak"
 
 
-# ── prompt builder ─────────────────────────────────────────────────────────────
-def _build_prompt(
-    question:         str,
+# ── build human message ───────────────────────────────────────────────────────
+def _build_input(
+    question: str,
     candidate_answer: str,
-    expected_answer:  str,
-    metrics:          dict,
+    expected_answer: str,
+    metrics: dict,
     missing_keywords: list,
 ) -> str:
-    score       = metrics.get("final_score",        0.0)
-    semantic    = metrics.get("semantic_score",      0.0)
-    relevance   = metrics.get("question_relevance",  0.0)
-    kw_score    = metrics.get("keyword_score",       0.0)
-    length_sc   = metrics.get("length_score",        0.0)
-    discourse   = metrics.get("discourse_score",     0.0)
-    lex_div     = metrics.get("lexical_diversity",   0.0)
-    quality     = _quality_label(score)
+    score     = metrics.get("final_score", 0.0)
+    semantic  = metrics.get("semantic_score", 0.0)
+    relevance = metrics.get("question_relevance", 0.0)
+    kw_score  = metrics.get("keyword_score", 0.0)
+    length_sc = metrics.get("length_score", 0.0)
+    discourse = metrics.get("discourse_score", 0.0)
+    lex_div   = metrics.get("lexical_diversity", 0.0)
+    quality   = _quality_label(score)
     missing_str = ", ".join(missing_keywords[:5]) if missing_keywords else "none"
 
     diagnostics = []
@@ -99,10 +215,7 @@ def _build_prompt(
         "The answer is mostly correct but could be more complete."
     )
 
-    return f"""You are an expert interview coach. A candidate just answered a mock interview question.
-Your job is to write personalised feedback and a concrete improvement tip.
-
-QUESTION:
+    return f"""QUESTION:
 {question}
 
 CANDIDATE'S ANSWER:
@@ -116,80 +229,37 @@ EVALUATION SUMMARY:
 - Semantic closeness: {semantic:.2f}/1.00
 - Question relevance: {relevance:.2f}/1.00
 - Keyword coverage: {kw_score:.2f}/1.00
-- {diagnostic_line}
-
-INSTRUCTIONS:
-Write exactly two lines in this format — nothing else before or after:
-
-FEEDBACK: <one sentence — what the candidate did well or the primary gap in their answer>
-TIP: <one or two sentences — the single most actionable thing they should do differently next time>
-
-Rules you must follow:
-- Address the candidate directly ("your answer", "you covered", "you missed").
-- Be specific to this answer and question — not generic interview advice.
-- Do not copy phrases from the reference answer.
-- Do not mention scores, numbers, or metric names.
-- FEEDBACK must be under 25 words.
-- TIP must be under 40 words.
-- Output only the two FEEDBACK and TIP lines, nothing else."""
+- {diagnostic_line}"""
 
 
-# ── synchronous Groq call (runs in thread pool) ──────────────────────────────
-def _call_groq_sync(prompt: str) -> Optional[dict]:
-    if not _groq_client:
+# ── sync call (runs in thread pool) ──────────────────────────────────────────
+def _call_chain_sync(human_input: str, cache_key: str) -> Optional[dict]:
+    if not _chain:
         return None
     try:
-        is_reasoning = "oss" in GROQ_MODEL or "reasoning" in GROQ_MODEL
-        call_kwargs = dict(
-            model=GROQ_MODEL,
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.35,
-            max_completion_tokens=400 if is_reasoning else 200,
-            top_p=0.9,
-            stream=False,
-        )
-        if is_reasoning:
-            call_kwargs["reasoning_effort"] = "medium"
-        else:
-            call_kwargs["stop"] = ["\n\n", "---", "==="]
-        completion = _groq_client.chat.completions.create(**call_kwargs)
-        msg = completion.choices[0].message
-        # Try content first, then reasoning field for oss models
-        raw = (msg.content or "").strip()
-        reasoning = (getattr(msg, "reasoning", None) or "").strip()
-        # Parse from both — content takes priority
-        result = _parse_response(raw) if raw else None
-        if not result and reasoning:
-            result = _parse_response(reasoning)
-        logger.debug(f"Groq content: {raw[:100]}, reasoning: {reasoning[:100]}")
+        output: FeedbackOutput = _chain.invoke({
+            "input": human_input,
+            "history": list(_history),
+        })
+        result = {
+            "feedback": output.feedback.strip().strip('"'),
+            "tip": output.tip.strip().strip('"'),
+            "tts_feedback": output.tts_feedback.strip().strip('"'),
+        }
+        _add_to_history(human_input, result)
+        _cache_put(cache_key, result)
+        logger.info(f"LLM feedback OK ({len(result['feedback'])} chars)")
         return result
     except Exception as exc:
-        logger.warning(f"Groq call failed: {exc}")
+        logger.warning(f"LangChain call failed: {exc}")
+        cached = _cache_get(cache_key)
+        if cached:
+            logger.info(f"Serving cached response for: {cache_key[:60]}")
+            return cached
         return None
 
 
-def _parse_response(raw: str) -> Optional[dict]:
-    feedback: Optional[str] = None
-    tip:      Optional[str] = None
-
-    for line in raw.splitlines():
-        stripped = line.strip()
-        upper    = stripped.upper()
-        if upper.startswith("FEEDBACK:"):
-            feedback = stripped.split(":", 1)[1].strip()
-        elif upper.startswith("TIP:"):
-            tip = stripped.split(":", 1)[1].strip()
-
-    if feedback and tip:
-        return {"feedback": feedback, "tip": tip}
-    if feedback and not tip:
-        logger.debug("Groq response missing TIP line — using feedback only")
-        return {"feedback": feedback, "tip": ""}
-    logger.debug(f"Groq response could not be parsed: {raw[:200]}")
-    return None
-
-
-# ── async public API ───────────────────────────────────────────────────────────
+# ── async public API ──────────────────────────────────────────────────────────
 async def generate_llm_feedback(
     question:         str,
     candidate_answer: str,
@@ -198,20 +268,24 @@ async def generate_llm_feedback(
     missing_keywords: list,
 ) -> Optional[dict]:
     """
-    Returns {"feedback": str, "tip": str} or None on failure.
-    The caller must handle None gracefully — rule-based feedback is the fallback.
+    Returns {"feedback": str, "tip": str, "tts_feedback": str} or None on failure.
     """
     if not llm_available:
         return None
 
-    prompt = _build_prompt(
+    key = _cache_key(question, metrics.get("final_score", 0.0))
+    cached = _cache_get(key)
+    if cached:
+        logger.info(f"Cache hit for: {key[:60]}")
+        return cached
+
+    human_input = _build_input(
         question, candidate_answer, expected_answer, metrics, missing_keywords
     )
 
     loop = asyncio.get_event_loop()
     try:
-        result = await loop.run_in_executor(None, _call_groq_sync, prompt)
-        return result
+        return await loop.run_in_executor(None, _call_chain_sync, human_input, key)
     except Exception as exc:
         logger.warning(f"LLM feedback executor error: {exc}")
         return None
