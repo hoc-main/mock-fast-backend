@@ -33,6 +33,7 @@ from ..services.feedback_generator import (
     generate_question_feedback,
     generate_session_summary,
 )
+from ..services import llm_feedback as _llm
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/feedback", tags=["Feedback"])
@@ -180,8 +181,8 @@ def _build_metrics_dict(m: MetricSnapshot) -> dict:
 async def get_question_feedback(req: QuestionFeedbackRequest):
     """
     Generate rich feedback for a single answered question.
-    Call this after evaluate_answer() with the STT transcript,
-    the metrics dict, and the full question_data record.
+    Tries LLM (Groq) first for narrative + tips.
+    Falls back to rule-based feedback_generator if LLM fails.
     """
     try:
         fb = generate_question_feedback(
@@ -191,6 +192,28 @@ async def get_question_feedback(req: QuestionFeedbackRequest):
             question_id=req.question_id,
             seed=req.question_index,
         )
+
+        # Try LLM first — override narrative + tips if it succeeds
+        if _llm.llm_available:
+            try:
+                qd = _build_question_data_dict(req.question_data)
+                llm_result = await _llm.generate_llm_feedback(
+                    question=qd.get("question", qd.get("question_text", "")),
+                    candidate_answer=req.transcript,
+                    expected_answer=qd.get("primary_answer", qd.get("answer", "")),
+                    metrics=_build_metrics_dict(req.metrics),
+                    missing_keywords=req.metrics.missing_keywords,
+                )
+                if llm_result and llm_result.get("feedback"):
+                    fb["narrative"] = llm_result["feedback"]
+                    if llm_result.get("tip"):
+                        fb["improvement_tips"] = [llm_result["tip"]]
+                    logger.info("Using LLM feedback for /question")
+                else:
+                    logger.info("LLM returned empty for /question, using rule-based")
+            except Exception as exc:
+                logger.warning(f"LLM failed for /question, using rule-based: {exc}")
+
         return QuestionFeedbackResponse(**fb)
     except Exception as exc:
         logger.exception("Error generating question feedback")
@@ -201,8 +224,7 @@ async def get_question_feedback(req: QuestionFeedbackRequest):
 async def get_session_feedback(req: SessionFeedbackRequest):
     """
     Generate rich feedback for an entire interview session.
-    Accepts all answered questions and returns per-question feedback
-    plus a session-level summary in a single call.
+    Tries LLM first per question, falls back to rule-based.
     """
     if not req.questions:
         raise HTTPException(status_code=400, detail="No questions provided.")
@@ -217,6 +239,25 @@ async def get_session_feedback(req: SessionFeedbackRequest):
                 question_id=item.question_id,
                 seed=item.question_index,
             )
+
+            # Try LLM first per question
+            if _llm.llm_available:
+                try:
+                    qd = _build_question_data_dict(item.question_data)
+                    llm_result = await _llm.generate_llm_feedback(
+                        question=qd.get("question", qd.get("question_text", "")),
+                        candidate_answer=item.transcript,
+                        expected_answer=qd.get("primary_answer", qd.get("answer", "")),
+                        metrics=_build_metrics_dict(item.metrics),
+                        missing_keywords=item.metrics.missing_keywords,
+                    )
+                    if llm_result and llm_result.get("feedback"):
+                        fb["narrative"] = llm_result["feedback"]
+                        if llm_result.get("tip"):
+                            fb["improvement_tips"] = [llm_result["tip"]]
+                except Exception as exc:
+                    logger.warning(f"LLM failed for session question, using rule-based: {exc}")
+
             all_feedbacks.append(fb)
 
         summary = generate_session_summary(all_feedbacks)

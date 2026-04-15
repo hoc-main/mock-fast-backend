@@ -1,62 +1,53 @@
 """
 llm_feedback.py
 ================
-LLM-powered feedback and tip generation via local Ollama (llama3.2:3b).
+LLM-powered feedback and tip generation via Groq API.
 
 This is an ENRICHMENT layer — it runs after the NLP scorer and the
-rule-based feedback have already been sent to the client.
-The rule-based result is always available instantly.
-This improves the feedback quality with a personalised, context-aware message
-that arrives 3-5 seconds later as a second WebSocket message.
-
-No new pip dependencies — uses only stdlib urllib.request for the HTTP call.
+rule-based feedback have already been produced.
+The rule-based result is always available instantly as fallback.
 
 Environment variables (add to .env):
-    OLLAMA_URL      http://localhost:11434/api/generate
-    OLLAMA_MODEL    llama3.2:3b
-    OLLAMA_TIMEOUT  12
+    GROQ_API_KEY     your groq api key
+    GROQ_MODEL       openai/gpt-oss-120b
+    GROQ_TIMEOUT     15
 """
 
 import asyncio
-import json
 import logging
 import os
-import urllib.request
-import urllib.error
 from typing import Optional
+
+from groq import Groq
 
 logger = logging.getLogger(__name__)
 
-# ── config from env ────────────────────────────────────────────────────────────
-OLLAMA_URL     = os.getenv("OLLAMA_URL",     "http://localhost:11434/api/generate")
-OLLAMA_MODEL   = os.getenv("OLLAMA_MODEL",   "llama3.2:3b")
-OLLAMA_TIMEOUT = int(os.getenv("OLLAMA_TIMEOUT", "12"))
-
-# ── availability flag — set at startup, read at call time ─────────────────────
-# Set to False if the startup health-check in main.py found Ollama unreachable.
-# Avoids a 12-second timeout on every request when the daemon is not running.
-ollama_available: bool = True
+# ── availability flag ─────────────────────────────────────────────────────────
+GROQ_API_KEY: str = ""
+GROQ_MODEL:   str = "openai/gpt-oss-120b"
+GROQ_TIMEOUT: int = 15
+llm_available: bool = False
+_groq_client: Optional[Groq] = None
 
 
-def check_ollama_available() -> bool:
-    """
-    Ping the Ollama tags endpoint. Called once at startup.
-    Sets the module-level flag so every subsequent call fast-fails if needed.
-    """
-    global ollama_available
+def check_llm_available() -> bool:
+    """Read env vars at call time (after load_dotenv) and init client."""
+    global llm_available, _groq_client, GROQ_API_KEY, GROQ_MODEL, GROQ_TIMEOUT
+    GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+    GROQ_MODEL   = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
+    GROQ_TIMEOUT = int(os.getenv("GROQ_TIMEOUT", "15"))
+    if not GROQ_API_KEY:
+        llm_available = False
+        logger.warning("GROQ_API_KEY not set — LLM feedback disabled, rule-based fallback active")
+        return False
     try:
-        req = urllib.request.Request(
-            "http://localhost:11434/api/tags",
-            method="GET",
-        )
-        with urllib.request.urlopen(req, timeout=3):
-            pass
-        ollama_available = True
-        logger.info(f"Ollama reachable — LLM feedback enabled ({OLLAMA_MODEL})")
+        _groq_client = Groq(api_key=GROQ_API_KEY)
+        llm_available = True
+        logger.info(f"Groq client initialized — LLM feedback enabled ({GROQ_MODEL})")
         return True
     except Exception as exc:
-        ollama_available = False
-        logger.warning(f"Ollama not reachable — LLM feedback disabled. Rule-based fallback active. ({exc})")
+        llm_available = False
+        logger.warning(f"Groq client init failed — LLM feedback disabled. ({exc})")
         return False
 
 
@@ -86,7 +77,6 @@ def _build_prompt(
     quality     = _quality_label(score)
     missing_str = ", ".join(missing_keywords[:5]) if missing_keywords else "none"
 
-    # Build a brief diagnostic summary so the model knows WHY the score is what it is
     diagnostics = []
     if relevance < 0.40:
         diagnostics.append("the answer did not address the specific question asked")
@@ -144,60 +134,41 @@ Rules you must follow:
 - Output only the two FEEDBACK and TIP lines, nothing else."""
 
 
-# ── synchronous Ollama HTTP call (runs in thread pool) ────────────────────────
-def _call_ollama_sync(prompt: str) -> Optional[dict]:
-    """
-    Blocking HTTP POST to Ollama. Always returns {"feedback": str, "tip": str}
-    or None if the call fails or times out.
-    """
-
-    print("sending request to ollama")
-
-    payload = json.dumps({
-        "model":  OLLAMA_MODEL,
-        "prompt": prompt,
-        "stream": False,
-        "options": {
-            "temperature":    0.35,   # low — consistent, not creative
-            "num_predict":    140,    # enough for feedback + tip, stops rambling
-            "top_p":          0.90,
-            "repeat_penalty": 1.15,
-            "stop":           ["\n\n", "---", "==="],
-        },
-    }).encode("utf-8")
-
-    req = urllib.request.Request(
-        OLLAMA_URL,
-        data=payload,
-        headers={"Content-Type": "application/json"},
-        method="POST",
-    )
-
-    print("request sent to ollama")
-
+# ── synchronous Groq call (runs in thread pool) ──────────────────────────────
+def _call_groq_sync(prompt: str) -> Optional[dict]:
+    if not _groq_client:
+        return None
     try:
-        with urllib.request.urlopen(req, timeout=OLLAMA_TIMEOUT) as resp:
-            body = resp.read()
-        result = json.loads(body)
-        raw    = result.get("response", "").strip()
-        logger.debug(f"Ollama raw response: {raw[:200]}")
-        return _parse_response(raw)
-    except urllib.error.URLError as exc:
-        logger.warning(f"Ollama connection error: {exc}")
-        return None
-    except TimeoutError:
-        logger.warning(f"Ollama timed out after {OLLAMA_TIMEOUT}s")
-        return None
+        is_reasoning = "oss" in GROQ_MODEL or "reasoning" in GROQ_MODEL
+        call_kwargs = dict(
+            model=GROQ_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.35,
+            max_completion_tokens=400 if is_reasoning else 200,
+            top_p=0.9,
+            stream=False,
+        )
+        if is_reasoning:
+            call_kwargs["reasoning_effort"] = "medium"
+        else:
+            call_kwargs["stop"] = ["\n\n", "---", "==="]
+        completion = _groq_client.chat.completions.create(**call_kwargs)
+        msg = completion.choices[0].message
+        # Try content first, then reasoning field for oss models
+        raw = (msg.content or "").strip()
+        reasoning = (getattr(msg, "reasoning", None) or "").strip()
+        # Parse from both — content takes priority
+        result = _parse_response(raw) if raw else None
+        if not result and reasoning:
+            result = _parse_response(reasoning)
+        logger.debug(f"Groq content: {raw[:100]}, reasoning: {reasoning[:100]}")
+        return result
     except Exception as exc:
-        logger.warning(f"Ollama call failed: {exc}")
+        logger.warning(f"Groq call failed: {exc}")
         return None
 
 
 def _parse_response(raw: str) -> Optional[dict]:
-    """
-    Extract FEEDBACK and TIP from the model output.
-    Handles minor variations in capitalisation and spacing.
-    """
     feedback: Optional[str] = None
     tip:      Optional[str] = None
 
@@ -211,13 +182,10 @@ def _parse_response(raw: str) -> Optional[dict]:
 
     if feedback and tip:
         return {"feedback": feedback, "tip": tip}
-
-    # Fallback: if model ignored the format, try to split on double-newline
     if feedback and not tip:
-        logger.debug("Ollama response missing TIP line — using feedback only")
+        logger.debug("Groq response missing TIP line — using feedback only")
         return {"feedback": feedback, "tip": ""}
-
-    logger.debug(f"Ollama response could not be parsed: {raw[:200]}")
+    logger.debug(f"Groq response could not be parsed: {raw[:200]}")
     return None
 
 
@@ -230,17 +198,10 @@ async def generate_llm_feedback(
     missing_keywords: list,
 ) -> Optional[dict]:
     """
-    Async wrapper that runs the blocking Ollama call in a thread pool executor.
-
-    Returns {"feedback": str, "tip": str} or None if:
-      - Ollama daemon is not running (ollama_available == False)
-      - The call times out
-      - The response cannot be parsed
-
-    The caller (transcription.py) must handle None gracefully — rule-based
-    feedback is already in the DB and sent to the client by this point.
+    Returns {"feedback": str, "tip": str} or None on failure.
+    The caller must handle None gracefully — rule-based feedback is the fallback.
     """
-    if not ollama_available:
+    if not llm_available:
         return None
 
     prompt = _build_prompt(
@@ -249,7 +210,7 @@ async def generate_llm_feedback(
 
     loop = asyncio.get_event_loop()
     try:
-        result = await loop.run_in_executor(None, _call_ollama_sync, prompt)
+        result = await loop.run_in_executor(None, _call_groq_sync, prompt)
         return result
     except Exception as exc:
         logger.warning(f"LLM feedback executor error: {exc}")

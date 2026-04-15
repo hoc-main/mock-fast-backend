@@ -26,10 +26,17 @@ Routes:
 import logging
 import os
 
+from dotenv import load_dotenv
+from pathlib import Path
+load_dotenv(Path(__file__).resolve().parent / ".env")
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .routers import hierarchy, sessions, stats, transcription, feedback, tts
+from .services.llm_feedback import check_llm_available
+from .db.database import engine, Base
+from .db import models  # noqa: ensure models are registered
 
 logging.basicConfig(
     level=logging.INFO,
@@ -56,6 +63,14 @@ app.include_router(stats.router)          # /api/performance-stats/
 app.include_router(transcription.router)  # /ws/transcribe/{id}, /ws/intent/{id}
 app.include_router(feedback.router)       # /api/feedback/...
 app.include_router(tts.router)            # /api/tts/
+
+
+@app.on_event("startup")
+async def startup_event():
+    # Create tables if using SQLite (local dev)
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    check_llm_available()
 
 
 @app.get("/health")

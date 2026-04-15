@@ -20,8 +20,13 @@ Protocol (server → client):
 import asyncio
 import json
 import logging
+import os
 import time
 from typing import Optional
+
+from dotenv import load_dotenv
+from pathlib import Path
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 from deepgram import AsyncDeepgramClient
 from deepgram.core.events import EventType
@@ -34,12 +39,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..db.database import AsyncSessionLocal
 from ..db.models import InterviewAnswer, InterviewSession, Question
 from ..services.evaluation import evaluate_answer
+from ..services import llm_feedback as _llm
 from ..services.voice_intent import classify_voice_intent, classify_nav_intent
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["Transcription"])
 
-_dg_client = AsyncDeepgramClient()
+_dg_client = AsyncDeepgramClient(api_key=os.getenv("DEEPGRAM_API_KEY", "dummy"))
 
 
 # ── DB helpers ─────────────────────────────────────────────────────────────────
@@ -268,6 +274,34 @@ async def transcribe_websocket(
                 model_path=(session.module.model_pkl_path if session.module else None),
             )
 
+            # ── LLM-first feedback: try Groq, fall back to rule-based ───────
+            # Run LLM enrichment BEFORE saving so we do a single DB write.
+            eval_feedback = evaluation["feedback"]  # rule-based fallback
+            eval_tip = evaluation["tip"]
+
+            if _llm.llm_available:
+                try:
+                    llm_result = await _llm.generate_llm_feedback(
+                        question=current_question.question_text,
+                        candidate_answer=full_transcript,
+                        expected_answer=current_question.expected_answer,
+                        metrics=evaluation,
+                        missing_keywords=evaluation.get("missing_keywords", []),
+                    )
+                    if llm_result and llm_result.get("feedback"):
+                        eval_feedback = llm_result["feedback"]
+                        eval_tip = llm_result.get("tip") or eval_tip
+                        logger.info(f"[session={session_id}] using LLM feedback")
+                    else:
+                        logger.info(f"[session={session_id}] LLM returned empty, using rule-based")
+                except Exception as exc:
+                    logger.warning(f"[session={session_id}] LLM failed, using rule-based: {exc}")
+
+            # Override evaluation feedback/tip with the enriched version before saving.
+            evaluation["feedback"] = eval_feedback
+            evaluation["tip"] = eval_tip
+
+            # Single DB write — stores all 7 float metrics + final feedback/tip.
             await _upsert_answer(session, current_question, full_transcript, evaluation, db)
             logger.info(f"[session={session_id}] saved. score={evaluation['final_score']}")
 
@@ -278,8 +312,12 @@ async def transcribe_websocket(
                     "score":            evaluation["final_score"],
                     "semantic_score":   evaluation["semantic_score"],
                     "keyword_score":    evaluation["keyword_score"],
-                    "feedback":         evaluation["feedback"],
-                    "tip":              evaluation["tip"],
+                    "question_relevance": evaluation["question_relevance"],
+                    "lexical_diversity":  evaluation["lexical_diversity"],
+                    "discourse_score":    evaluation["discourse_score"],
+                    "penalty":            evaluation["penalty"],
+                    "feedback":         eval_feedback,
+                    "tip":              eval_tip,
                     "missing_keywords": evaluation["missing_keywords"],
                 },
             }))
