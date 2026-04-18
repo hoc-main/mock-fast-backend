@@ -67,6 +67,9 @@ app.include_router(tts.router)            # /api/tts/
 
 @app.on_event("startup")
 async def startup_event():
+    # Create tables if using SQLite (local dev)
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
     check_llm_available()
 
 

@@ -329,7 +329,7 @@ async def transcribe_websocket(
                 model="flux-general-en",
                 encoding="linear16",
                 sample_rate="16000",
-                eot_timeout_ms="8000",
+                eot_timeout_ms="15000",
                 eot_threshold="0.9",
             ) as dg_conn:
 

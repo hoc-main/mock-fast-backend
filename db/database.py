@@ -10,35 +10,28 @@ logger = logging.getLogger(__name__)
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql+asyncpg://root:root@localhost:5432/hp"
+    "postgresql+asyncpg://postgres:postgres@localhost:5432/app"
 )
 
-engine = create_async_engine(
-    DATABASE_URL,
-    pool_size=10,
-    max_overflow=20,
+_is_sqlite = DATABASE_URL.startswith("sqlite")
 
-    # Sends "SELECT 1" before giving a connection to your code.
-    # Detects and discards dead connections automatically.
+_engine_kwargs = dict(
     pool_pre_ping=True,
-
-    # Recycle connections every 10 min — prevents using connections
-    # that Postgres has already closed on its side (hosted DBs like
-    # Supabase/RDS often have a 10min idle timeout).
-    pool_recycle=600,
-
-    # Raise after 30s if no connection available — avoids hanging forever.
-    pool_timeout=30,
-
-    # asyncpg-level timeouts — kills the coroutine if the server is
-    # unresponsive rather than blocking indefinitely.
-    connect_args={
-        "command_timeout": 60,
-        "timeout": 10,
-    },
-
-    # echo=(os.getenv("APP_ENV") == "development"),
 )
+
+if not _is_sqlite:
+    _engine_kwargs.update(
+        pool_size=10,
+        max_overflow=20,
+        pool_recycle=600,
+        pool_timeout=30,
+        connect_args={
+            "command_timeout": 60,
+            "timeout": 10,
+        },
+    )
+
+engine = create_async_engine(DATABASE_URL, **_engine_kwargs)
 
 AsyncSessionLocal = async_sessionmaker(
     engine,

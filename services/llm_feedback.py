@@ -14,12 +14,13 @@ import asyncio
 import logging
 import os
 from collections import OrderedDict
-from typing import Optional
+from typing import Optional, List
 
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_groq import ChatGroq
 from pydantic import BaseModel, Field
+from sqlalchemy import select, desc, asc, func
 
 logger = logging.getLogger(__name__)
 
@@ -153,6 +154,7 @@ def check_llm_available() -> bool:
 # ── conversation history buffer (last N good exchanges) ──────────────────────
 _MAX_HISTORY = 6
 _history: list = []
+_kb_loaded: bool = False
 
 
 def _add_to_history(human_msg: str, result: dict) -> None:
@@ -165,6 +167,86 @@ def _add_to_history(human_msg: str, result: dict) -> None:
     while len(_history) > _MAX_HISTORY * 2:
         _history.pop(0)
         _history.pop(0)
+
+
+# ── DB knowledge base loader ─────────────────────────────────────────────────
+async def load_knowledge_from_db() -> None:
+    """Load best past feedback from DB into history buffer as few-shot examples."""
+    global _kb_loaded
+    if _kb_loaded:
+        return
+    try:
+        from ..db.database import AsyncSessionLocal
+        from ..db.models import InterviewAnswer, Question
+
+        async with AsyncSessionLocal() as db:
+            # Only load LLM-quality feedback (longer than 80 chars = not rule-based template)
+            min_feedback_len = 80
+
+            # Get top-rated answers (good examples)
+            good_result = await db.execute(
+                select(InterviewAnswer, Question)
+                .join(Question, InterviewAnswer.question_id == Question.id)
+                .where(
+                    InterviewAnswer.feedback != "",
+                    InterviewAnswer.feedback.isnot(None),
+                    InterviewAnswer.final_score >= 0.7,
+                    func.length(InterviewAnswer.feedback) >= min_feedback_len,
+                )
+                .order_by(desc(InterviewAnswer.final_score))
+                .limit(3)
+            )
+            good_rows = good_result.all()
+
+            # Get low-rated answers (weak examples)
+            weak_result = await db.execute(
+                select(InterviewAnswer, Question)
+                .join(Question, InterviewAnswer.question_id == Question.id)
+                .where(
+                    InterviewAnswer.feedback != "",
+                    InterviewAnswer.feedback.isnot(None),
+                    InterviewAnswer.final_score < 0.4,
+                    func.length(InterviewAnswer.feedback) >= min_feedback_len,
+                )
+                .order_by(asc(InterviewAnswer.final_score))
+                .limit(2)
+            )
+            weak_rows = weak_result.all()
+
+            rows = weak_rows + good_rows
+            if not rows:
+                logger.info("No past feedback in DB — using hardcoded few-shot only")
+                _kb_loaded = True
+                return
+
+            for ans, q in rows:
+                quality = _quality_label(float(ans.final_score or 0))
+                # Derive TTS from first sentence of feedback
+                tts_line = (ans.feedback or "").split(".")[0].strip() + "."
+                human_msg = (
+                    f"QUESTION:\n{q.question_text}\n\n"
+                    f"CANDIDATE'S ANSWER:\n{ans.transcript}\n\n"
+                    f"EVALUATION SUMMARY:\n"
+                    f"- Overall quality: {quality} (score {ans.final_score:.2f}/1.00)"
+                )
+                ai_msg = (
+                    f"FEEDBACK: {ans.feedback}\n"
+                    f"TIP: {ans.tip or 'No specific tip provided.'}\n"
+                    f"TTS: {tts_line}"
+                )
+                _history.append(HumanMessage(content=human_msg))
+                _history.append(AIMessage(content=ai_msg))
+
+            # Trim if too many
+            while len(_history) > _MAX_HISTORY * 2:
+                _history.pop(0)
+                _history.pop(0)
+
+            _kb_loaded = True
+            logger.info(f"Loaded {len(rows)} past feedback examples from DB into LLM history")
+    except Exception as exc:
+        logger.warning(f"Could not load knowledge from DB: {exc}")
+        _kb_loaded = True  # Don't retry on every call
 
 
 # ── score → quality label ─────────────────────────────────────────────────────
@@ -272,6 +354,10 @@ async def generate_llm_feedback(
     """
     if not llm_available:
         return None
+
+    # Lazy-load DB knowledge on first call
+    if not _kb_loaded:
+        await load_knowledge_from_db()
 
     key = _cache_key(question, metrics.get("final_score", 0.0))
     cached = _cache_get(key)
