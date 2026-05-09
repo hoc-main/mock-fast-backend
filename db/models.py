@@ -61,6 +61,7 @@ class Module(Base):
     model_pkl_path: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     dataset_json_path: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     is_free: Mapped[bool] = mapped_column(Boolean, default=True)
+    companies: Mapped[list] = mapped_column(JSON, default=list) # List of company names
 
     subdomain: Mapped["Subdomain"] = relationship(back_populates="modules")
     questions: Mapped[List["Question"]] = relationship(back_populates="module")
@@ -130,3 +131,52 @@ class InterviewAnswer(Base):
 
     session: Mapped["InterviewSession"] = relationship(back_populates="answers")
     question: Mapped[Optional["Question"]] = relationship(back_populates="user_answers")
+
+
+# ── Jobs & Applications ──────────────────────────────────────────────────────
+
+class Job(Base):
+    __tablename__ = "jobs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    title: Mapped[str] = mapped_column(String(255))
+    company: Mapped[str] = mapped_column(String(255))
+    work_mode: Mapped[str] = mapped_column(String(50))
+    start_date: Mapped[str] = mapped_column(String(50))
+    duration: Mapped[str] = mapped_column(String(50))
+    stipend: Mapped[str] = mapped_column(String(100))
+    apply_by: Mapped[str] = mapped_column(String(50))
+    type: Mapped[str] = mapped_column(String(50))
+    schedule: Mapped[str] = mapped_column(String(50))
+    posted: Mapped[str] = mapped_column(String(50))
+    skills: Mapped[list] = mapped_column(JSON, default=list) # JSON array
+    description: Mapped[str] = mapped_column(Text)
+    responsibilities: Mapped[list] = mapped_column(JSON, default=list) # JSON array
+    additional_note: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    who_can_apply: Mapped[list] = mapped_column(JSON, default=list) # JSON array
+    other_requirements: Mapped[list] = mapped_column(JSON, default=list) # JSON array
+    perks: Mapped[list] = mapped_column(JSON, default=list) # JSON array
+    company_about: Mapped[str] = mapped_column(Text)
+    opps_posted: Mapped[int] = mapped_column(Integer, default=0)
+    candidates_hired: Mapped[int] = mapped_column(Integer, default=0)
+    logo: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
+
+    applications: Mapped[List["JobApplication"]] = relationship(back_populates="job")
+
+
+class JobApplication(Base):
+    __tablename__ = "job_applications"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    job_id: Mapped[int] = mapped_column(ForeignKey("jobs.id"))
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.user_id"))
+    phone_number: Mapped[str] = mapped_column(String(15))
+    resume_url: Mapped[str] = mapped_column(String(255))
+    certificates_url: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    cover_letter: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String(20), default="pending")
+    applied_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
+
+    job: Mapped["Job"] = relationship(back_populates="applications")
+    user: Mapped["User"] = relationship()
