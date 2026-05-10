@@ -1,9 +1,11 @@
 import os
 import shutil
 import uuid
+import logging
 from datetime import datetime
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, BackgroundTasks
+
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,6 +18,8 @@ from ..services.email_service import send_application_confirmation_email
 
 
 router = APIRouter(prefix="/api", tags=["Jobs"])
+logger = logging.getLogger(__name__)
+
 
 UPLOAD_DIR = "data/uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -100,6 +104,7 @@ async def apply_for_job(
     user = user_result.scalar_one_or_none()
     
     if user and user.email:
+        logger.info(f"Adding background task to send confirmation email to {user.email}")
         background_tasks.add_task(
             send_application_confirmation_email,
             recipient_email=user.email,
@@ -107,6 +112,10 @@ async def apply_for_job(
             job_title=job.title,
             company_name=job.company
         )
+    else:
+        logger.warning(f"Could not send confirmation email for user_id {user_id}: User not found or email missing.")
 
+    logger.info(f"Application {application.id} submitted successfully for job {job_id} by user {user_id}")
     return {"message": "Application submitted successfully", "application_id": application.id}
+
 

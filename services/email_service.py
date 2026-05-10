@@ -1,10 +1,13 @@
 import os
 import smtplib
+import logging
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from dotenv import load_dotenv
 
 load_dotenv()
+logger = logging.getLogger(__name__)
+
 
 def send_application_confirmation_email(recipient_email: str, user_name: str, job_title: str, company_name: str):
     """
@@ -18,8 +21,11 @@ def send_application_confirmation_email(recipient_email: str, user_name: str, jo
     smtp_from_name = os.getenv("SMTP_FROM_NAME", "HR Team")
 
     if not all([smtp_host, smtp_user, smtp_password, smtp_from_email]):
-        print("SMTP configuration is missing. Email not sent.")
+        logger.warning("SMTP configuration is incomplete. Email cannot be sent. Check your .env file.")
         return False
+
+    logger.info(f"Preparing to send application confirmation email to {recipient_email}")
+
 
     subject = f"Application Received: {job_title} at {company_name}"
     
@@ -119,11 +125,25 @@ def send_application_confirmation_email(recipient_email: str, user_name: str, jo
     message.attach(part2)
 
     try:
-        with smtplib.SMTP(smtp_host, smtp_port) as server:
+        if smtp_port == 465:
+            # SSL Connection
+            server = smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=10)
+        else:
+            # STARTTLS Connection (e.g., port 587)
+            server = smtplib.SMTP(smtp_host, smtp_port, timeout=10)
             server.starttls()
-            server.login(smtp_user, smtp_password)
-            server.sendmail(smtp_from_email, recipient_email, message.as_string())
+            
+        server.login(smtp_user, smtp_password)
+        server.sendmail(smtp_from_email, recipient_email, message.as_string())
+        server.quit()
+        logger.info(f"Email successfully sent to {recipient_email}")
         return True
+    except smtplib.SMTPConnectError:
+        logger.error(f"Failed to connect to SMTP server at {smtp_host}:{smtp_port}")
+    except smtplib.SMTPAuthenticationError:
+        logger.error(f"SMTP Authentication failed for user {smtp_user}. Verify your credentials/app password.")
     except Exception as e:
-        print(f"Error sending email: {e}")
-        return False
+        logger.exception(f"Unexpected error while sending email to {recipient_email}: {e}")
+    return False
+
+
