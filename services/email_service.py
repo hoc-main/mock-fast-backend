@@ -131,13 +131,16 @@ def send_application_confirmation_email(recipient_email: str, user_name: str, jo
         else:
             # STARTTLS Connection (e.g., port 587)
             server = smtplib.SMTP(smtp_host, smtp_port, timeout=10)
+            server.ehlo()  # Identify ourselves to the server
             server.starttls()
+            server.ehlo()  # Re-identify after encrypted connection is established
             
         server.login(smtp_user, smtp_password)
         server.sendmail(smtp_from_email, recipient_email, message.as_string())
         server.quit()
         logger.info(f"Email successfully sent to {recipient_email}")
         return True
+
     except smtplib.SMTPConnectError:
         logger.error(f"Failed to connect to SMTP server at {smtp_host}:{smtp_port}")
     except smtplib.SMTPAuthenticationError:
