@@ -3,7 +3,8 @@ import shutil
 import uuid
 from datetime import datetime
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, BackgroundTasks
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -11,6 +12,8 @@ from sqlalchemy.orm import selectinload
 from ..db.database import get_db
 from ..db.models import Job, JobApplication, User
 from ..schemas import JobOut, JobApplicationOut
+from ..services.email_service import send_application_confirmation_email
+
 
 router = APIRouter(prefix="/api", tags=["Jobs"])
 
@@ -38,7 +41,9 @@ async def apply_for_job(
     resume: UploadFile = File(...),
     certificate: Optional[UploadFile] = File(None),
     user_id: int = Form(...),
+    background_tasks: BackgroundTasks = BackgroundTasks(),
     db: AsyncSession = Depends(get_db)
+
 ):
     # 1. Validate Job
     result = await db.execute(select(Job).where(Job.id == job_id))
@@ -90,4 +95,18 @@ async def apply_for_job(
     await db.commit()
     await db.refresh(application)
 
+    # 5. Fetch user and job details for email
+    user_result = await db.execute(select(User).where(User.user_id == user_id))
+    user = user_result.scalar_one_or_none()
+    
+    if user and user.email:
+        background_tasks.add_task(
+            send_application_confirmation_email,
+            recipient_email=user.email,
+            user_name=f"{user.first_name} {user.last_name}",
+            job_title=job.title,
+            company_name=job.company
+        )
+
     return {"message": "Application submitted successfully", "application_id": application.id}
+
