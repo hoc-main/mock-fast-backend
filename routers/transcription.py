@@ -248,7 +248,7 @@ async def transcribe_websocket(
                 "turn_count":          len(state["accumulated"]),
             }))
 
-        async def handle_final_evaluate(full_transcript: str) -> None:
+        async def handle_final_evaluate(full_transcript: str, ws_source_event: str) -> None:
             """Called when frontend confirms user is done (sends EVALUATE)."""
             if state["evaluation_sent"]:
                 return
@@ -308,6 +308,7 @@ async def transcribe_websocket(
             await websocket.send_text(json.dumps({
                 "type":       "evaluation",
                 "transcript": full_transcript,
+                "ws_source_event": ws_source_event,
                 "evaluation": {
                     "score":            evaluation["final_score"],
                     "semantic_score":   evaluation["semantic_score"],
@@ -382,7 +383,7 @@ async def transcribe_websocket(
                                     f"{prior.strip()} {accumulated_text}".strip()
                                     if prior.strip() else accumulated_text
                                 ) or final_transcript or last_partial
-                                await handle_final_evaluate(full)
+                                await handle_final_evaluate(full, text)
                                 await websocket.close()
                                 break
 
@@ -393,7 +394,7 @@ async def transcribe_websocket(
                                     f"{prior.strip()} {accumulated_text}".strip()
                                     if prior.strip() else accumulated_text
                                 )
-                                await handle_final_evaluate(full)
+                                await handle_final_evaluate(full, text)
                                 # WS stays open until client closes it after receiving evaluation
 
                             elif text == "CONTINUE":
