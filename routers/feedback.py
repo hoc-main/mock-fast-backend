@@ -113,6 +113,7 @@ class QuestionFeedbackResponse(BaseModel):
     score_tier:       str
     narrative:        str
     improvement_tips: List[str]
+    tts_feedback:     str = ""
     grammar_notes:    GrammarNotes
     content_analysis: ContentAnalysis
     stt_flags:        List[str]
@@ -208,6 +209,7 @@ async def get_question_feedback(req: QuestionFeedbackRequest):
                     fb["narrative"] = llm_result["feedback"]
                     if llm_result.get("tip"):
                         fb["improvement_tips"] = [llm_result["tip"]]
+                    fb["tts_feedback"] = llm_result.get("tts_feedback", "")
                     logger.info("Using LLM feedback for /question")
                 else:
                     logger.info("LLM returned empty for /question, using rule-based")

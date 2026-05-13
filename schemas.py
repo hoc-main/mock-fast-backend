@@ -22,6 +22,7 @@ class EvaluationOut(BaseModel):
     penalty: float
     feedback: str
     tip: str
+    tts_feedback: str = ""
     score_tier: str = ""
     improvement_tips: List[str] = []
     stt_flags: List[str] = []
@@ -153,6 +154,7 @@ class ModuleOut(BaseModel):
     module_name: str
     slug: str
     is_free: bool = True
+    companies: List[str] = []
     question_count: int = 0
 
 class SubdomainOut(BaseModel):
@@ -173,3 +175,49 @@ class DomainListOut(BaseModel):
 class ModuleDetailOut(ModuleOut):
     domain_name: Optional[str] = None
     subdomain_name: Optional[str] = None
+
+
+# ── Jobs & Applications ──────────────────────────────────────────────────────
+
+class JobOut(BaseModel):
+    id: int
+    title: str
+    company: str
+    work_mode: str
+    start_date: str
+    duration: str
+    stipend: str
+    apply_by: str
+    type: str
+    schedule: str
+    posted: str
+    skills: List[str]
+    description: str
+    responsibilities: List[str]
+    additional_note: Optional[str] = None
+    who_can_apply: List[str]
+    other_requirements: List[str]
+    perks: List[str]
+    company_about: str
+    opps_posted: int
+    candidates_hired: int
+    logo: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class JobApplicationOut(BaseModel):
+    id: int
+    job_id: int
+    user_id: int
+    phone_number: str
+    resume_url: str
+    certificates_url: Optional[str] = None
+    cover_letter: Optional[str] = None
+    status: str
+    applied_at: datetime
+
+    class Config:
+        from_attributes = True

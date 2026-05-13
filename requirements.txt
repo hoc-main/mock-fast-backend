@@ -17,5 +17,6 @@ tqdm
 pandas
 deepgram-sdk
 groq
+langchain-groq
 sentencepiece>=0.2.0
 accelerate>=0.30.0

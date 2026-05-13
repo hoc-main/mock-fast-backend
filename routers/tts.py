@@ -14,7 +14,7 @@ async def text_to_speech(text: str = Query(...)):
         async with httpx.AsyncClient() as client:
             async with client.stream(
                 "POST",
-                f"{DEEPGRAM_TTS_URL}?model=aura-2-phoebe-en",
+                f"{DEEPGRAM_TTS_URL}?model=aura-2-asteria-en",
                 headers={
                     "Authorization": f"Token {DEEPGRAM_API_KEY}",
                     "Content-Type": "application/json",
