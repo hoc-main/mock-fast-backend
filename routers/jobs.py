@@ -5,6 +5,7 @@ import logging
 from datetime import datetime
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, BackgroundTasks
+from fastapi.responses import FileResponse
 
 
 from sqlalchemy import select
@@ -144,3 +145,17 @@ async def get_corporate_applicants(corporate_user_id: int, db: AsyncSession = De
             "applied_at": app.applied_at.isoformat() if app.applied_at else None
         })
     return applicants
+
+
+@router.get("/uploads/{filename}")
+async def get_uploaded_file(filename: str):
+    # The filename parameter is a path suffix after "uploads/"
+    # For security, let's make sure they are not doing directory traversal
+    safe_filename = os.path.basename(filename)
+    file_path = os.path.join(UPLOAD_DIR, safe_filename)
+    
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="File not found")
+        
+    return FileResponse(file_path, media_type="application/pdf")
+
