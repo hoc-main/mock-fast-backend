@@ -118,4 +118,29 @@ async def apply_for_job(
     logger.info(f"Application {application.id} submitted successfully for job {job_id} by user {user_id}")
     return {"message": "Application submitted successfully", "application_id": application.id}
 
-
+@router.get("/corporate/{corporate_user_id}/applicants")
+async def get_corporate_applicants(corporate_user_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(JobApplication, Job, User)
+        .join(Job, JobApplication.job_id == Job.id)
+        .join(User, JobApplication.user_id == User.user_id)
+        .where(Job.corporate_user_id == corporate_user_id)
+        .order_by(JobApplication.applied_at.desc())
+    )
+    
+    applicants = []
+    for app, job, user in result.all():
+        applicants.append({
+            "id": app.id,
+            "job_id": job.id,
+            "job_title": job.title,
+            "applicant_name": f"{user.first_name} {user.last_name}",
+            "applicant_email": user.email,
+            "phone_number": app.phone_number,
+            "resume_url": app.resume_url,
+            "certificates_url": app.certificates_url,
+            "cover_letter": app.cover_letter,
+            "status": app.status,
+            "applied_at": app.applied_at.isoformat() if app.applied_at else None
+        })
+    return applicants

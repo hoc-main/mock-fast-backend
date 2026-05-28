@@ -181,6 +181,7 @@ class ModuleDetailOut(ModuleOut):
 
 class JobOut(BaseModel):
     id: int
+    corporate_user_id: Optional[int] = None
     title: str
     company: str
     work_mode: str

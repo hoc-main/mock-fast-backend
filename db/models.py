@@ -139,6 +139,7 @@ class Job(Base):
     __tablename__ = "jobs"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    corporate_user_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.user_id"), nullable=True)
     title: Mapped[str] = mapped_column(String(255))
     company: Mapped[str] = mapped_column(String(255))
     work_mode: Mapped[str] = mapped_column(String(50))
