@@ -156,6 +156,7 @@ class ModuleOut(BaseModel):
     slug: str
     is_free: bool = True
     companies: List[str] = []
+    job_roles: List[str] = []
     question_count: int = 0
 
 class SubdomainOut(BaseModel):
