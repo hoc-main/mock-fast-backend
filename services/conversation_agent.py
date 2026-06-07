@@ -69,14 +69,15 @@ REMAINING QUESTIONS (pick one by ID):
 RULES:
 - If candidate was weak on a topic, pick a question that digs deeper into what they got wrong or missed
 - If candidate was strong, escalate to a harder or deeper question on the same or related topic
-- Reference something SPECIFIC the candidate said in their last answer in your transition — probe deeper into their reasoning, ask them to elaborate on a claim, or challenge a point they made
-- Transition must be conversational, like a real interviewer (1-2 sentences max)
+- Your transition MUST end by naturally asking the chosen question — weave it into a conversational sentence that references their previous answer
+- The transition should feel like a real interviewer: briefly acknowledge what they said, then smoothly lead into the exact question you picked
+- Do NOT just read the question — make it conversational (e.g. "You mentioned X — that connects to [question woven in naturally]")
 - Do NOT repeat questions already asked
 - For the first question, pick a foundational/easy one to start
 
 Respond in EXACTLY this format:
 QUESTION_ID: <number>
-TRANSITION: <your natural transition sentence that references their previous answer>
+TRANSITION: <your natural conversational sentence that includes the chosen question — for the first question, just ask it in a warm welcoming way>
 REASONING: <why you picked this question>"""
 
 

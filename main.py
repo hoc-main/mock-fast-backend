@@ -77,3 +77,17 @@ async def startup_event():
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+@app.post("/api/test/conversation-agent")
+async def test_conversation_agent(body: dict):
+    """Test endpoint for conversation agent — feed dummy data to verify Groq picks next question."""
+    from .services.conversation_agent import pick_next_question
+    result = await pick_next_question(
+        remaining_questions=body.get("remaining_questions", []),
+        conversation_history=body.get("conversation_history", []),
+        module_topic=body.get("module_topic", "technical"),
+    )
+    if result:
+        return {"status": "success", "question_id": result.question_id, "transition": result.transition, "reasoning": result.reasoning}
+    return {"status": "failed", "message": "LLM unavailable or parse error"}
