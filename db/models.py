@@ -62,6 +62,7 @@ class Module(Base):
     dataset_json_path: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     is_free: Mapped[bool] = mapped_column(Boolean, default=True)
     companies: Mapped[list] = mapped_column(JSON, default=list) # List of company names
+    job_roles: Mapped[list] = mapped_column(JSON, default=list) # List of job roles this module covers
 
     subdomain: Mapped["Subdomain"] = relationship(back_populates="modules")
     questions: Mapped[List["Question"]] = relationship(back_populates="module")
