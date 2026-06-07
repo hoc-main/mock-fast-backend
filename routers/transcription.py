@@ -277,6 +277,20 @@ async def transcribe_websocket(
             await _upsert_answer(session, current_question, full_transcript, evaluation, db)
             logger.info(f"[session={session_id}] saved. score={evaluation['final_score']}")
 
+            # ── Update conversation history for next question selection ────
+            history = list(session.conversation_history or [])
+            history.append({
+                "question": current_question.question_text,
+                "answer": full_transcript,
+                "score": evaluation["final_score"],
+                "gaps": ", ".join(evaluation.get("missing_keywords", [])[:3]) or "none",
+            })
+            session.conversation_history = history
+            asked = list(session.asked_question_ids or [])
+            if current_question.id not in asked:
+                asked.append(current_question.id)
+                session.asked_question_ids = asked
+            await db.commit()
             # ── LLM-first feedback: try Groq, fall back to rule-based ───────
             eval_feedback = evaluation["feedback"]  # rule-based fallback
             eval_tip = evaluation["tip"]

@@ -58,6 +58,7 @@ class NextQuestionResponse(BaseModel):
     question: Optional[QuestionOut] = None
     question_index: Optional[int] = None
     total_questions: Optional[int] = None
+    transition: Optional[str] = None  # Conversational transition from LLM
     summary: Optional[Any] = None
 
 
@@ -155,7 +156,6 @@ class ModuleOut(BaseModel):
     slug: str
     is_free: bool = True
     companies: List[str] = []
-    job_roles: List[str] = []
     question_count: int = 0
 
 class SubdomainOut(BaseModel):

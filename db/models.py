@@ -101,6 +101,8 @@ class InterviewSession(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), server_default=func.now())
     current_index: Mapped[int] = mapped_column(Integer, default=0)
     status: Mapped[str] = mapped_column(String(20), default="active")
+    conversation_history: Mapped[list] = mapped_column(JSON, default=list)  # [{question, score, gaps}]
+    asked_question_ids: Mapped[list] = mapped_column(JSON, default=list)    # [int] IDs already asked
 
     user: Mapped[Optional["User"]] = relationship(back_populates="sessions")
     module: Mapped[Optional["Module"]] = relationship(back_populates="sessions")

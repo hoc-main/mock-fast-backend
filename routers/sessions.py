@@ -27,6 +27,7 @@ from ..services.evaluation import evaluate_answer
 from ..services.feedback_generator import generate_question_feedback, generate_session_summary
 from ..services.nlp_features import tokenize
 from ..services import llm_feedback as _llm
+from ..services.conversation_agent import pick_next_question
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/interview", tags=["Sessions"])
@@ -224,6 +225,13 @@ async def start_interview(body: StartInterviewRequest, db: AsyncSession = Depend
     if not current_q:
         raise HTTPException(status_code=500, detail="Could not load first question")
 
+    # Track first question as asked
+    asked = list(session.asked_question_ids or [])
+    if current_q.id not in asked:
+        asked.append(current_q.id)
+        session.asked_question_ids = asked
+        await db.commit()
+
     return StartInterviewResponse(
         session_id=session.id,
         question=QuestionOut(
@@ -272,7 +280,58 @@ async def next_question(session_id: int, db: AsyncSession = Depends(get_db)):
             summary={"results": results, **session_sum},
         )
 
-    next_q = await _get_question_at(session, db)
+    # ── Conversational: LLM picks next question ───────────────────────────────
+    next_q = None
+    transition = None
+
+    if _llm.llm_available:
+        # Get all remaining (unanswered) questions
+        asked_ids = list(session.asked_question_ids or [])
+        all_q_result = await db.execute(
+            select(Question)
+            .where(Question.module_id == session.module_id)
+            .order_by(Question.order)
+        )
+        all_questions = all_q_result.scalars().all()
+        remaining = [
+            {"id": q.id, "question": q.question_text, "topic": q.topic or ""}
+            for q in all_questions if q.id not in asked_ids
+        ]
+
+        # Get module name for context
+        module_result = await db.execute(select(Module).where(Module.id == session.module_id))
+        module = module_result.scalar_one_or_none()
+        module_topic = module.module_name if module else "technical"
+
+        # Ask LLM to pick next question
+        if remaining:
+            decision = await pick_next_question(
+                remaining_questions=remaining,
+                conversation_history=list(session.conversation_history or []),
+                module_topic=module_topic,
+            )
+            if decision:
+                # Load the chosen question
+                q_result = await db.execute(
+                    select(Question).where(Question.id == decision.question_id)
+                )
+                next_q = q_result.scalar_one_or_none()
+                transition = decision.transition
+                logger.info(
+                    f"[session={session_id}] LLM picked Q{decision.question_id}: "
+                    f"{decision.reasoning[:60]}"
+                )
+
+    # Fallback: sequential order
+    if not next_q:
+        next_q = await _get_question_at(session, db)
+
+    # Track asked question
+    asked = list(session.asked_question_ids or [])
+    asked.append(next_q.id)
+    session.asked_question_ids = asked
+    await db.commit()
+
     return NextQuestionResponse(
         session_id=session_id,
         completed=False,
@@ -284,6 +343,7 @@ async def next_question(session_id: int, db: AsyncSession = Depends(get_db)):
         ),
         question_index=session.current_index,
         total_questions=total,
+        transition=transition,
     )
 
 
