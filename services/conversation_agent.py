@@ -14,11 +14,29 @@ import asyncio
 import json
 import logging
 import os
+import time
 from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
+
+# Cached Groq client — reuse across calls to avoid re-init overhead
+_groq_client = None
+_groq_client_key = None
+
+
+def _get_groq_client():
+    global _groq_client, _groq_client_key
+    from groq import Groq
+    api_key = os.getenv("GROQ_API_KEY", "")
+    if not api_key:
+        return None
+    if _groq_client and _groq_client_key == api_key:
+        return _groq_client
+    _groq_client = Groq(api_key=api_key)
+    _groq_client_key = api_key
+    return _groq_client
 
 
 class NextQuestionDecision(BaseModel):
@@ -84,36 +102,41 @@ REASONING: <why you picked this question>"""
 # ── Sync call (runs in thread pool) ──────────────────────────────────────────
 
 def _pick_next_question_sync(prompt: str) -> Optional[NextQuestionDecision]:
-    from groq import Groq
-    api_key = os.getenv("GROQ_API_KEY", "")
+    client = _get_groq_client()
     model = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b")
-    if not api_key:
+    if not client:
         return None
-    try:
-        client = Groq(api_key=api_key)
-        is_reasoning = "oss" in model or "reasoning" in model
-        call_kwargs = dict(
-            model=model,
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.4,
-            max_completion_tokens=500 if is_reasoning else 250,
-            top_p=0.9,
-            stream=False,
-        )
-        if is_reasoning:
-            call_kwargs["reasoning_effort"] = "low"
-        completion = client.chat.completions.create(**call_kwargs)
-        msg = completion.choices[0].message
-        raw = (msg.content or "").strip()
-        reasoning_text = (getattr(msg, "reasoning", None) or "").strip()
-        # Parse from content first, then reasoning
-        result = _parse_decision(raw)
-        if not result and reasoning_text:
-            result = _parse_decision(reasoning_text)
-        return result
-    except Exception as exc:
-        logger.warning(f"Conversation agent LLM call failed: {exc}")
-        return None
+
+    max_retries = 2
+    for attempt in range(max_retries + 1):
+        try:
+            is_reasoning = "oss" in model or "reasoning" in model
+            call_kwargs = dict(
+                model=model,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.4,
+                max_completion_tokens=500 if is_reasoning else 250,
+                top_p=0.9,
+                stream=False,
+            )
+            if is_reasoning:
+                call_kwargs["reasoning_effort"] = "low"
+            completion = client.chat.completions.create(**call_kwargs)
+            msg = completion.choices[0].message
+            raw = (msg.content or "").strip()
+            reasoning_text = (getattr(msg, "reasoning", None) or "").strip()
+            result = _parse_decision(raw)
+            if not result and reasoning_text:
+                result = _parse_decision(reasoning_text)
+            return result
+        except Exception as exc:
+            if attempt < max_retries:
+                wait = 1.5 * (attempt + 1)
+                logger.info(f"Conversation agent retry {attempt + 1}/{max_retries} after {wait}s: {exc}")
+                time.sleep(wait)
+            else:
+                logger.warning(f"Conversation agent LLM call failed after {max_retries + 1} attempts: {exc}")
+                return None
 
 
 def _parse_decision(raw: str) -> Optional[NextQuestionDecision]:
