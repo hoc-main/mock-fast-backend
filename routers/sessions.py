@@ -233,6 +233,35 @@ async def start_interview(body: StartInterviewRequest, db: AsyncSession = Depend
         raise HTTPException(status_code=500, detail="No questions found for this module")
 
     current_q = await _get_question_at(session, db)
+
+    # Try to pick a question not asked in previous sessions
+    if current_q and session.user_id:
+        past_sessions_result = await db.execute(
+            select(InterviewSession).where(
+                InterviewSession.user_id == body.user_id,
+                InterviewSession.module_id == body.module_id,
+                InterviewSession.status == "completed",
+                InterviewSession.id != session.id,
+            )
+        )
+        past_asked_ids = set()
+        for past_s in past_sessions_result.scalars().all():
+            past_asked_ids.update(past_s.asked_question_ids or [])
+
+        if current_q.id in past_asked_ids:
+            # Find first question not asked in any past session
+            all_q_result = await db.execute(
+                select(Question)
+                .where(Question.module_id == module.id)
+                .order_by(Question.order)
+            )
+            for q in all_q_result.scalars().all():
+                if q.id not in past_asked_ids:
+                    current_q = q
+                    session.current_index = q.order
+                    await db.commit()
+                    break
+
     if not current_q:
         raise HTTPException(status_code=500, detail="Could not load first question")
 
@@ -296,8 +325,23 @@ async def next_question(session_id: int, db: AsyncSession = Depends(get_db)):
     transition = None
 
     if _llm.llm_available:
-        # Get all remaining (unanswered) questions
+        # Get all remaining (unanswered) questions — exclude this session + past sessions
         asked_ids = list(session.asked_question_ids or [])
+
+        # Also exclude questions from user's previous completed sessions for this module
+        if session.user_id:
+            past_sessions_result = await db.execute(
+                select(InterviewSession).where(
+                    InterviewSession.user_id == session.user_id,
+                    InterviewSession.module_id == session.module_id,
+                    InterviewSession.status == "completed",
+                    InterviewSession.id != session.id,
+                )
+            )
+            for past_session in past_sessions_result.scalars().all():
+                asked_ids.extend(past_session.asked_question_ids or [])
+            asked_ids = list(set(asked_ids))  # deduplicate
+
         all_q_result = await db.execute(
             select(Question)
             .where(Question.module_id == session.module_id)
@@ -308,6 +352,14 @@ async def next_question(session_id: int, db: AsyncSession = Depends(get_db)):
             {"id": q.id, "question": q.question_text, "topic": q.topic or ""}
             for q in all_questions if q.id not in asked_ids
         ]
+
+        # If all questions exhausted across sessions, reset to current session only
+        if not remaining:
+            current_asked = list(session.asked_question_ids or [])
+            remaining = [
+                {"id": q.id, "question": q.question_text, "topic": q.topic or ""}
+                for q in all_questions if q.id not in current_asked
+            ]
 
         # Get module name for context
         module_result = await db.execute(select(Module).where(Module.id == session.module_id))
