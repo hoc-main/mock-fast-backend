@@ -339,7 +339,8 @@ async def next_question(session_id: int, db: AsyncSession = Depends(get_db)):
 
     # Track asked question
     asked = list(session.asked_question_ids or [])
-    asked.append(next_q.id)
+    if next_q.id not in asked:
+        asked.append(next_q.id)
     session.asked_question_ids = asked
     await db.commit()
 
