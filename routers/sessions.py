@@ -195,22 +195,27 @@ async def start_interview(body: StartInterviewRequest, db: AsyncSession = Depend
     if not module:
         raise HTTPException(status_code=404, detail="Module not found")
 
-    await _ensure_questions_loaded(module, db)
-
-    total = await _question_count(module.id, db)
-    if total == 0:
-        raise HTTPException(status_code=500, detail="No questions found for this module")
-
-    session_result = await db.execute(
+    # Check for existing sessions
+    existing_sessions_result = await db.execute(
         select(InterviewSession).where(
-            InterviewSession.user_id  == body.user_id,
+            InterviewSession.user_id == body.user_id,
             InterviewSession.module_id == body.module_id,
-            InterviewSession.status   == "active",
         )
     )
-    session = session_result.scalars().first()
+    existing_sessions = existing_sessions_result.scalars().all()
 
-    if not session:
+    # Check if there's an active session to resume
+    active_session = next((s for s in existing_sessions if s.status == "active"), None)
+    if active_session:
+        session = active_session
+    else:
+        # If there's any completed session, block
+        if existing_sessions:
+            raise HTTPException(
+                status_code=403,
+                detail="You have already attempted this mock interview. Multiple attempts are not allowed."
+            )
+        # No sessions at all, create new
         session = InterviewSession(
             user_id=body.user_id,
             module_id=body.module_id,
@@ -220,6 +225,12 @@ async def start_interview(body: StartInterviewRequest, db: AsyncSession = Depend
         db.add(session)
         await db.commit()
         await db.refresh(session)
+
+    await _ensure_questions_loaded(module, db)
+
+    total = await _question_count(module.id, db)
+    if total == 0:
+        raise HTTPException(status_code=500, detail="No questions found for this module")
 
     current_q = await _get_question_at(session, db)
     if not current_q:
