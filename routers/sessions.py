@@ -19,6 +19,7 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from ..db.database import get_db
 from ..db.models import InterviewAnswer, InterviewSession, Module, Question, User
@@ -495,7 +496,11 @@ async def get_session_detail(session_id: int, db: AsyncSession = Depends(get_db)
         .where(InterviewAnswer.session_id == session_id)
     )
 
-    module_result = await db.execute(select(Module).where(Module.id == session.module_id))
+    module_result = await db.execute(
+        select(Module)
+        .options(selectinload(Module.subdomain))
+        .where(Module.id == session.module_id)
+    )
     module = module_result.scalar_one_or_none()
 
     feedback_dicts = [_get_feedback_dict(a, q) for a, q in rows]
@@ -506,6 +511,7 @@ async def get_session_detail(session_id: int, db: AsyncSession = Depends(get_db)
         "session_id":        session_id,
         "created_at":        session.created_at,
         "module_name":       module.module_name if module else "Unknown",
+        "subdomain_name":    module.subdomain.name if (module and module.subdomain) else "Unknown",
         "total_score":       round(avg_result.scalar() or 0.0, 1),
         "summary_paragraph": session_sum.get("summary_paragraph", ""),
         "strengths":         session_sum.get("strengths", []),
@@ -533,13 +539,18 @@ async def get_user_sessions(user_id: int, db: AsyncSession = Depends(get_db)):
             select(func.count()).select_from(InterviewAnswer)
             .where(InterviewAnswer.session_id == s.id)
         )
-        module_result = await db.execute(select(Module).where(Module.id == s.module_id))
+        module_result = await db.execute(
+            select(Module)
+            .options(selectinload(Module.subdomain))
+            .where(Module.id == s.module_id)
+        )
         module = module_result.scalar_one_or_none()
 
         output.append({
             "id":             s.id,
             "created_at":     s.created_at,
             "module_name":    module.module_name if module else "Unknown",
+            "subdomain_name":  module.subdomain.name if (module and module.subdomain) else "Unknown",
             "total_score":    round(avg_result.scalar() or 0.0, 1),
             "question_count": count_result.scalar(),
         })

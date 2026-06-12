@@ -126,6 +126,7 @@ class SessionListItem(BaseModel):
     id: int
     created_at: datetime
     module_name: str
+    subdomain_name: Optional[str] = None
     total_score: float
     question_count: int
 
@@ -134,6 +135,7 @@ class SessionDetailResponse(BaseModel):
     session_id: int
     created_at: datetime
     module_name: str
+    subdomain_name: Optional[str] = None
     total_score: float
     session_summary: Optional[str] = None
     results: List[AnswerResult]
