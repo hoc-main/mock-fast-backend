@@ -22,7 +22,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from ..db.database import get_db
-from ..db.models import InterviewAnswer, InterviewSession, Module, Question, User
+from ..db.models import InterviewAnswer, InterviewSession, Module, Question, Subdomain, User
 from ..schemas import EvaluationRequest, EvaluationResponse, EvaluationOut, NextQuestionResponse, QuestionOut, StartInterviewRequest, StartInterviewResponse
 from ..services.evaluation import evaluate_answer
 from ..services.feedback_generator import generate_question_feedback, generate_session_summary
@@ -147,20 +147,10 @@ def _serialize_answer(answer: InterviewAnswer, question: Question, fb: dict) -> 
         "question_text":      question.question_text,
         "transcript":         answer.transcript or "",
         "final_score":        answer.final_score,
-        "semantic_score":     answer.semantic_score,
-        "keyword_score":      answer.keyword_score,
-        "question_relevance": answer.question_relevance,
-        "lexical_diversity":  answer.lexical_diversity,
-        "discourse_score":    answer.discourse_score,
-        "penalty":            answer.penalty,
-        # Use stored feedback/tip (written at evaluation time, may be richer)
         "feedback":           answer.feedback or fb.get("narrative", ""),
         "tip":                answer.tip      or "",
-        # New feedback fields from the rich generator
         "score_tier":          fb.get("score_tier", ""),
         "improvement_bullets": fb.get("improvement_tips", []),
-        "grammar_notes":       fb.get("grammar_notes", {}),
-        "stt_flags":           fb.get("stt_flags", []),
         "missing_keywords":    list(answer.missing_keywords or []),
     }
 
@@ -235,12 +225,11 @@ async def start_interview(body: StartInterviewRequest, db: AsyncSession = Depend
 
     current_q = await _get_question_at(session, db)
 
-    # Try to pick a question not asked in previous sessions
+    # Try to pick a question not asked in any previous session (across all modules)
     if current_q and session.user_id:
         past_sessions_result = await db.execute(
             select(InterviewSession).where(
                 InterviewSession.user_id == body.user_id,
-                InterviewSession.module_id == body.module_id,
                 InterviewSession.status == "completed",
                 InterviewSession.id != session.id,
             )
@@ -270,8 +259,9 @@ async def start_interview(body: StartInterviewRequest, db: AsyncSession = Depend
     asked = list(session.asked_question_ids or [])
     if current_q.id not in asked:
         asked.append(current_q.id)
-        session.asked_question_ids = asked
-        await db.commit()
+    session.asked_question_ids = asked
+    session.current_question_id = current_q.id
+    await db.commit()
 
     return StartInterviewResponse(
         session_id=session.id,
@@ -329,12 +319,12 @@ async def next_question(session_id: int, db: AsyncSession = Depends(get_db)):
         # Get all remaining (unanswered) questions — exclude this session + past sessions
         asked_ids = list(session.asked_question_ids or [])
 
-        # Also exclude questions from user's previous completed sessions for this module
+        # Exclude questions from ALL of this user's past sessions (any module)
+        # so the same user never gets the same question across different sessions
         if session.user_id:
             past_sessions_result = await db.execute(
                 select(InterviewSession).where(
                     InterviewSession.user_id == session.user_id,
-                    InterviewSession.module_id == session.module_id,
                     InterviewSession.status == "completed",
                     InterviewSession.id != session.id,
                 )
@@ -343,10 +333,39 @@ async def next_question(session_id: int, db: AsyncSession = Depends(get_db)):
                 asked_ids.extend(past_session.asked_question_ids or [])
             asked_ids = list(set(asked_ids))  # deduplicate
 
+        # Get current module and its job_roles + subdomain
+        module_result = await db.execute(select(Module).where(Module.id == session.module_id))
+        module = module_result.scalar_one_or_none()
+        module_topic = module.module_name if module else "technical"
+        current_job_roles = set(module.job_roles or []) if module else set()
+
+        # Expand question pool: all modules in same subdomain sharing job roles
+        sibling_module_ids = [session.module_id]
+        if module and module.subdomain_id and current_job_roles:
+            sibling_result = await db.execute(
+                select(Module).where(
+                    Module.subdomain_id == module.subdomain_id,
+                    Module.id != module.id,
+                )
+            )
+            for sibling in sibling_result.scalars().all():
+                sibling_roles = set(sibling.job_roles or [])
+                if sibling_roles & current_job_roles:  # intersection
+                    sibling_module_ids.append(sibling.id)
+                    # Ensure sibling questions are loaded
+                    await _ensure_questions_loaded(sibling, db)
+
+        logger.info(
+            f"[session={session_id}] cross-question pool: "
+            f"{len(sibling_module_ids)} modules (subdomain={module.subdomain_id}, "
+            f"roles={list(current_job_roles)[:3]})"
+        )
+
+        # Fetch questions from the expanded pool
         all_q_result = await db.execute(
             select(Question)
-            .where(Question.module_id == session.module_id)
-            .order_by(Question.order)
+            .where(Question.module_id.in_(sibling_module_ids))
+            .order_by(Question.module_id, Question.order)
         )
         all_questions = all_q_result.scalars().all()
         remaining = [
@@ -362,15 +381,13 @@ async def next_question(session_id: int, db: AsyncSession = Depends(get_db)):
                 for q in all_questions if q.id not in current_asked
             ]
 
-        # Get module name for context
-        module_result = await db.execute(select(Module).where(Module.id == session.module_id))
-        module = module_result.scalar_one_or_none()
-        module_topic = module.module_name if module else "technical"
-
-        # Ask LLM to pick next question
+        # Ask LLM to pick next question (cap at 20 to keep prompt manageable)
+        MAX_QUESTIONS_FOR_LLM = 20
         if remaining:
+            import random
+            llm_pool = remaining if len(remaining) <= MAX_QUESTIONS_FOR_LLM else random.sample(remaining, MAX_QUESTIONS_FOR_LLM)
             decision = await pick_next_question(
-                remaining_questions=remaining,
+                remaining_questions=llm_pool,
                 conversation_history=list(session.conversation_history or []),
                 module_topic=module_topic,
             )
@@ -395,6 +412,7 @@ async def next_question(session_id: int, db: AsyncSession = Depends(get_db)):
     if next_q.id not in asked:
         asked.append(next_q.id)
     session.asked_question_ids = asked
+    session.current_question_id = next_q.id
     await db.commit()
 
     return NextQuestionResponse(
@@ -627,12 +645,6 @@ async def evaluate_question(
     return EvaluationResponse(
         evaluation=EvaluationOut(
             score=ans_row.final_score,
-            semantic_score=ans_row.semantic_score,
-            keyword_score=ans_row.keyword_score,
-            question_relevance=ans_row.question_relevance,
-            lexical_diversity=ans_row.lexical_diversity,
-            discourse_score=ans_row.discourse_score,
-            penalty=ans_row.penalty,
             feedback=ans_row.feedback,
             tip=ans_row.tip,
             missing_keywords=list(ans_row.missing_keywords or []),

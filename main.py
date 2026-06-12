@@ -68,10 +68,28 @@ app.include_router(jobs.router)           # /api/jobs/
 
 @app.on_event("startup")
 async def startup_event():
-    # Create tables if using SQLite (local dev)
+    # Create tables (SQLite) or add missing columns (PostgreSQL)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        # Auto-add new columns that don't exist yet (create_all won't ALTER existing tables)
+        await _auto_add_missing_columns(conn)
     check_llm_available()
+
+
+async def _auto_add_missing_columns(conn):
+    """Add columns introduced after initial table creation. Safe to re-run."""
+    from sqlalchemy import text
+    migrations = [
+        ("interview_interviewsession", "current_question_id", "INTEGER NULL"),
+        ("interview_interviewsession", "conversation_history", "TEXT DEFAULT '[]'"),
+        ("interview_interviewsession", "asked_question_ids", "TEXT DEFAULT '[]'"),
+    ]
+    for table, column, col_def in migrations:
+        try:
+            await conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} {col_def}"))
+            logger.info(f"Auto-added column: {table}.{column}")
+        except Exception:
+            pass  # Column already exists
 
 
 @app.get("/health")

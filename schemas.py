@@ -14,18 +14,9 @@ class QuestionOut(BaseModel):
 
 class EvaluationOut(BaseModel):
     score: float
-    semantic_score: float
-    keyword_score: float
-    question_relevance: float
-    lexical_diversity: float
-    discourse_score: float
-    penalty: float
     feedback: str
     tip: str
     tts_feedback: str = ""
-    score_tier: str = ""
-    improvement_tips: List[str] = []
-    stt_flags: List[str] = []
     missing_keywords: List[str]
 
 
@@ -101,15 +92,8 @@ class AnswerResult(BaseModel):
     question_text: str
     transcript: str
     final_score: float
-    semantic_score: float
-    keyword_score: float
-    question_relevance: float = 0.0
-    lexical_diversity: float = 0.0
-    discourse_score: float = 0.0
-    penalty: float = 0.0
     feedback: str
     tip: str
-    question_summary: Optional[str] = None
     improvement_bullets: List[str] = []
     missing_keywords: List[Any]
 

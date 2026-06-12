@@ -64,54 +64,7 @@ SCORE_TIERS = [
     (0.00, "weak"),
 ]
 
-# Narrative sentence templates keyed by (tier, dimension)
-# Each slot has multiple variants so text is less robotic.
-_NARRATIVE_TEMPLATES = {
-    # Opening sentence — overall impression
-    "open_strong":   [
-        "Your answer demonstrated a solid grasp of the topic and addressed the question clearly.",
-        "You provided a well-structured and accurate response that covered the core idea effectively.",
-        "The answer reflected genuine understanding and was largely on point for what was asked.",
-    ],
-    "open_good":     [
-        "Your answer showed a reasonable understanding of the topic, though there is room to sharpen it further.",
-        "The response was generally relevant and correct in its direction, but fell short in a few key areas.",
-        "You covered the main idea adequately, even if some important details were left out.",
-    ],
-    "open_partial":  [
-        "Your answer touched on the topic but lacked the depth and accuracy needed for a complete response.",
-        "The response was partially on track, but it missed several important aspects of the question.",
-        "You demonstrated some familiarity with the subject, yet the answer felt incomplete overall.",
-    ],
-    "open_weak":     [
-        "The answer did not adequately address what was being asked and requires significant improvement.",
-        "Your response was quite vague or off-topic, making it difficult to assess your understanding.",
-        "The answer lacked substance and did not reflect a clear command of the subject matter.",
-    ],
-
-    # Positive observation (pros sentence)
-    "pro_semantic":  "Your explanation aligned well with the expected answer on a conceptual level.",
-    "pro_keywords":  "You successfully incorporated several key terms that are central to this topic.",
-    "pro_discourse": "The response had good structural flow, with clear sequencing and logical connectives.",
-    "pro_length":    "The length of your answer was appropriate and proportional to the question's scope.",
-    "pro_lexical":   "You used a varied vocabulary, which added depth and precision to your response.",
-    "pro_relevance": "You stayed focused on the question and did not wander into unrelated territory.",
-
-    # Constructive observation (cons sentence)
-    "con_semantic":  "However, the core concept was not explained with sufficient accuracy or completeness.",
-    "con_keywords":  "Key terms and concepts that define this topic were either missing or only partially mentioned.",
-    "con_discourse": "The answer lacked structured reasoning — it would benefit from clearer sequencing (e.g., definition → explanation → example).",
-    "con_length_short": "The response was too brief to demonstrate full understanding; more elaboration was needed.",
-    "con_length_long":  "The answer was somewhat verbose, with ideas repeated rather than developed further.",
-    "con_relevance": "Portions of the answer drifted away from the specific question, reducing its overall relevance.",
-    "con_grammar":   "There were noticeable spoken artifacts — filler words and repetitions — that reduced clarity.",
-
-    # Closing observation
-    "close_strong":  "Overall, this was a commendable response that would leave a positive impression in an interview.",
-    "close_good":    "With a bit more precision and completeness, this answer could easily reach a strong level.",
-    "close_partial": "Focusing on the missing keywords and adding a concrete example would significantly improve this answer.",
-    "close_weak":    "Revisiting the fundamentals of this topic and practising a structured 'define it, explain it, then give an example' approach will help greatly.",
-}
+# Narrative sentence templates removed — using content-based generation instead.
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -121,10 +74,6 @@ def _score_tier(score: float) -> str:
             return label
     return "weak"
 
-
-def _pick(templates: List[str], seed: int = 0) -> str:
-    """Deterministic pick from a list to avoid random variation on retries."""
-    return templates[seed % len(templates)]
 
 
 def _normalize(text: str) -> str:
@@ -333,64 +282,65 @@ def _build_narrative(
     metrics: Dict[str, Any],
     grammar: Dict[str, Any],
     content: Dict[str, Any],
+    question_text: str,
+    transcript: str,
+    expected_answer: str,
     seed: int = 0,
 ) -> str:
     """
-    Builds a 3-4 sentence narrative paragraph covering pros and cons.
+    Builds a specific feedback paragraph that references actual content.
     """
-    T = _NARRATIVE_TEMPLATES
     sentences: List[str] = []
 
-    # 1. Opening sentence
-    sentences.append(_pick(T[f"open_{tier}"], seed))
+    # What they got right
+    covered = content.get("concepts_covered", [])
+    missing = content.get("concepts_missing", [])
+    present_kw = content.get("present_keywords", {})
+    missing_kw = content.get("missing_keywords", {})
+    all_present = present_kw.get("critical", []) + present_kw.get("supporting", [])
+    all_missing = missing_kw.get("critical", []) + missing_kw.get("supporting", [])
 
-    # 2. Positive observation (pick the strongest metric as the 'pro')
-    semantic  = metrics.get("semantic_score", 0.0)
-    kw_score  = metrics.get("keyword_score", 0.0)
-    discourse = metrics.get("discourse_score", 0.0)
-    length    = metrics.get("length_score", 0.0)
-    lexical   = metrics.get("lexical_diversity", 0.0)
-    relevance = metrics.get("question_relevance", 0.0)
+    if tier in ("strong", "good"):
+        if all_present:
+            kw_list = ", ".join(all_present[:3])
+            sentences.append(f"You correctly covered key concepts like {kw_list}, showing solid understanding.")
+        elif covered:
+            sentences.append(f"You addressed the core idea around '{covered[0]}' effectively.")
+        else:
+            sentences.append("Your answer was generally on track and relevant to what was asked.")
+    elif tier == "partial":
+        if all_present:
+            sentences.append(f"You mentioned {', '.join(all_present[:2])}, which is a good start.")
+        else:
+            sentences.append("Your answer touched on the topic but didn't go deep enough.")
+    else:
+        sentences.append("Your answer didn't sufficiently address the question that was asked.")
 
-    pro_scores = [
-        (semantic,  T["pro_semantic"]),
-        (kw_score,  T["pro_keywords"]),
-        (discourse, T["pro_discourse"]),
-        (length,    T["pro_length"]),
-        (lexical,   T["pro_lexical"]),
-        (relevance, T["pro_relevance"]),
-    ]
-    # Only add a pro sentence if the best metric is genuinely good (>= 0.55)
-    pro_scores_good = [(v, s) for v, s in pro_scores if v >= 0.55]
-    if pro_scores_good:
-        pro_scores_good.sort(reverse=True)
-        sentences.append(pro_scores_good[0][1])
+    # What they missed
+    if all_missing and tier != "strong":
+        missed_str = ", ".join(all_missing[:3])
+        sentences.append(f"You missed important concepts: {missed_str}.")
+    elif missing and tier != "strong":
+        sentences.append(f"You didn't cover the point about '{missing[0]}'.")
 
-    # 3. Constructive/con observation (pick the weakest metric)
-    con_scores = [
-        (semantic,  T["con_semantic"]),
-        (kw_score,  T["con_keywords"]),
-        (discourse, T["con_discourse"]),
-        (relevance, T["con_relevance"]),
-    ]
-    # Length-specific cons
-    # word count unused after refactor — kept as placeholder
-    if length < 0.45:
-        con_scores.append((length, T["con_length_short"]))
-    elif lexical < 0.45:
-        con_scores.append((lexical, T["con_length_long"]))
+    # Grammar/delivery note only if severe
+    if grammar["severity"] in ("moderate", "heavy") and grammar["filler_words_found"]:
+        fillers = ", ".join(grammar["filler_words_found"][:2])
+        sentences.append(f"Your delivery had noticeable filler words ({fillers}) that reduced clarity.")
 
-    con_scores_bad = [(v, s) for v, s in con_scores if v < 0.60]
-    if con_scores_bad:
-        con_scores_bad.sort()   # ascending — weakest first
-        sentences.append(con_scores_bad[0][1])
-    elif grammar["severity"] in ("moderate", "heavy"):
-        sentences.append(T["con_grammar"])
+    # Closing
+    if tier == "strong":
+        sentences.append("Overall a strong response that would leave a positive impression.")
+    elif tier == "good":
+        if all_missing:
+            sentences.append(f"Adding {all_missing[0]} would take this from good to excellent.")
+        else:
+            sentences.append("A bit more detail would elevate this to a top-tier answer.")
+    elif tier == "partial":
+        sentences.append("Focus on covering the key points more completely next time.")
+    else:
+        sentences.append("Review the core concepts for this topic and practice explaining them step by step.")
 
-    # 4. Closing sentence
-    sentences.append(T[f"close_{tier}"])
-
-    # Ensure 3-4 sentences
     return " ".join(sentences[:4])
 
 
@@ -402,108 +352,61 @@ def _build_improvement_tips(
     metrics: Dict[str, Any],
     grammar: Dict[str, Any],
     content: Dict[str, Any],
+    expected_answer: str,
 ) -> List[str]:
     """
-    Returns 3-4 actionable bullet-point tips.
+    Returns 2-3 actionable tips that reference specific missing content.
     """
     tips: List[str] = []
-
-    semantic  = metrics.get("semantic_score", 0.0)
-    kw_score  = metrics.get("keyword_score", 0.0)
-    discourse = metrics.get("discourse_score", 0.0)
-    length    = metrics.get("length_score", 0.0)
-    relevance = metrics.get("question_relevance", 0.0)
-    lexical   = metrics.get("lexical_diversity", 0.0)
 
     missing_critical   = content["missing_keywords"]["critical"]
     missing_supporting = content["missing_keywords"]["supporting"]
     concepts_missing   = content["concepts_missing"]
 
-    # Tip 1 — critical missing keywords
+    # Tip 1 — what specific content to add
     if missing_critical:
-        kws = ", ".join(f'"{k}"' for k in missing_critical[:3])
+        kws = ", ".join(missing_critical[:3])
         tips.append(
-            f"Make sure to include critical keywords: {kws}. "
-            "These are the core terms evaluators expect in a strong answer."
+            f"Include these key concepts in your answer: {kws}. "
+            "These are what interviewers specifically look for."
         )
     elif missing_supporting:
-        kws = ", ".join(f'"{k}"' for k in missing_supporting[:3])
+        kws = ", ".join(missing_supporting[:3])
         tips.append(
-            f"Strengthen your answer by weaving in supporting terms like {kws} "
-            "to show breadth of knowledge."
+            f"Strengthen your answer by mentioning: {kws}."
+        )
+    elif concepts_missing:
+        tips.append(
+            f"You missed the point about '{concepts_missing[0]}' — add that to make your answer complete."
         )
 
-    # Tip 2 — content depth
-    if concepts_missing:
-        point = concepts_missing[0]
-        tips.append(
-            f"Your answer missed the idea around '{point}...'. "
-            "Covering this point would make the response more complete."
-        )
-    elif semantic < 0.60:
-        tips.append(
-            "Focus on explaining the concept more precisely — "
-            "start with a clear one-line definition, then add the mechanism or process, "
-            "and finish with a real-world example."
-        )
-
-    # Tip 3 — structure / discourse
-    if discourse < 0.40:
-        tips.append(
-            "Improve structure by using signposting phrases like "
-            "'Firstly...', 'This is because...', 'For example...', and 'In summary...'. "
-            "Structured answers score higher on clarity."
-        )
-
-    # Tip 4 — grammar / STT
-    if grammar["severity"] in ("moderate", "heavy"):
-        fillers = grammar["filler_words_found"]
-        if fillers:
-            top_fillers = ", ".join(f'"{f}"' for f in fillers[:3])
+    # Tip 2 — how to structure the answer better
+    if tier in ("weak", "partial"):
+        # Extract first sentence of expected answer as a hint
+        first_point = expected_answer.split(".")[0].strip() if expected_answer else ""
+        if first_point and len(first_point) > 15:
             tips.append(
-                f"Reduce spoken filler words such as {top_fillers}. "
-                "Pausing silently for 1-2 seconds is far more effective than filling with verbal crutches."
+                f"A strong answer would start by explaining: '{first_point[:80]}'. Build from there."
             )
-        if grammar["word_repetitions"]:
-            reps = ", ".join(f'"{r}"' for r in grammar["word_repetitions"][:2])
+        else:
             tips.append(
-                f"Avoid word repetitions like {reps}. "
-                "Speak more slowly and deliberately to prevent inadvertent doubling."
+                "Structure your answer as: define the concept → explain how it works → give one example."
             )
-    elif grammar["severity"] == "minor" and len(tips) < 3:
+
+    # Tip 3 — delivery (only if actually bad)
+    if grammar["severity"] in ("moderate", "heavy") and grammar["filler_words_found"]:
+        top_fillers = ", ".join(f'"{f}"' for f in grammar["filler_words_found"][:2])
         tips.append(
-            "Minor filler words were detected. Practising answers out loud with a timer "
-            "will naturally reduce hesitation sounds over time."
+            f"Reduce fillers like {top_fillers} — pause silently instead, it sounds more confident."
         )
 
-    # Tip 5 — length
-    if length < 0.40 and len(tips) < 4:
-        tips.append(
-            "The answer was too short. Aim for 40-60 words that include: "
-            "(1) a one-line definition, (2) two key points, (3) one short real-world example."
-        )
-    elif lexical < 0.40 and len(tips) < 4:
-        tips.append(
-            "The answer felt repetitive in its vocabulary. Try using synonyms and related concepts "
-            "to demonstrate a richer command of the subject."
-        )
+    # Ensure at least 2 tips
+    if not tips:
+        tips.append("Review the expected answer and identify which 2-3 key points make it strong, then practice including them.")
+    if len(tips) < 2:
+        tips.append("Practice saying your answer out loud in under 30 seconds while hitting all key points.")
 
-    # Ensure at least 3 tips, at most 4
-    if len(tips) == 0:
-        tips.append("Review the ideal answer and identify which structural elements made it effective.")
-    if len(tips) < 3:
-        tips.append(
-            "Practice articulating your answer in 3 layers: "
-            "what it is → how it works → why it matters."
-        )
-    if len(tips) < 3:
-        tips.append(
-            "After answering, ask yourself: "
-            "'Did I define the term, explain the mechanism, and give one example?' "
-            "If any is missing, add it."
-        )
-
-    return tips[:4]
+    return tips[:3]
 
 
 # ── STT Flags ──────────────────────────────────────────────────────────────────
@@ -572,14 +475,19 @@ def generate_question_feedback(
         or question_data.get("question_text")
         or question_data.get("text", "")
     )
+    expected_answer = (
+        question_data.get("answer")
+        or question_data.get("primary_answer")
+        or ""
+    )
 
     # Sub-analyses
     grammar = analyse_grammar_and_stt(transcript)
     content = analyse_content(transcript, question_data, metrics)
 
     # Narrative and tips
-    narrative = _build_narrative(score, tier, metrics, grammar, content, seed)
-    tips      = _build_improvement_tips(score, tier, metrics, grammar, content)
+    narrative = _build_narrative(score, tier, metrics, grammar, content, q_text, transcript, expected_answer, seed)
+    tips      = _build_improvement_tips(score, tier, metrics, grammar, content, expected_answer)
     stt_flags = _build_stt_flags(grammar)
 
     return {

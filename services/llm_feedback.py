@@ -56,49 +56,54 @@ def _cache_get(key: str) -> Optional[dict]:
 
 # ── structured output schema ──────────────────────────────────────────────────
 class FeedbackOutput(BaseModel):
-    feedback: str = Field(description="2-3 sentences of detailed feedback, 40-60 words. Address candidate as 'you'.")
-    tip: str = Field(description="2-3 sentences of professional improvement tip with concrete example, 30-50 words.")
-    tts_feedback: str = Field(description="One short natural sentence under 15 words summarizing how the answer went.")
+    feedback: str = Field(description="2-3 sentences explaining what the candidate got right and what key points they missed. Be specific — name the exact concepts. 40-70 words.")
+    tip: str = Field(description="A concrete actionable tip: tell them exactly what to say or include next time, with a mini example. 30-50 words.")
+    tts_feedback: str = Field(description="One natural spoken sentence (under 15 words) that a human interviewer would say as immediate reaction.")
 
 
 # ── few-shot examples (pre-loaded into memory) ───────────────────────────────
 _FEW_SHOT_EXAMPLES = [
     {
         "human": """QUESTION: What is polymorphism in OOP?
+
 CANDIDATE'S ANSWER: Polymorphism is when objects can take different forms.
-EVALUATION SUMMARY:
-- Overall quality: weak (score 0.25/1.00)
-- Key issues identified: the answer is too short; key concepts missing: method overriding, method overloading, interfaces.""",
+
+REFERENCE ANSWER: Polymorphism allows objects of different classes to be treated through the same interface. There are two types: compile-time (method overloading — same method name, different parameters) and runtime (method overriding — subclass provides specific implementation of a parent method). Interfaces and abstract classes enable polymorphic behavior by defining contracts that multiple classes implement differently.""",
         "ai": FeedbackOutput(
-            feedback="You correctly identified that polymorphism involves objects taking different forms, which shows basic awareness. However, your answer lacks depth — you didn't explain method overriding, overloading, or how interfaces enable polymorphic behavior, which are essential to a complete answer.",
-            tip="Structure your response by first defining polymorphism, then distinguishing compile-time (overloading) from runtime (overriding) polymorphism. For example: 'A Dog and Cat class both override an Animal.speak() method, producing different outputs.'",
-            tts_feedback="Your answer was too brief and missed key polymorphism concepts.",
+            feedback="You got the core idea right — polymorphism is about objects taking different forms. But you missed the two types: compile-time polymorphism through method overloading, and runtime polymorphism through method overriding. You also didn't mention how interfaces enable it.",
+            tip="Next time, structure it as: 'There are two types — overloading where same method has different parameters, and overriding where a subclass redefines a parent method. For example, Dog and Cat both override Animal.speak() differently.'",
+            tts_feedback="Right idea, but you need to cover overloading and overriding specifically.",
         ),
     },
     {
         "human": """QUESTION: Explain the event loop in Node.js.
+
 CANDIDATE'S ANSWER: The event loop is what makes Node.js non-blocking. It handles callbacks by checking the callback queue after the call stack is empty. This allows Node to handle many connections with a single thread using phases like timers, poll, and check.
-EVALUATION SUMMARY:
-- Overall quality: good (score 0.78/1.00)
-- The answer is mostly correct but could be more complete.""",
+
+REFERENCE ANSWER: The event loop is Node.js's mechanism for non-blocking I/O. It continuously checks the call stack and callback queue. When the stack is empty, it picks callbacks from the queue. It runs in phases: timers, pending callbacks, poll (I/O), check (setImmediate), and close callbacks. The microtask queue (Promises, process.nextTick) has priority over the regular callback queue.""",
         "ai": FeedbackOutput(
-            feedback="You gave a solid explanation of the event loop's role in non-blocking I/O and correctly mentioned the callback queue and call stack relationship. You also referenced specific phases, which shows deeper understanding. To strengthen this further, mention the microtask queue and how promises are prioritized.",
-            tip="Add a brief example showing how setTimeout and Promise.resolve callbacks execute in different order due to the microtask queue having higher priority than the timer phase.",
-            tts_feedback="Strong answer with good technical depth on the event loop.",
+            feedback="You nailed the fundamentals — non-blocking I/O, single thread, callback queue, and call stack relationship. You even named specific phases which shows solid understanding. The one gap: you didn't mention the microtask queue and how Promises get priority over setTimeout callbacks.",
+            tip="Add this point: 'The microtask queue handles Promises and process.nextTick with higher priority — so Promise.resolve() executes before setTimeout(fn, 0) even though both are async.'",
+            tts_feedback="Strong answer — just add how the microtask queue prioritizes promises.",
         ),
     },
 ]
 
 # ── system prompt ─────────────────────────────────────────────────────────────
-_SYSTEM_PROMPT = """You are an expert interview coach. You evaluate mock interview answers and provide structured feedback.
+_SYSTEM_PROMPT = """You are a senior technical interviewer giving verbal feedback after each answer.
+
+Your job:
+1. Compare the candidate's answer against the reference answer.
+2. Identify SPECIFIC concepts they covered correctly and SPECIFIC concepts they missed or got wrong.
+3. Give a concrete tip with an example of what a better answer would include.
 
 RULES:
-- Never think out loud, count words, or repeat instructions.
-- Never wrap output in quotes or markdown.
+- Be SPECIFIC — name exact concepts, terms, or ideas. Never say vague things like "your answer lacks depth" or "could be more complete" without saying WHAT is missing.
 - Address the candidate as "you".
-- Do not copy the reference answer.
-- Do not mention scores or metrics.
-- Be specific to the question asked."""
+- Never mention scores, metrics, semantic similarity, or keywords.
+- Never copy the reference answer verbatim — paraphrase the missing points.
+- Sound like a real interviewer talking to a candidate, not a robot generating a report.
+- The tts_feedback should sound like what an interviewer would naturally say out loud right after hearing the answer (e.g. "Good start, but you missed the key distinction between X and Y")."""
 
 
 def check_llm_available() -> bool:
@@ -135,13 +140,13 @@ def check_llm_available() -> bool:
             )))
 
         prompt = ChatPromptTemplate.from_messages([
-            SystemMessage(content=_SYSTEM_PROMPT),
+            SystemMessage(content=_SYSTEM_PROMPT + "\n\nRespond in EXACTLY this format:\nFEEDBACK: <your feedback>\nTIP: <your tip>\nTTS: <one short sentence>"),
             *few_shot_messages,
             MessagesPlaceholder(variable_name="history", optional=True),
             ("human", "{input}"),
         ])
 
-        _chain = prompt | llm.with_structured_output(FeedbackOutput)
+        _chain = prompt | llm
         llm_available = True
         logger.info(f"LangChain+Groq initialized — LLM feedback enabled ({GROQ_MODEL})")
         return True
@@ -265,69 +270,53 @@ def _build_input(
     metrics: dict,
     missing_keywords: list,
 ) -> str:
-    score     = metrics.get("final_score", 0.0)
-    semantic  = metrics.get("semantic_score", 0.0)
-    relevance = metrics.get("question_relevance", 0.0)
-    kw_score  = metrics.get("keyword_score", 0.0)
-    length_sc = metrics.get("length_score", 0.0)
-    discourse = metrics.get("discourse_score", 0.0)
-    lex_div   = metrics.get("lexical_diversity", 0.0)
-    quality   = _quality_label(score)
-    missing_str = ", ".join(missing_keywords[:5]) if missing_keywords else "none"
-
-    diagnostics = []
-    if relevance < 0.40:
-        diagnostics.append("the answer did not address the specific question asked")
-    if semantic < 0.50:
-        diagnostics.append("the meaning is far from the expected concept")
-    elif semantic < 0.70:
-        diagnostics.append("the meaning is partially correct but incomplete")
-    if kw_score < 0.40 and missing_keywords:
-        diagnostics.append(f"key concepts missing: {missing_str}")
-    if length_sc < 0.45:
-        diagnostics.append("the answer is too short")
-    if discourse < 0.33:
-        diagnostics.append("no structured reasoning or examples provided")
-    if lex_div < 0.45:
-        diagnostics.append("the answer is repetitive")
-
-    diagnostic_line = (
-        "Key issues identified: " + "; ".join(diagnostics) + "."
-        if diagnostics else
-        "The answer is mostly correct but could be more complete."
-    )
-
     return f"""QUESTION:
 {question}
 
 CANDIDATE'S ANSWER:
 {candidate_answer}
 
-REFERENCE ANSWER (for context only — do not quote or copy from it):
-{expected_answer}
-
-EVALUATION SUMMARY:
-- Overall quality: {quality} (score {score:.2f}/1.00)
-- Semantic closeness: {semantic:.2f}/1.00
-- Question relevance: {relevance:.2f}/1.00
-- Keyword coverage: {kw_score:.2f}/1.00
-- {diagnostic_line}"""
+REFERENCE ANSWER:
+{expected_answer}"""
 
 
 # ── sync call (runs in thread pool) ──────────────────────────────────────────
+def _parse_llm_response(raw: str) -> Optional[dict]:
+    """Parse FEEDBACK/TIP/TTS from plain text LLM response."""
+    feedback = ""
+    tip = ""
+    tts = ""
+    for line in raw.splitlines():
+        stripped = line.strip()
+        upper = stripped.upper()
+        if upper.startswith("FEEDBACK:"):
+            feedback = stripped.split(":", 1)[1].strip()
+        elif upper.startswith("TIP:"):
+            tip = stripped.split(":", 1)[1].strip()
+        elif upper.startswith("TTS:"):
+            tts = stripped.split(":", 1)[1].strip()
+    if feedback:
+        return {
+            "feedback": feedback.strip('"'),
+            "tip": tip.strip('"'),
+            "tts_feedback": tts.strip('"'),
+        }
+    return None
+
+
 def _call_chain_sync(human_input: str, cache_key: str) -> Optional[dict]:
     if not _chain:
         return None
     try:
-        output: FeedbackOutput = _chain.invoke({
+        output = _chain.invoke({
             "input": human_input,
             "history": list(_history),
         })
-        result = {
-            "feedback": output.feedback.strip().strip('"'),
-            "tip": output.tip.strip().strip('"'),
-            "tts_feedback": output.tts_feedback.strip().strip('"'),
-        }
+        raw = output.content if hasattr(output, 'content') else str(output)
+        result = _parse_llm_response(raw)
+        if not result:
+            logger.warning(f"LLM response parse failed: {raw[:200]}")
+            return None
         _add_to_history(human_input, result)
         _cache_put(cache_key, result)
         logger.info(f"LLM feedback OK ({len(result['feedback'])} chars)")

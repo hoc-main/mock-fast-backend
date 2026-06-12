@@ -53,6 +53,15 @@ _dg_client = AsyncDeepgramClient(api_key=os.getenv("DEEPGRAM_API_KEY", "dummy"))
 async def _get_current_question(
     session: InterviewSession, db: AsyncSession
 ) -> Optional[Question]:
+    # Prefer explicit current_question_id (supports cross-module questions)
+    if session.current_question_id:
+        result = await db.execute(
+            select(Question).where(Question.id == session.current_question_id)
+        )
+        q = result.scalar_one_or_none()
+        if q:
+            return q
+    # Fallback: offset-based within primary module
     result = await db.execute(
         select(Question)
         .where(Question.module_id == session.module_id)
@@ -331,8 +340,6 @@ async def transcribe_websocket(
                 "ws_source_event": ws_source_event,
                 "evaluation": {
                     "score":            evaluation["final_score"],
-                    "semantic_score":   evaluation["semantic_score"],
-                    "keyword_score":    evaluation["keyword_score"],
                     "feedback":         eval_feedback,
                     "tip":              eval_tip,
                     "missing_keywords": evaluation["missing_keywords"],
