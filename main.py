@@ -79,10 +79,14 @@ async def startup_event():
 async def _auto_add_missing_columns(conn):
     """Add columns introduced after initial table creation. Safe to re-run."""
     from sqlalchemy import text
+    
+    # Detect if PostgreSQL or SQLite
+    is_pg = "postgresql" in str(conn.engine.url)
+    
     migrations = [
         ("interview_interviewsession", "current_question_id", "INTEGER NULL"),
-        ("interview_interviewsession", "conversation_history", "TEXT DEFAULT '[]'"),
-        ("interview_interviewsession", "asked_question_ids", "TEXT DEFAULT '[]'"),
+        ("interview_interviewsession", "conversation_history", "JSONB DEFAULT '[]'::jsonb" if is_pg else "TEXT DEFAULT '[]'"),
+        ("interview_interviewsession", "asked_question_ids", "JSONB DEFAULT '[]'::jsonb" if is_pg else "TEXT DEFAULT '[]'"),
     ]
     for table, column, col_def in migrations:
         try:
