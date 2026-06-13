@@ -144,6 +144,7 @@ class ModuleOut(BaseModel):
     companies: List[str] = []
     job_roles: List[str] = []
     question_count: int = 0
+    is_attempted: bool = False
 
 class SubdomainOut(BaseModel):
     id: int
