@@ -22,7 +22,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from ..db.database import get_db
-from ..db.models import InterviewAnswer, InterviewSession, Module, Question, Subdomain, User
+from ..db.models import InterviewAnswer, InterviewSession, Module, Question, Subdomain, User, Purchase
 from ..schemas import EvaluationRequest, EvaluationResponse, EvaluationOut, NextQuestionResponse, QuestionOut, StartInterviewRequest, StartInterviewResponse
 from ..services.evaluation import evaluate_answer
 from ..services.feedback_generator import generate_question_feedback, generate_session_summary
@@ -185,6 +185,22 @@ async def start_interview(body: StartInterviewRequest, db: AsyncSession = Depend
     module = module_result.scalar_one_or_none()
     if not module:
         raise HTTPException(status_code=404, detail="Module not found")
+
+    # Check if module is free or user has purchased it
+    if not module.is_free:
+        purchase_result = await db.execute(
+            select(Purchase)
+            .where(
+                Purchase.user_id == body.user_id,
+                Purchase.module_id == body.module_id
+            )
+        )
+        purchase = purchase_result.scalar_one_or_none()
+        if not purchase:
+            raise HTTPException(
+                status_code=403,
+                detail="You need to purchase this mock interview to access it."
+            )
 
     # Check for existing sessions
     existing_sessions_result = await db.execute(

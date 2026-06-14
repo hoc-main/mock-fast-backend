@@ -145,6 +145,7 @@ class ModuleOut(BaseModel):
     job_roles: List[str] = []
     question_count: int = 0
     is_attempted: bool = False
+    is_purchased: bool = False
 
 class SubdomainOut(BaseModel):
     id: int
@@ -208,6 +209,42 @@ class JobApplicationOut(BaseModel):
     cover_letter: Optional[str] = None
     status: str
     applied_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# ── Payments & Purchases ────────────────────────────────────────────────────────
+
+
+class CreateOrderRequest(BaseModel):
+    user_id: int
+    module_id: int
+    amount: int  # Amount in paise
+
+
+class CreateOrderResponse(BaseModel):
+    order_id: int
+    razorpay_order_id: str
+    amount: int
+    currency: str
+
+
+class VerifyPaymentRequest(BaseModel):
+    razorpay_payment_id: str
+    razorpay_order_id: str
+    razorpay_signature: str
+    order_id: int
+
+
+class PurchaseOut(BaseModel):
+    id: int
+    user_id: int
+    module_id: int
+    order_id: int
+    amount: int
+    currency: str
+    created_at: datetime
 
     class Config:
         from_attributes = True

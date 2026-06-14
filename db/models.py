@@ -9,7 +9,7 @@ from datetime import datetime
 from typing import List, Optional
 from sqlalchemy import (
     BigInteger, Boolean, Column, DateTime, Float, ForeignKey,
-    Integer, JSON, String, Text, func, Boolean
+    Integer, JSON, String, Text, func, Boolean, UniqueConstraint
 )
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from .database import Base
@@ -185,3 +185,43 @@ class JobApplication(Base):
 
     job: Mapped["Job"] = relationship(back_populates="applications")
     user: Mapped["User"] = relationship()
+
+
+# ── Payments & Purchases ──────────────────────────────────────────────────
+
+class Order(Base):
+    __tablename__ = "orders"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.user_id"))
+    module_id: Mapped[int] = mapped_column(ForeignKey("modules.id"))
+    razorpay_order_id: Mapped[str] = mapped_column(String(100))
+    amount: Mapped[int] = mapped_column(Integer)  # Amount in paise
+    currency: Mapped[str] = mapped_column(String(10), default="INR")
+    status: Mapped[str] = mapped_column(String(50), default="created")  # created, paid, failed
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
+    
+    __table_args__ = (
+        UniqueConstraint('razorpay_order_id', name='_razorpay_order_id_uc'),
+    )
+
+
+class Purchase(Base):
+    __tablename__ = "purchases"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.user_id"))
+    module_id: Mapped[int] = mapped_column(ForeignKey("modules.id"))
+    order_id: Mapped[int] = mapped_column(ForeignKey("orders.id"))
+    razorpay_payment_id: Mapped[str] = mapped_column(String(100))
+    razorpay_order_id: Mapped[str] = mapped_column(String(100))
+    razorpay_signature: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    webhook_signature: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    amount: Mapped[int] = mapped_column(Integer)
+    currency: Mapped[str] = mapped_column(String(10), default="INR")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
+    
+    __table_args__ = (
+        UniqueConstraint('order_id', name='_order_id_uc'),
+        UniqueConstraint('razorpay_payment_id', name='_razorpay_payment_id_uc'),
+    )

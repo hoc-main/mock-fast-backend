@@ -33,7 +33,7 @@ load_dotenv(Path(__file__).resolve().parent / ".env")
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .routers import hierarchy, sessions, stats, transcription, feedback, tts, jobs
+from .routers import hierarchy, sessions, stats, transcription, feedback, tts, jobs, payments
 from .services.llm_feedback import check_llm_available
 from .db.database import engine, Base
 from .db import models  # noqa: ensure models are registered
@@ -64,6 +64,7 @@ app.include_router(transcription.router)  # /ws/transcribe/{id}, /ws/intent/{id}
 app.include_router(feedback.router)       # /api/feedback/...
 app.include_router(tts.router)            # /api/tts/
 app.include_router(jobs.router)           # /api/jobs/
+app.include_router(payments.router)       # /api/payments/...
 
 
 @app.on_event("startup")
@@ -94,6 +95,48 @@ async def _auto_add_missing_columns(conn):
             logger.info(f"Auto-added column: {table}.{column}")
         except Exception:
             pass  # Column already exists
+    
+    # Auto-create orders and purchases tables for SQLite (since SQLite doesn't have migrations easily)
+    try:
+        if not is_pg:
+            # Drop old tables if they exist to add new constraints/columns
+            try:
+                await conn.execute(text("DROP TABLE IF EXISTS purchases"))
+                await conn.execute(text("DROP TABLE IF EXISTS orders"))
+                logger.info("Dropped old orders/purchases tables to recreate with new constraints")
+            except Exception:
+                pass
+                
+            await conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS orders (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL,
+                    module_id INTEGER NOT NULL,
+                    razorpay_order_id VARCHAR(100) NOT NULL UNIQUE,
+                    amount INTEGER NOT NULL,
+                    currency VARCHAR(10) NOT NULL DEFAULT 'INR',
+                    status VARCHAR(50) NOT NULL DEFAULT 'created',
+                    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+                )
+            """))
+            await conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS purchases (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL,
+                    module_id INTEGER NOT NULL,
+                    order_id INTEGER NOT NULL UNIQUE,
+                    razorpay_payment_id VARCHAR(100) NOT NULL UNIQUE,
+                    razorpay_order_id VARCHAR(100) NOT NULL,
+                    razorpay_signature VARCHAR(255),
+                    webhook_signature VARCHAR(255),
+                    amount INTEGER NOT NULL,
+                    currency VARCHAR(10) NOT NULL DEFAULT 'INR',
+                    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+                )
+            """))
+            logger.info("Auto-created orders and purchases tables for SQLite with new constraints")
+    except Exception as e:
+        logger.warning(f"Could not auto-create tables: {e}")
 
 
 @app.get("/health")

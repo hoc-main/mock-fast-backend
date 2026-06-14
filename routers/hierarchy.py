@@ -6,7 +6,7 @@ from sqlalchemy import func
 from typing import List, Optional
 
 from ..db.database import get_db
-from ..db.models import Domain, Module, Question, Subdomain, InterviewSession
+from ..db.models import Domain, Module, Question, Subdomain, InterviewSession, Purchase
 from ..schemas import DomainOut, ModuleOut, SubdomainOut, ModuleDetailOut, DomainListOut
 
 # All routes under /api/ — matches frontend API_BASE = "http://localhost:8001/api"
@@ -29,17 +29,25 @@ async def get_domains(user_id: Optional[int] = None, db: AsyncSession = Depends(
     domains = result.scalars().all()
 
     attempted_module_ids = set()
+    purchased_module_ids = set()
     if user_id:
         sessions_result = await db.execute(
             select(InterviewSession.module_id)
             .where(InterviewSession.user_id == user_id)
         )
         attempted_module_ids = {mid for mid in sessions_result.scalars().all() if mid is not None}
+        
+        purchases_result = await db.execute(
+            select(Purchase.module_id)
+            .where(Purchase.user_id == user_id)
+        )
+        purchased_module_ids = {mid for mid in purchases_result.scalars().all() if mid is not None}
 
     for domain in domains:
         for subdomain in domain.subdomains:
             for module in subdomain.modules:
                 module.is_attempted = module.id in attempted_module_ids
+                module.is_purchased = module.id in purchased_module_ids
 
     return {"data": domains}
 
