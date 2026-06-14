@@ -592,6 +592,33 @@ async def get_user_sessions(user_id: int, db: AsyncSession = Depends(get_db)):
     return {"data": output}
 
 
+# ── delete session (public) ────────────────────────────────────────────────────
+
+@router.delete("/session/")
+async def delete_session(user_id: int, module_id: int, db: AsyncSession = Depends(get_db)):
+    """Delete all sessions and answers for a user+module so the exam can be retaken."""
+    sessions_result = await db.execute(
+        select(InterviewSession).where(
+            InterviewSession.user_id == user_id,
+            InterviewSession.module_id == module_id,
+        )
+    )
+    sessions = sessions_result.scalars().all()
+    if not sessions:
+        raise HTTPException(status_code=404, detail="No sessions found for this user and module")
+
+    for s in sessions:
+        answers_result = await db.execute(
+            select(InterviewAnswer).where(InterviewAnswer.session_id == s.id)
+        )
+        for answer in answers_result.scalars().all():
+            await db.delete(answer)
+        await db.delete(s)
+
+    await db.commit()
+    return {"deleted": True, "sessions_removed": len(sessions)}
+
+
 # ── deferred evaluation ────────────────────────────────────────────────────────
 
 async def _upsert_answer(
