@@ -28,6 +28,7 @@ from ..services.evaluation import evaluate_answer
 from ..services.feedback_generator import generate_question_feedback, generate_session_summary
 from ..services.nlp_features import tokenize
 from ..services import llm_feedback as _llm
+from ..services.llm_feedback import rewrite_session_summary
 from ..services.conversation_agent import pick_next_question
 
 logger = logging.getLogger(__name__)
@@ -155,11 +156,10 @@ def _serialize_answer(answer: InterviewAnswer, question: Question, fb: dict) -> 
     }
 
 
-def _build_session_summary(feedback_dicts: List[dict]) -> dict:
+async def _build_session_summary(feedback_dicts: List[dict]) -> dict:
     """
     Generate session-level summary from a list of feedback dicts.
-    generate_session_summary expects the same dicts returned by
-    generate_question_feedback (contains score, score_tier, grammar_notes, etc.)
+    Uses template logic first, then rewrites with LLM for better phrasing.
     """
     if not feedback_dicts:
         return {
@@ -169,7 +169,9 @@ def _build_session_summary(feedback_dicts: List[dict]) -> dict:
             "metric_averages":     {},
             "grammar_summary":     {},
         }
-    return generate_session_summary(feedback_dicts)
+    summary = generate_session_summary(feedback_dicts)
+    summary = await rewrite_session_summary(summary)
+    return summary
 
 
 # ── endpoints ──────────────────────────────────────────────────────────────────
@@ -319,7 +321,7 @@ async def next_question(session_id: int, db: AsyncSession = Depends(get_db)):
 
         feedback_dicts = [_get_feedback_dict(a, q) for a, q in rows]
         results        = [_serialize_answer(a, q, fb) for (a, q), fb in zip(rows, feedback_dicts)]
-        session_sum    = _build_session_summary(feedback_dicts)
+        session_sum    = await _build_session_summary(feedback_dicts)
 
         return NextQuestionResponse(
             session_id=session_id,
@@ -466,7 +468,7 @@ async def terminate_session(session_id: int, db: AsyncSession = Depends(get_db))
 
     feedback_dicts = [_get_feedback_dict(a, q) for a, q in rows]
     results        = [_serialize_answer(a, q, fb) for (a, q), fb in zip(rows, feedback_dicts)]
-    session_sum    = _build_session_summary(feedback_dicts)
+    session_sum    = await _build_session_summary(feedback_dicts)
 
     return {
         "session_id": session_id,
@@ -497,7 +499,7 @@ async def get_summary(session_id: int, db: AsyncSession = Depends(get_db)):
 
     feedback_dicts = [_get_feedback_dict(a, q) for a, q in rows]
     results        = [_serialize_answer(a, q, fb) for (a, q), fb in zip(rows, feedback_dicts)]
-    session_sum    = _build_session_summary(feedback_dicts)
+    session_sum    = await _build_session_summary(feedback_dicts)
 
     return {
         "session_id":          session_id,
@@ -539,7 +541,7 @@ async def get_session_detail(session_id: int, db: AsyncSession = Depends(get_db)
 
     feedback_dicts = [_get_feedback_dict(a, q) for a, q in rows]
     results        = [_serialize_answer(a, q, fb) for (a, q), fb in zip(rows, feedback_dicts)]
-    session_sum    = _build_session_summary(feedback_dicts)
+    session_sum    = await _build_session_summary(feedback_dicts)
 
     return {
         "session_id":        session_id,

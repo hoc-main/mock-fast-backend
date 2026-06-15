@@ -364,3 +364,117 @@ async def generate_llm_feedback(
     except Exception as exc:
         logger.warning(f"LLM feedback executor error: {exc}")
         return None
+
+
+# ── LLM Session Summary Rewriter ─────────────────────────────────────────────
+
+_SESSION_SUMMARY_SYSTEM = """You are a senior interview coach writing a performance summary for a candidate after a mock interview session.
+
+You will receive raw metrics and template-generated strengths/improvements. Your job is to rewrite them into polished, human-sounding language.
+
+RULES:
+- Write a 3-4 sentence summary paragraph that feels like a real coach talking to a candidate.
+- Rewrite strengths as concise, encouraging bullet points (keep the meaning, improve the phrasing).
+- Rewrite improvement areas as actionable, specific advice (not generic platitudes).
+- Reference actual numbers (score %, question count) naturally.
+- Don't invent new information — only rephrase what's provided.
+- Address the candidate as "you".
+- Be direct, professional, and motivating.
+
+Respond in EXACTLY this format:
+SUMMARY: <your 3-4 sentence paragraph>
+STRENGTHS: <bullet1> | <bullet2> | <bullet3>
+IMPROVEMENTS: <bullet1> | <bullet2> | <bullet3>"""
+
+
+def _call_summary_rewrite_sync(human_input: str) -> Optional[dict]:
+    """Sync LLM call for session summary rewriting."""
+    if not GROQ_API_KEY:
+        return None
+    try:
+        is_reasoning = "oss" in GROQ_MODEL or "reasoning" in GROQ_MODEL
+        kwargs = dict(
+            api_key=GROQ_API_KEY,
+            model=GROQ_MODEL,
+            temperature=0.4,
+            max_tokens=2000 if is_reasoning else 400,
+        )
+        if is_reasoning:
+            kwargs["reasoning_effort"] = "medium"
+
+        llm = ChatGroq(**kwargs)
+        messages = [
+            SystemMessage(content=_SESSION_SUMMARY_SYSTEM),
+            HumanMessage(content=human_input),
+        ]
+        output = llm.invoke(messages)
+        raw = output.content if hasattr(output, 'content') else str(output)
+
+        # For reasoning models, content may be empty — check additional_kwargs
+        if not raw and hasattr(output, 'additional_kwargs'):
+            raw = output.additional_kwargs.get('reasoning_content', '')
+
+        # Parse response
+        summary = ""
+        strengths = []
+        improvements = []
+        for line in raw.splitlines():
+            stripped = line.strip()
+            upper = stripped.upper()
+            if upper.startswith("SUMMARY:"):
+                summary = stripped.split(":", 1)[1].strip()
+            elif upper.startswith("STRENGTHS:"):
+                strengths = [s.strip() for s in stripped.split(":", 1)[1].split("|") if s.strip()]
+            elif upper.startswith("IMPROVEMENTS:"):
+                improvements = [s.strip() for s in stripped.split(":", 1)[1].split("|") if s.strip()]
+
+        if summary:
+            return {
+                "summary_paragraph": summary,
+                "strengths": strengths or None,
+                "improvement_areas": improvements or None,
+            }
+        return None
+    except Exception as exc:
+        logger.warning(f"LLM session summary rewrite failed: {exc}")
+        return None
+
+
+async def rewrite_session_summary(template_summary: dict) -> dict:
+    """
+    Takes the template-generated session summary and rewrites the narrative parts using LLM.
+    Returns the same dict with improved summary_paragraph, strengths, and improvement_areas.
+    Falls back to template if LLM fails.
+    """
+    if not llm_available:
+        return template_summary
+
+    human_input = (
+        f"SESSION METRICS:\n"
+        f"- Questions answered: {len(template_summary.get('score_trend', []))}\n"
+        f"- Overall score: {template_summary.get('session_score', 0):.0%}\n"
+        f"- Score tier: {template_summary.get('score_tier', 'unknown')}\n"
+        f"- Trend: {template_summary.get('trend_direction', 'consistent')}\n"
+        f"- Metric averages: {template_summary.get('metric_averages', {})}\n\n"
+        f"TEMPLATE STRENGTHS:\n"
+        f"{chr(10).join('- ' + s for s in template_summary.get('strengths', []))}\n\n"
+        f"TEMPLATE IMPROVEMENTS:\n"
+        f"{chr(10).join('- ' + s for s in template_summary.get('improvement_areas', []))}\n\n"
+        f"TEMPLATE SUMMARY:\n"
+        f"{template_summary.get('summary_paragraph', '')}\n"
+    )
+
+    loop = asyncio.get_event_loop()
+    try:
+        result = await loop.run_in_executor(None, _call_summary_rewrite_sync, human_input)
+        if result:
+            template_summary["summary_paragraph"] = result["summary_paragraph"]
+            if result.get("strengths"):
+                template_summary["strengths"] = result["strengths"]
+            if result.get("improvement_areas"):
+                template_summary["improvement_areas"] = result["improvement_areas"]
+            logger.info("Session summary rewritten by LLM")
+    except Exception as exc:
+        logger.warning(f"LLM summary rewrite executor error: {exc}")
+
+    return template_summary
