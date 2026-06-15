@@ -51,9 +51,24 @@ async def get_price(user_id: int, db: AsyncSession = Depends(get_db)):
             now = datetime.datetime.now(datetime.timezone.utc)
         time_diff = now - user.created_at
         if time_diff.total_seconds() <= 48 * 3600:
-            return {"rupees": 20, "paise": 2000, "display": "₹20.00"}
+            remaining = (48 * 3600) - time_diff.total_seconds()
+            return {
+                "rupees": 20, 
+                "paise": 2000, 
+                "display": "₹20.00",
+                "is_discounted": True,
+                "original_display": "₹50.00",
+                "remaining_seconds": remaining
+            }
             
-    return {"rupees": 50, "paise": 5000, "display": "₹50.00"}
+    return {
+        "rupees": 50, 
+        "paise": 5000, 
+        "display": "₹50.00",
+        "is_discounted": False,
+        "original_display": "₹50.00",
+        "remaining_seconds": 0
+    }
 
 
 
