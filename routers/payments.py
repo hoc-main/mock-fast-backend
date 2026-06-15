@@ -13,6 +13,7 @@ import os
 import razorpay
 import hmac
 import hashlib
+import datetime
 from typing import Optional
 from razorpay.errors import SignatureVerificationError
 
@@ -37,6 +38,24 @@ razorpay_client = razorpay.Client(auth=(
 # Razorpay webhook secret from env
 RAZORPAY_WEBHOOK_SECRET = os.getenv("RAZORPAY_WEBHOOK_SECRET", "")
 
+@router.get("/price/")
+async def get_price(user_id: int, db: AsyncSession = Depends(get_db)):
+    user_result = await db.execute(select(User).where(User.user_id == user_id))
+    user = user_result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if user.created_at:
+        now = datetime.datetime.now()
+        if user.created_at.tzinfo is not None:
+            now = datetime.datetime.now(datetime.timezone.utc)
+        time_diff = now - user.created_at
+        if time_diff.total_seconds() <= 48 * 3600:
+            return {"rupees": 20, "paise": 2000, "display": "₹20.00"}
+            
+    return {"rupees": 50, "paise": 5000, "display": "₹50.00"}
+
+
 
 @router.post("/create-order/", response_model=CreateOrderResponse)
 async def create_order(body: CreateOrderRequest, db: AsyncSession = Depends(get_db)):
@@ -51,9 +70,19 @@ async def create_order(body: CreateOrderRequest, db: AsyncSession = Depends(get_
     if not module:
         raise HTTPException(status_code=404, detail="Module not found")
     
+    # Calculate amount dynamically
+    actual_amount = 5000
+    if user.created_at:
+        now = datetime.datetime.now()
+        if user.created_at.tzinfo is not None:
+            now = datetime.datetime.now(datetime.timezone.utc)
+        time_diff = now - user.created_at
+        if time_diff.total_seconds() <= 48 * 3600:
+            actual_amount = 2000
+            
     # Create Razorpay order
     razorpay_order = razorpay_client.order.create({
-        "amount": body.amount,
+        "amount": actual_amount,
         "currency": "INR",
         "payment_capture": 1
     })
@@ -63,7 +92,7 @@ async def create_order(body: CreateOrderRequest, db: AsyncSession = Depends(get_
         user_id=body.user_id,
         module_id=body.module_id,
         razorpay_order_id=razorpay_order["id"],
-        amount=body.amount,
+        amount=actual_amount,
         currency="INR",
         status="created"
     )
@@ -74,7 +103,7 @@ async def create_order(body: CreateOrderRequest, db: AsyncSession = Depends(get_
     return CreateOrderResponse(
         order_id=new_order.id,
         razorpay_order_id=razorpay_order["id"],
-        amount=body.amount,
+        amount=actual_amount,
         currency="INR"
     )
 
