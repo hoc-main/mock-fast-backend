@@ -41,6 +41,9 @@ class StartInterviewResponse(BaseModel):
     question: QuestionOut
     question_index: int
     total_questions: int
+    domain_id: Optional[int] = None
+    subdomain_id: Optional[int] = None
+    module_id: Optional[int] = None
 
 
 class NextQuestionResponse(BaseModel):

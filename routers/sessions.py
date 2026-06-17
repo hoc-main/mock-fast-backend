@@ -183,7 +183,7 @@ async def start_interview(body: StartInterviewRequest, db: AsyncSession = Depend
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    module_result = await db.execute(select(Module).where(Module.id == body.module_id))
+    module_result = await db.execute(select(Module).options(selectinload(Module.subdomain)).where(Module.id == body.module_id))
     module = module_result.scalar_one_or_none()
     if not module:
         raise HTTPException(status_code=404, detail="Module not found")
@@ -291,6 +291,9 @@ async def start_interview(body: StartInterviewRequest, db: AsyncSession = Depend
         ),
         question_index=session.current_index,
         total_questions=total,
+        domain_id=module.subdomain.domain_id if module and module.subdomain else None,
+        subdomain_id=module.subdomain_id if module else None,
+        module_id=module.id if module else None,
     )
 
 
