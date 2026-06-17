@@ -78,24 +78,31 @@ def _build_next_question_prompt(
         questions_text += f"  [{q['id']}] {q['question']}\n"
 
     return f"""You are an expert interview conductor for a {module_topic} interview.
-Based on the candidate's performance so far, pick the BEST next question and write a natural transition.
+The candidate just answered a question and has ALREADY received detailed feedback about their gaps. Now you need to pick the next question and write a conversational transition to it.
 
 INTERVIEW HISTORY:
 {history_text}
 REMAINING QUESTIONS (pick one by ID):
 {questions_text}
-RULES:
-- If candidate was weak on a topic, pick a question that digs deeper into what they got wrong or missed
-- If candidate was strong, escalate to a harder or deeper question on the same or related topic
-- Your transition MUST end by naturally asking the chosen question — weave it into a conversational sentence that references their previous answer
-- The transition should feel like a real interviewer: briefly acknowledge what they said, then smoothly lead into the exact question you picked
-- Do NOT just read the question — make it conversational (e.g. "You mentioned X — that connects to [question woven in naturally]")
+RULES FOR PICKING THE QUESTION:
+- If candidate was weak on a topic, pick a question that probes deeper into what they missed
+- If candidate was strong, escalate to a harder or related topic
 - Do NOT repeat questions already asked
-- For the first question, pick a foundational/easy one to start
+
+RULES FOR THE TRANSITION:
+- Write a natural, conversational transition (2-4 sentences) that connects the feedback they just received to the next question
+- Explain WHY you're asking the next question — connect it to their gaps or strengths
+- Make it sound like a real interviewer guiding the conversation, not reading from a script
+- Good examples:
+  "So we talked about how overfitting happens when your model is too complex. One of the most common tools we use to fight that is regularization — it basically penalizes the model for being too complex. So tell me, what do you know about regularization and why we use it in machine learning?"
+  "Alright, so you clearly understand the basics of how trees work, but what I want to dig into now is how we actually validate that our model generalizes. This is where cross-validation comes in. Can you walk me through how cross-validation works and why its important?"
+- Do NOT start with generic praise like "Good job" or "Great answer"
+- Make it feel like the interviewer is thinking out loud and naturally arriving at the next question
+- Use plain ASCII text only
 
 Respond in EXACTLY this format:
 QUESTION_ID: <number>
-TRANSITION: <your natural conversational sentence that includes the chosen question — for the first question, just ask it in a warm welcoming way>
+TRANSITION: <your conversational transition that explains why this question is next and naturally asks it>
 REASONING: <why you picked this question>"""
 
 

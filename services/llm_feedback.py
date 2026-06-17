@@ -56,9 +56,8 @@ def _cache_get(key: str) -> Optional[dict]:
 
 # ── structured output schema ──────────────────────────────────────────────────
 class FeedbackOutput(BaseModel):
-    feedback: str = Field(description="3-5 sentences explaining what the candidate got right, what key points they missed, and what a strong answer should include. Be specific — name the exact concepts, terms, and reasoning gaps. 70-120 words.")
-    tip: str = Field(description="A concrete actionable tip: tell them exactly what to say or include next time, with a mini example. 30-50 words.")
-    tts_feedback: str = Field(description="A natural spoken sentence (20-35 words) that a human interviewer would say as verbal feedback. Acknowledge what they got right and briefly mention the main gap. Must sound conversational, not robotic.")
+    feedback: str = Field(description="8-12 sentences giving a thorough conversational evaluation addressing EVERY part of the question. For each part: state whether the candidate covered it or missed it, explain what was expected, and guide them on what a strong answer looks like. Be specific with concepts, terms, and reasoning. Include what they said that was correct, what was wrong or missing, and exactly what they should have said instead. Speak naturally like a real interviewer talking face-to-face. 250-300 words. Use plain ASCII text only, no special unicode dashes.")
+    tip: str = Field(description="A concrete actionable tip: tell them exactly what to say or include next time, with a mini example structure. 40-60 words. Use plain ASCII text only.")
 
 
 # ── few-shot examples (pre-loaded into memory) ───────────────────────────────
@@ -70,9 +69,8 @@ CANDIDATE'S ANSWER: Polymorphism is when objects can take different forms.
 
 REFERENCE ANSWER: Polymorphism allows objects of different classes to be treated through the same interface. There are two types: compile-time (method overloading — same method name, different parameters) and runtime (method overriding — subclass provides specific implementation of a parent method). Interfaces and abstract classes enable polymorphic behavior by defining contracts that multiple classes implement differently.""",
         "ai": FeedbackOutput(
-            feedback="You got the core idea right — polymorphism is about objects taking different forms. But you missed the two types: compile-time polymorphism through method overloading, and runtime polymorphism through method overriding. You also didn't mention how interfaces enable it.",
-            tip="Next time, structure it as: 'There are two types — overloading where same method has different parameters, and overriding where a subclass redefines a parent method. For example, Dog and Cat both override Animal.speak() differently.'",
-            tts_feedback="You got the basic idea right, but you need to cover the two types — overloading and overriding — and mention how interfaces enable polymorphic behavior.",
+            feedback="Your answer is too vague to demonstrate real understanding. Saying 'objects take different forms' is just restating the dictionary definition without explaining HOW polymorphism actually works. The question expected you to distinguish between compile-time polymorphism (method overloading — same method name with different parameters) and runtime polymorphism (method overriding — subclass redefines parent method). You also completely missed how interfaces and abstract classes enable polymorphic behavior by defining contracts. This level of surface-only answer would not pass in a real interview.",
+            tip="Structure it as: 'Polymorphism has two types — compile-time through overloading (same method, different params) and runtime through overriding (subclass redefines parent behavior). Interfaces enable this by defining contracts multiple classes implement differently. Example: Dog and Cat both override Animal.speak().'",
         ),
     },
     {
@@ -82,28 +80,38 @@ CANDIDATE'S ANSWER: The event loop is what makes Node.js non-blocking. It handle
 
 REFERENCE ANSWER: The event loop is Node.js's mechanism for non-blocking I/O. It continuously checks the call stack and callback queue. When the stack is empty, it picks callbacks from the queue. It runs in phases: timers, pending callbacks, poll (I/O), check (setImmediate), and close callbacks. The microtask queue (Promises, process.nextTick) has priority over the regular callback queue.""",
         "ai": FeedbackOutput(
-            feedback="You nailed the fundamentals — non-blocking I/O, single thread, callback queue, and call stack relationship. You even named specific phases which shows solid understanding. The one gap: you didn't mention the microtask queue and how Promises get priority over setTimeout callbacks.",
-            tip="Add this point: 'The microtask queue handles Promises and process.nextTick with higher priority — so Promise.resolve() executes before setTimeout(fn, 0) even though both are async.'",
-            tts_feedback="Strong answer — you covered non-blocking I/O and the phases well. The one thing missing is the microtask queue and how Promises get priority over regular callbacks.",
+            feedback="You covered the basics well — non-blocking nature, single thread, call stack and callback queue relationship, and even named some phases. That shows you understand the core mechanism. However, you missed a critical piece: the microtask queue. In Node.js, Promises and process.nextTick get priority over the regular callback queue, meaning Promise.resolve() executes before setTimeout(fn, 0). This is a common interview follow-up and distinguishes someone who has worked with async code from someone who just read about it.",
+            tip="Add: 'The microtask queue handles Promises and process.nextTick with higher priority than the callback queue — so Promise.resolve() runs before setTimeout(fn, 0) even though both are async. This is why mixing Promises with timers can produce unexpected ordering.'",
         ),
     },
 ]
 
 # ── system prompt ─────────────────────────────────────────────────────────────
-_SYSTEM_PROMPT = """You are a senior technical interviewer giving verbal feedback after each answer.
+_SYSTEM_PROMPT = """You are a tough but fair senior technical interviewer giving verbal feedback face-to-face after each answer. You speak naturally like a real person in a conversation - not like a written report.
 
-Your job:
-1. Compare the candidate's answer against the reference answer.
-2. Identify SPECIFIC concepts they covered correctly and SPECIFIC concepts they missed or got wrong.
-3. Give a concrete tip with an example of what a better answer would include.
+Your approach:
+1. Be TRANSPARENT about gaps - don't sugarcoat. If they missed the point, say so clearly.
+2. GUIDE them toward what the question wanted - explain what a complete answer should have covered.
+3. Name SPECIFIC concepts, terms, and reasoning steps they missed.
+4. If their answer was vague or surface-level, call it out and explain what depth was expected.
+5. Only acknowledge what they got right if they actually demonstrated understanding, not just surface keywords.
+
+TONE & STYLE:
+- Sound like you're TALKING to someone, not writing an essay. Use conversational phrasing.
+- Use natural speech patterns: "Look, you got the basic idea, but here's the problem..." or "Okay so you mentioned X, which is correct, but the question was really asking you to..."
+- Don't use numbered lists like "First... Second... Third..." - weave your points naturally.
+- Don't start with "Your answer is..." - be more human. Start with what you observed.
+- Be the kind of interviewer who makes candidates think "that was tough but I learned exactly what I need to improve"
 
 RULES:
-- Be SPECIFIC — name exact concepts, terms, or ideas. Never say vague things like "your answer lacks depth" or "could be more complete" without saying WHAT is missing.
+- Be direct and honest. Don't blindly praise or motivate. If the answer was weak, say it's weak and explain why.
+- If they only answered part of a multi-part question, explicitly point out which parts they skipped.
+- Guide them: "The question was asking you to explain X AND Y. You only touched on X at a surface level."
+- Name exact missing concepts, don't say vague things like "you could go deeper".
 - Address the candidate as "you".
-- Never mention scores, metrics, semantic similarity, or keywords.
-- Never copy the reference answer verbatim — paraphrase the missing points.
-- Sound like a real interviewer talking to a candidate, not a robot generating a report.
-- The tts_feedback should sound like what an interviewer would naturally say out loud right after hearing the answer (e.g. "Good start, but you missed the key distinction between X and Y")."""
+- Never mention scores, metrics, or keyword matching.
+- Never copy the reference answer verbatim - paraphrase the key points they should have made.
+- Use plain ASCII text only, no special unicode characters or dashes."""
 
 
 def check_llm_available() -> bool:
@@ -121,7 +129,7 @@ def check_llm_available() -> bool:
             api_key=GROQ_API_KEY,
             model=GROQ_MODEL,
             temperature=0.35,
-            max_tokens=800 if is_reasoning else 450,
+            max_tokens=2000 if is_reasoning else 450,
         )
         if is_reasoning:
             kwargs["reasoning_effort"] = "medium"
@@ -135,12 +143,11 @@ def check_llm_available() -> bool:
             ai_obj = ex["ai"]
             few_shot_messages.append(AIMessage(content=(
                 f"FEEDBACK: {ai_obj.feedback}\n"
-                f"TIP: {ai_obj.tip}\n"
-                f"TTS: {ai_obj.tts_feedback}"
+                f"TIP: {ai_obj.tip}"
             )))
 
         prompt = ChatPromptTemplate.from_messages([
-            SystemMessage(content=_SYSTEM_PROMPT + "\n\nRespond in EXACTLY this format:\nFEEDBACK: <your feedback>\nTIP: <your tip>\nTTS: <one natural spoken sentence, 20-35 words, acknowledging what they got right and the main gap>"),
+            SystemMessage(content=_SYSTEM_PROMPT + "\n\nRespond in EXACTLY this format:\nFEEDBACK: <8-12 sentences, 250-300 words, conversational tone, covering EVERY part of the question thoroughly, plain ASCII only>\nTIP: <your actionable tip, 40-60 words, plain ASCII>"),
             *few_shot_messages,
             MessagesPlaceholder(variable_name="history", optional=True),
             ("human", "{input}"),
@@ -166,8 +173,7 @@ def _add_to_history(human_msg: str, result: dict) -> None:
     _history.append(HumanMessage(content=human_msg))
     _history.append(AIMessage(content=(
         f"FEEDBACK: {result['feedback']}\n"
-        f"TIP: {result['tip']}\n"
-        f"TTS: {result['tts_feedback']}"
+        f"TIP: {result['tip']}"
     )))
     while len(_history) > _MAX_HISTORY * 2:
         _history.pop(0)
@@ -226,8 +232,6 @@ async def load_knowledge_from_db() -> None:
 
             for ans, q in rows:
                 quality = _quality_label(float(ans.final_score or 0))
-                # Derive TTS from first sentence of feedback
-                tts_line = (ans.feedback or "").split(".")[0].strip() + "."
                 human_msg = (
                     f"QUESTION:\n{q.question_text}\n\n"
                     f"CANDIDATE'S ANSWER:\n{ans.transcript}\n\n"
@@ -236,8 +240,7 @@ async def load_knowledge_from_db() -> None:
                 )
                 ai_msg = (
                     f"FEEDBACK: {ans.feedback}\n"
-                    f"TIP: {ans.tip or 'No specific tip provided.'}\n"
-                    f"TTS: {tts_line}"
+                    f"TIP: {ans.tip or 'No specific tip provided.'}"
                 )
                 _history.append(HumanMessage(content=human_msg))
                 _history.append(AIMessage(content=ai_msg))
@@ -282,10 +285,9 @@ REFERENCE ANSWER:
 
 # ── sync call (runs in thread pool) ──────────────────────────────────────────
 def _parse_llm_response(raw: str) -> Optional[dict]:
-    """Parse FEEDBACK/TIP/TTS from plain text LLM response."""
+    """Parse FEEDBACK/TIP from plain text LLM response."""
     feedback = ""
     tip = ""
-    tts = ""
     for line in raw.splitlines():
         stripped = line.strip()
         upper = stripped.upper()
@@ -293,13 +295,11 @@ def _parse_llm_response(raw: str) -> Optional[dict]:
             feedback = stripped.split(":", 1)[1].strip()
         elif upper.startswith("TIP:"):
             tip = stripped.split(":", 1)[1].strip()
-        elif upper.startswith("TTS:"):
-            tts = stripped.split(":", 1)[1].strip()
     if feedback:
         return {
             "feedback": feedback.strip('"'),
             "tip": tip.strip('"'),
-            "tts_feedback": tts.strip('"'),
+            "tts_feedback": "",
         }
     return None
 
@@ -313,6 +313,11 @@ def _call_chain_sync(human_input: str, cache_key: str) -> Optional[dict]:
             "history": list(_history),
         })
         raw = output.content if hasattr(output, 'content') else str(output)
+
+        # For reasoning models, content may be empty — check additional_kwargs
+        if not raw and hasattr(output, 'additional_kwargs'):
+            raw = output.additional_kwargs.get('reasoning_content', '')
+
         result = _parse_llm_response(raw)
         if not result:
             logger.warning(f"LLM response parse failed: {raw[:200]}")
@@ -380,8 +385,22 @@ def _clean_transcript_sync(raw_transcript: str, question: str) -> Optional[str]:
             max_tokens=300,
         )
         messages = [
-            SystemMessage(content="""You are a transcript cleaner. Fix obvious speech-to-text errors, remove filler words (um, uh, like, basically), fix broken grammar, and make it readable. STRICT RULES: Do NOT add any new words, concepts, or information. Do NOT rephrase or improve the answer. Only fix clear STT mistakes (e.g. "there" -> "their" if obvious, repeated words, broken sentences). If the transcript is already clean, return it unchanged. Return ONLY the cleaned transcript."""),
-            HumanMessage(content=raw_transcript),
+            SystemMessage(content="""You are fixing speech-to-text errors in a recorded answer. The topic context is provided ONLY so you can identify misheard technical terms.
+
+Fix:
+- Misheard technical terms (use topic context to infer correct terms)
+- Filler words (um, uh, like, basically, so, you know)
+- Repeated/stuttered words
+- Broken grammar from STT
+
+DO NOT:
+- Add any new information, explanations, or points
+- Expand or improve the answer in any way
+- Generate content from the topic — only fix what's already there
+- Change the meaning or add words the speaker didn't say
+
+If a word is unrecognizable and you can't confidently fix it, leave it. Return ONLY the cleaned transcript."""),
+            HumanMessage(content=f"TOPIC (for reference only): {question}\n\nTRANSCRIPT: {raw_transcript}"),
         ]
         output = llm.invoke(messages)
         cleaned = (output.content or "").strip()
