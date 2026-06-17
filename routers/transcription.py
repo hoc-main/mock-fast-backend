@@ -40,6 +40,7 @@ from ..db.database import AsyncSessionLocal
 from ..db.models import InterviewAnswer, InterviewSession, Question
 from ..services.evaluation import evaluate_answer
 from ..services import llm_feedback as _llm
+from ..services.llm_feedback import clean_transcript
 from ..services.voice_intent import classify_voice_intent, classify_nav_intent
 
 logger = logging.getLogger(__name__)
@@ -272,6 +273,9 @@ async def transcribe_websocket(
 
             logger.info(f"[session={session_id}] final evaluate: {full_transcript[:80]}")
 
+            # Clean up garbled STT transcript before evaluation
+            full_transcript = await clean_transcript(full_transcript, current_question.question_text)
+
             question_data = {
                 "id":       current_question.id,
                 "question": current_question.question_text,
@@ -354,11 +358,13 @@ async def transcribe_websocket(
 
         try:
             async with _dg_client.listen.v2.connect(
-                model="flux-general-en",
+                model="nova-3",
                 encoding="linear16",
                 sample_rate="16000",
                 eot_timeout_ms="8000",
                 eot_threshold="0.7",
+                smart_format=True,
+                punctuate=True,
             ) as dg_conn:
 
                 def on_message(message) -> None:

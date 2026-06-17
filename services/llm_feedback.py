@@ -366,6 +366,51 @@ async def generate_llm_feedback(
         return None
 
 
+# ── LLM Transcript Cleanup ───────────────────────────────────────────────────
+
+def _clean_transcript_sync(raw_transcript: str, question: str) -> Optional[str]:
+    """Clean up garbled STT transcript using LLM."""
+    if not GROQ_API_KEY or len(raw_transcript.split()) < 5:
+        return None
+    try:
+        llm = ChatGroq(
+            api_key=GROQ_API_KEY,
+            model=os.getenv("GROQ_MODEL_FAST", "llama-3.3-70b-versatile"),
+            temperature=0.1,
+            max_tokens=300,
+        )
+        messages = [
+            SystemMessage(content="""You are a transcript cleaner. Fix obvious speech-to-text errors, remove filler words (um, uh, like, basically), fix broken grammar, and make it readable. STRICT RULES: Do NOT add any new words, concepts, or information. Do NOT rephrase or improve the answer. Only fix clear STT mistakes (e.g. "there" -> "their" if obvious, repeated words, broken sentences). If the transcript is already clean, return it unchanged. Return ONLY the cleaned transcript."""),
+            HumanMessage(content=raw_transcript),
+        ]
+        output = llm.invoke(messages)
+        cleaned = (output.content or "").strip()
+        if cleaned and len(cleaned) > 10:
+            return cleaned
+        return None
+    except Exception as exc:
+        logger.warning(f"Transcript cleanup failed: {exc}")
+        return None
+
+
+async def clean_transcript(raw_transcript: str, question: str) -> str:
+    """Clean a garbled STT transcript. Returns original if cleanup fails."""
+    if not llm_available or not raw_transcript.strip():
+        return raw_transcript
+    loop = asyncio.get_event_loop()
+    try:
+        result = await asyncio.wait_for(
+            loop.run_in_executor(None, _clean_transcript_sync, raw_transcript, question),
+            timeout=5.0,
+        )
+        if result:
+            logger.info(f"Transcript cleaned: '{raw_transcript[:50]}...' -> '{result[:50]}...'")
+            return result
+    except (asyncio.TimeoutError, Exception) as exc:
+        logger.warning(f"Transcript cleanup timeout/error: {exc}")
+    return raw_transcript
+
+
 # ── LLM Session Summary Rewriter ─────────────────────────────────────────────
 
 _SESSION_SUMMARY_SYSTEM = """You are a senior interview coach writing a performance summary for a candidate after a mock interview session.
