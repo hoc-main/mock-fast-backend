@@ -358,13 +358,11 @@ async def transcribe_websocket(
 
         try:
             async with _dg_client.listen.v2.connect(
-                model="nova-3",
+                model="flux-general-en",
                 encoding="linear16",
                 sample_rate="16000",
                 eot_timeout_ms="8000",
                 eot_threshold="0.7",
-                smart_format=True,
-                punctuate=True,
             ) as dg_conn:
 
                 def on_message(message) -> None:
