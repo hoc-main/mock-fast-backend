@@ -356,32 +356,14 @@ async def transcribe_websocket(
                 },
             }))
 
-        # Build keyword hints from the current question for better STT accuracy
-        keywords_hint = []
-        q_text = current_question.question_text or ""
-        expected = current_question.expected_answer or ""
-        # Extract important words from question + expected answer for Deepgram keyword boosting
-        import re as _re
-        _stop = {"a","an","the","is","are","was","were","to","of","and","or","in","on","for","with","that","this","it","as","by","be","at","from","how","what","does","do","you","your","both","its","can","will","would","should","may","might","could","have","has","had","been","not","but","if","so","than","then","also","very","just","about","which","when","where","why","who"}
-        for text in [q_text, expected[:300]]:
-            words = _re.findall(r'\b[a-zA-Z][a-zA-Z-]{2,}\b', text)
-            for w in words:
-                if w.lower() not in _stop and w not in keywords_hint:
-                    keywords_hint.append(w)
-        keywords_hint = keywords_hint[:50]  # Deepgram limit
-
         try:
-            dg_kwargs = dict(
+            async with _dg_client.listen.v2.connect(
                 model="flux-general-en",
                 encoding="linear16",
                 sample_rate="16000",
                 eot_timeout_ms="8000",
                 eot_threshold="0.7",
-            )
-            if keywords_hint:
-                dg_kwargs["keywords"] = keywords_hint
-
-            async with _dg_client.listen.v2.connect(**dg_kwargs) as dg_conn:
+            ) as dg_conn:
 
                 def on_message(message) -> None:
                     nonlocal final_transcript, last_partial
