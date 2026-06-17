@@ -56,9 +56,9 @@ def _cache_get(key: str) -> Optional[dict]:
 
 # ── structured output schema ──────────────────────────────────────────────────
 class FeedbackOutput(BaseModel):
-    feedback: str = Field(description="2-3 sentences explaining what the candidate got right and what key points they missed. Be specific — name the exact concepts. 40-70 words.")
+    feedback: str = Field(description="3-5 sentences explaining what the candidate got right, what key points they missed, and what a strong answer should include. Be specific — name the exact concepts, terms, and reasoning gaps. 70-120 words.")
     tip: str = Field(description="A concrete actionable tip: tell them exactly what to say or include next time, with a mini example. 30-50 words.")
-    tts_feedback: str = Field(description="One natural spoken sentence (under 15 words) that a human interviewer would say as immediate reaction.")
+    tts_feedback: str = Field(description="A natural spoken sentence (20-35 words) that a human interviewer would say as verbal feedback. Acknowledge what they got right and briefly mention the main gap. Must sound conversational, not robotic.")
 
 
 # ── few-shot examples (pre-loaded into memory) ───────────────────────────────
@@ -72,7 +72,7 @@ REFERENCE ANSWER: Polymorphism allows objects of different classes to be treated
         "ai": FeedbackOutput(
             feedback="You got the core idea right — polymorphism is about objects taking different forms. But you missed the two types: compile-time polymorphism through method overloading, and runtime polymorphism through method overriding. You also didn't mention how interfaces enable it.",
             tip="Next time, structure it as: 'There are two types — overloading where same method has different parameters, and overriding where a subclass redefines a parent method. For example, Dog and Cat both override Animal.speak() differently.'",
-            tts_feedback="Right idea, but you need to cover overloading and overriding specifically.",
+            tts_feedback="You got the basic idea right, but you need to cover the two types — overloading and overriding — and mention how interfaces enable polymorphic behavior.",
         ),
     },
     {
@@ -84,7 +84,7 @@ REFERENCE ANSWER: The event loop is Node.js's mechanism for non-blocking I/O. It
         "ai": FeedbackOutput(
             feedback="You nailed the fundamentals — non-blocking I/O, single thread, callback queue, and call stack relationship. You even named specific phases which shows solid understanding. The one gap: you didn't mention the microtask queue and how Promises get priority over setTimeout callbacks.",
             tip="Add this point: 'The microtask queue handles Promises and process.nextTick with higher priority — so Promise.resolve() executes before setTimeout(fn, 0) even though both are async.'",
-            tts_feedback="Strong answer — just add how the microtask queue prioritizes promises.",
+            tts_feedback="Strong answer — you covered non-blocking I/O and the phases well. The one thing missing is the microtask queue and how Promises get priority over regular callbacks.",
         ),
     },
 ]
@@ -140,7 +140,7 @@ def check_llm_available() -> bool:
             )))
 
         prompt = ChatPromptTemplate.from_messages([
-            SystemMessage(content=_SYSTEM_PROMPT + "\n\nRespond in EXACTLY this format:\nFEEDBACK: <your feedback>\nTIP: <your tip>\nTTS: <one short sentence>"),
+            SystemMessage(content=_SYSTEM_PROMPT + "\n\nRespond in EXACTLY this format:\nFEEDBACK: <your feedback>\nTIP: <your tip>\nTTS: <one natural spoken sentence, 20-35 words, acknowledging what they got right and the main gap>"),
             *few_shot_messages,
             MessagesPlaceholder(variable_name="history", optional=True),
             ("human", "{input}"),
