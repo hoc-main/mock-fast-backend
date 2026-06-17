@@ -319,6 +319,7 @@ async def transcribe_websocket(
                             expected_answer=current_question.expected_answer,
                             metrics=evaluation,
                             missing_keywords=evaluation.get("missing_keywords", []),
+                            module_id=session.module_id,
                         ),
                         timeout=12.0,
                     )

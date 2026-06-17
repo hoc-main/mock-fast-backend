@@ -165,74 +165,132 @@ def check_llm_available() -> bool:
         return False
 
 
-# ── conversation history buffer (last N good exchanges) ──────────────────────
-_MAX_HISTORY = 6
-_history: list = []
-_kb_loaded: bool = False
+# ── conversation history buffers (separated: DB knowledge vs live session) ───
+_MAX_KB_EXAMPLES = 8       # permanent DB-sourced few-shot examples
+_MAX_SESSION_HISTORY = 4   # live conversation exchanges this session
+_kb_examples: list = []    # permanent, only replaced on module change
+_session_history: list = [] # rolling window of current session
+_kb_loaded_module: Optional[int] = None  # track which module's KB is loaded
 
 
 def _add_to_history(human_msg: str, result: dict) -> None:
-    _history.append(HumanMessage(content=human_msg))
-    _history.append(AIMessage(content=(
+    _session_history.append(HumanMessage(content=human_msg))
+    _session_history.append(AIMessage(content=(
         f"FEEDBACK: {result['feedback']}\n"
         f"TIP: {result['tip']}"
     )))
-    while len(_history) > _MAX_HISTORY * 2:
-        _history.pop(0)
-        _history.pop(0)
+    while len(_session_history) > _MAX_SESSION_HISTORY * 2:
+        _session_history.pop(0)
+        _session_history.pop(0)
 
 
-# ── DB knowledge base loader ─────────────────────────────────────────────────
-async def load_knowledge_from_db() -> None:
-    """Load best past feedback from DB into history buffer as few-shot examples."""
-    global _kb_loaded
-    if _kb_loaded:
+def _get_full_history() -> list:
+    """Combine permanent KB examples + live session history for LLM context."""
+    return _kb_examples + _session_history
+
+
+# ── DB knowledge base loader (topic-aware) ───────────────────────────────────
+async def load_knowledge_from_db(module_id: Optional[int] = None) -> None:
+    """Load best past feedback from DB into KB buffer as few-shot examples.
+    
+    Prioritizes examples from the same module (topic-aware), then fills
+    remaining slots with diverse examples from other modules.
+    """
+    global _kb_loaded_module, _kb_examples
+    
+    # Skip if already loaded for this module
+    if _kb_loaded_module == (module_id or -1):
         return
+    
     try:
         from ..db.database import AsyncSessionLocal
-        from ..db.models import InterviewAnswer, Question
+        from ..db.models import InterviewAnswer, Question, InterviewSession
 
         async with AsyncSessionLocal() as db:
-            # Only load LLM-quality feedback (longer than 80 chars = not rule-based template)
             min_feedback_len = 80
-
-            # Get top-rated answers (good examples)
-            good_result = await db.execute(
-                select(InterviewAnswer, Question)
-                .join(Question, InterviewAnswer.question_id == Question.id)
-                .where(
-                    InterviewAnswer.feedback != "",
-                    InterviewAnswer.feedback.isnot(None),
-                    InterviewAnswer.final_score >= 0.7,
-                    func.length(InterviewAnswer.feedback) >= min_feedback_len,
+            _kb_examples.clear()
+            
+            # --- Phase 1: Topic-matched examples (same module) ---
+            topic_rows = []
+            if module_id:
+                topic_good = await db.execute(
+                    select(InterviewAnswer, Question)
+                    .join(Question, InterviewAnswer.question_id == Question.id)
+                    .join(InterviewSession, InterviewAnswer.session_id == InterviewSession.id)
+                    .where(
+                        InterviewSession.module_id == module_id,
+                        InterviewAnswer.feedback != "",
+                        InterviewAnswer.feedback.isnot(None),
+                        InterviewAnswer.final_score >= 0.7,
+                        func.length(InterviewAnswer.feedback) >= min_feedback_len,
+                    )
+                    .order_by(desc(InterviewAnswer.final_score))
+                    .limit(3)
                 )
-                .order_by(desc(InterviewAnswer.final_score))
-                .limit(3)
-            )
-            good_rows = good_result.all()
-
-            # Get low-rated answers (weak examples)
-            weak_result = await db.execute(
-                select(InterviewAnswer, Question)
-                .join(Question, InterviewAnswer.question_id == Question.id)
-                .where(
-                    InterviewAnswer.feedback != "",
-                    InterviewAnswer.feedback.isnot(None),
-                    InterviewAnswer.final_score < 0.4,
-                    func.length(InterviewAnswer.feedback) >= min_feedback_len,
+                topic_weak = await db.execute(
+                    select(InterviewAnswer, Question)
+                    .join(Question, InterviewAnswer.question_id == Question.id)
+                    .join(InterviewSession, InterviewAnswer.session_id == InterviewSession.id)
+                    .where(
+                        InterviewSession.module_id == module_id,
+                        InterviewAnswer.feedback != "",
+                        InterviewAnswer.feedback.isnot(None),
+                        InterviewAnswer.final_score < 0.4,
+                        func.length(InterviewAnswer.feedback) >= min_feedback_len,
+                    )
+                    .order_by(asc(InterviewAnswer.final_score))
+                    .limit(2)
                 )
-                .order_by(asc(InterviewAnswer.final_score))
-                .limit(2)
-            )
-            weak_rows = weak_result.all()
+                topic_rows = topic_weak.all() + topic_good.all()
 
-            rows = weak_rows + good_rows
-            if not rows:
+            # --- Phase 2: Fill remaining slots with global diverse examples ---
+            topic_ids = {ans.id for ans, _ in topic_rows}
+            remaining = _MAX_KB_EXAMPLES - len(topic_rows)
+            
+            global_rows = []
+            if remaining > 0:
+                good_query = (
+                    select(InterviewAnswer, Question)
+                    .join(Question, InterviewAnswer.question_id == Question.id)
+                    .where(
+                        InterviewAnswer.feedback != "",
+                        InterviewAnswer.feedback.isnot(None),
+                        InterviewAnswer.final_score >= 0.7,
+                        func.length(InterviewAnswer.feedback) >= min_feedback_len,
+                    )
+                    .order_by(desc(InterviewAnswer.final_score))
+                    .limit(remaining // 2 + 1)
+                )
+                if topic_ids:
+                    good_query = good_query.where(InterviewAnswer.id.notin_(topic_ids))
+                global_good = await db.execute(good_query)
+
+                weak_query = (
+                    select(InterviewAnswer, Question)
+                    .join(Question, InterviewAnswer.question_id == Question.id)
+                    .where(
+                        InterviewAnswer.feedback != "",
+                        InterviewAnswer.feedback.isnot(None),
+                        InterviewAnswer.final_score < 0.4,
+                        func.length(InterviewAnswer.feedback) >= min_feedback_len,
+                    )
+                    .order_by(asc(InterviewAnswer.final_score))
+                    .limit(remaining // 2)
+                )
+                if topic_ids:
+                    weak_query = weak_query.where(InterviewAnswer.id.notin_(topic_ids))
+                global_weak = await db.execute(weak_query)
+
+                global_rows = global_weak.all() + global_good.all()
+
+            # --- Build KB examples (topic first, then global) ---
+            all_rows = topic_rows + global_rows
+            if not all_rows:
                 logger.info("No past feedback in DB — using hardcoded few-shot only")
-                _kb_loaded = True
+                _kb_loaded_module = module_id or -1
                 return
 
-            for ans, q in rows:
+            for ans, q in all_rows[:_MAX_KB_EXAMPLES]:
                 quality = _quality_label(float(ans.final_score or 0))
                 human_msg = (
                     f"QUESTION:\n{q.question_text}\n\n"
@@ -244,19 +302,18 @@ async def load_knowledge_from_db() -> None:
                     f"FEEDBACK: {ans.feedback}\n"
                     f"TIP: {ans.tip or 'No specific tip provided.'}"
                 )
-                _history.append(HumanMessage(content=human_msg))
-                _history.append(AIMessage(content=ai_msg))
+                _kb_examples.append(HumanMessage(content=human_msg))
+                _kb_examples.append(AIMessage(content=ai_msg))
 
-            # Trim if too many
-            while len(_history) > _MAX_HISTORY * 2:
-                _history.pop(0)
-                _history.pop(0)
-
-            _kb_loaded = True
-            logger.info(f"Loaded {len(rows)} past feedback examples from DB into LLM history")
+            _kb_loaded_module = module_id or -1
+            logger.info(
+                f"KB loaded: {len(topic_rows)} topic-matched + "
+                f"{len(all_rows) - len(topic_rows)} global = "
+                f"{len(all_rows)} examples (module_id={module_id})"
+            )
     except Exception as exc:
         logger.warning(f"Could not load knowledge from DB: {exc}")
-        _kb_loaded = True  # Don't retry on every call
+        _kb_loaded_module = module_id or -1  # Don't retry on every call
 
 
 # ── score → quality label ─────────────────────────────────────────────────────
@@ -312,7 +369,7 @@ def _call_chain_sync(human_input: str, cache_key: str) -> Optional[dict]:
     try:
         output = _chain.invoke({
             "input": human_input,
-            "history": list(_history),
+            "history": _get_full_history(),
         })
         raw = output.content if hasattr(output, 'content') else str(output)
 
@@ -344,16 +401,18 @@ async def generate_llm_feedback(
     expected_answer:  str,
     metrics:          dict,
     missing_keywords: list,
+    module_id:        Optional[int] = None,
 ) -> Optional[dict]:
     """
     Returns {"feedback": str, "tip": str, "tts_feedback": str} or None on failure.
+    Pass module_id to get topic-aware few-shot examples from the DB.
     """
     if not llm_available:
         return None
 
-    # Lazy-load DB knowledge on first call
-    if not _kb_loaded:
-        await load_knowledge_from_db()
+    # Lazy-load or refresh DB knowledge when module changes
+    if _kb_loaded_module != (module_id or -1):
+        await load_knowledge_from_db(module_id)
 
     key = _cache_key(question, metrics.get("final_score", 0.0))
     cached = _cache_get(key)
