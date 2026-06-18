@@ -515,43 +515,28 @@ async def generate_llm_feedback(
 # ── LLM Transcript Cleanup ───────────────────────────────────────────────────
 
 def _clean_transcript_sync(raw_transcript: str, question: str) -> Optional[str]:
-    """Clean up garbled STT transcript using LLM."""
-    if not GROQ_API_KEYS:
+    """Clean up garbled STT transcript using LLM. Rotates key on 429."""
+    if not GROQ_API_KEYS or len(raw_transcript.split()) < 5:
         return None
-    try:
-        is_reasoning = "oss" in GROQ_MODEL or "reasoning" in GROQ_MODEL
-        kwargs = dict(
-            api_key=_get_current_key(),
-            model=GROQ_MODEL,
-            temperature=0.1,
-            max_tokens=300,
-        )
-        messages = [
-            SystemMessage(content="""You are fixing speech-to-text errors in a recorded answer. The topic context is provided ONLY so you can identify misheard technical terms.
-
-Fix:
-- Misheard technical terms (use topic context to infer correct terms)
-- Filler words (um, uh, like, basically, so, you know)
-- Repeated/stuttered words
-- Broken grammar from STT
-
-DO NOT:
-- Add any new information, explanations, or points
-- Expand or improve the answer in any way
-- Generate content from the topic — only fix what's already there
-- Change the meaning or add words the speaker didn't say
-
-If a word is unrecognizable and you can't confidently fix it, leave it. Return ONLY the cleaned transcript."""),
-            HumanMessage(content=f"TOPIC (for reference only): {question}\n\nTRANSCRIPT: {raw_transcript}"),
-        ]
-        output = llm.invoke(messages)
-        cleaned = (output.content or "").strip()
-        if cleaned and len(cleaned) > 10:
-            return cleaned
-        return None
-    except Exception as exc:
-        logger.warning(f"Transcript cleanup failed: {exc}")
-        return None
+    messages = [
+        SystemMessage(content="Fix speech-to-text errors: misheard terms, fillers, stutters, broken grammar. Do NOT add new info. Return ONLY cleaned transcript."),
+        HumanMessage(content=f"TOPIC: {question}\nTRANSCRIPT: {raw_transcript}"),
+    ]
+    for attempt in range(2):
+        try:
+            llm = ChatGroq(api_key=_get_current_key(), model=GROQ_FALLBACK_MODEL, temperature=0.1, max_tokens=300)
+            output = llm.invoke(messages)
+            cleaned = (output.content or "").strip()
+            if cleaned and len(cleaned) > 10:
+                return cleaned
+            return None
+        except Exception as exc:
+            if ("429" in str(exc) or "rate_limit" in str(exc).lower()) and attempt == 0:
+                logger.warning("Transcript cleanup rate limited, rotating key...")
+                _rotate_key()
+                continue
+            logger.warning(f"Transcript cleanup failed: {exc}")
+            return None
 
 
 async def clean_transcript(raw_transcript: str, question: str) -> str:
@@ -594,56 +579,41 @@ IMPROVEMENTS: <bullet1> | <bullet2> | <bullet3>"""
 
 
 def _call_summary_rewrite_sync(human_input: str) -> Optional[dict]:
-    """Sync LLM call for session summary rewriting."""
+    """Sync LLM call for session summary rewriting. Rotates key on 429."""
     if not GROQ_API_KEYS:
         return None
-    try:
-        is_reasoning = "oss" in GROQ_MODEL or "reasoning" in GROQ_MODEL
-        kwargs = dict(
-            api_key=_get_current_key(),
-            model=GROQ_MODEL,
-            temperature=0.4,
-            max_tokens=2000 if is_reasoning else 400,
-        )
-        if is_reasoning:
-            kwargs["reasoning_effort"] = "medium"
-
-        llm = ChatGroq(**kwargs)
-        messages = [
-            SystemMessage(content=_SESSION_SUMMARY_SYSTEM),
-            HumanMessage(content=human_input),
-        ]
-        output = llm.invoke(messages)
-        raw = output.content if hasattr(output, 'content') else str(output)
-
-        # For reasoning models, content may be empty — check additional_kwargs
-        if not raw and hasattr(output, 'additional_kwargs'):
-            raw = output.additional_kwargs.get('reasoning_content', '')
-
-        # Parse response
-        summary = ""
-        strengths = []
-        improvements = []
-        for line in raw.splitlines():
-            stripped = line.strip()
-            upper = stripped.upper()
-            if upper.startswith("SUMMARY:"):
-                summary = stripped.split(":", 1)[1].strip()
-            elif upper.startswith("STRENGTHS:"):
-                strengths = [s.strip() for s in stripped.split(":", 1)[1].split("|") if s.strip()]
-            elif upper.startswith("IMPROVEMENTS:"):
-                improvements = [s.strip() for s in stripped.split(":", 1)[1].split("|") if s.strip()]
-
-        if summary:
-            return {
-                "summary_paragraph": summary,
-                "strengths": strengths or None,
-                "improvement_areas": improvements or None,
-            }
-        return None
-    except Exception as exc:
-        logger.warning(f"LLM session summary rewrite failed: {exc}")
-        return None
+    for attempt in range(2):
+        try:
+            is_reasoning = "oss" in GROQ_MODEL or "reasoning" in GROQ_MODEL
+            kwargs = dict(api_key=_get_current_key(), model=GROQ_MODEL, temperature=0.4, max_tokens=2000 if is_reasoning else 400)
+            if is_reasoning:
+                kwargs["reasoning_effort"] = "medium"
+            llm = ChatGroq(**kwargs)
+            messages = [SystemMessage(content=_SESSION_SUMMARY_SYSTEM), HumanMessage(content=human_input)]
+            output = llm.invoke(messages)
+            raw = output.content if hasattr(output, 'content') else str(output)
+            if not raw and hasattr(output, 'additional_kwargs'):
+                raw = output.additional_kwargs.get('reasoning_content', '')
+            summary, strengths, improvements = "", [], []
+            for line in raw.splitlines():
+                stripped = line.strip()
+                upper = stripped.upper()
+                if upper.startswith("SUMMARY:"):
+                    summary = stripped.split(":", 1)[1].strip()
+                elif upper.startswith("STRENGTHS:"):
+                    strengths = [s.strip() for s in stripped.split(":", 1)[1].split("|") if s.strip()]
+                elif upper.startswith("IMPROVEMENTS:"):
+                    improvements = [s.strip() for s in stripped.split(":", 1)[1].split("|") if s.strip()]
+            if summary:
+                return {"summary_paragraph": summary, "strengths": strengths or None, "improvement_areas": improvements or None}
+            return None
+        except Exception as exc:
+            if ("429" in str(exc) or "rate_limit" in str(exc).lower()) and attempt == 0:
+                logger.warning("Summary rewrite rate limited, rotating key...")
+                _rotate_key()
+                continue
+            logger.warning(f"LLM session summary rewrite failed: {exc}")
+            return None
 
 
 async def rewrite_session_summary(template_summary: dict) -> dict:

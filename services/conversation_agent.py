@@ -27,9 +27,11 @@ _groq_client_key = None
 
 
 def _get_groq_client():
+    """Get Groq client using the key rotation pool from llm_feedback."""
     global _groq_client, _groq_client_key
     from groq import Groq
-    api_key = os.getenv("GROQ_API_KEY", "")
+    from .llm_feedback import _get_current_key, GROQ_API_KEYS
+    api_key = _get_current_key() if GROQ_API_KEYS else os.getenv("GROQ_API_KEY", "")
     if not api_key:
         return None
     if _groq_client and _groq_client_key == api_key:
@@ -37,6 +39,21 @@ def _get_groq_client():
     _groq_client = Groq(api_key=api_key)
     _groq_client_key = api_key
     return _groq_client
+
+
+def _rebuild_client_with_rotated_key():
+    """Rotate to next key and rebuild client."""
+    global _groq_client, _groq_client_key
+    from groq import Groq
+    from .llm_feedback import _rotate_key, GROQ_API_KEYS
+    if len(GROQ_API_KEYS) <= 1:
+        return None
+    new_key = _rotate_key()
+    if new_key:
+        _groq_client = Groq(api_key=new_key)
+        _groq_client_key = new_key
+        return _groq_client
+    return None
 
 
 class NextQuestionDecision(BaseModel):
@@ -111,6 +128,7 @@ REASONING: <why you picked this question>"""
 def _pick_next_question_sync(prompt: str) -> Optional[NextQuestionDecision]:
     client = _get_groq_client()
     model = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b")
+    fallback_model = os.getenv("GROQ_FALLBACK_MODEL", "llama-3.3-70b-versatile")
     if not client:
         return None
 
@@ -137,7 +155,31 @@ def _pick_next_question_sync(prompt: str) -> Optional[NextQuestionDecision]:
                 result = _parse_decision(reasoning_text)
             return result
         except Exception as exc:
-            if attempt < max_retries:
+            exc_str = str(exc).lower()
+            # Rate limit — rotate key and retry
+            if "rate_limit" in exc_str or "429" in exc_str or "too many" in exc_str:
+                logger.warning(f"Conversation agent rate limited, rotating key...")
+                new_client = _rebuild_client_with_rotated_key()
+                if new_client:
+                    client = new_client
+                    continue
+                # All keys exhausted — try fallback model
+                if fallback_model and fallback_model != model:
+                    try:
+                        logger.info(f"Conversation agent trying fallback: {fallback_model}")
+                        call_kwargs["model"] = fallback_model
+                        call_kwargs.pop("reasoning_effort", None)
+                        call_kwargs["max_completion_tokens"] = 250
+                        completion = client.chat.completions.create(**call_kwargs)
+                        msg = completion.choices[0].message
+                        raw = (msg.content or "").strip()
+                        result = _parse_decision(raw)
+                        if result:
+                            return result
+                    except Exception as fb_exc:
+                        logger.warning(f"Fallback model also failed: {fb_exc}")
+                return None
+            elif attempt < max_retries:
                 wait = 1.5 * (attempt + 1)
                 logger.info(f"Conversation agent retry {attempt + 1}/{max_retries} after {wait}s: {exc}")
                 time.sleep(wait)
@@ -191,7 +233,8 @@ async def pick_next_question(
     Returns:
         NextQuestionDecision or None (caller falls back to sequential)
     """
-    if not os.getenv("GROQ_API_KEY") or not remaining_questions:
+    from .llm_feedback import GROQ_API_KEYS, _get_current_key
+    if not (GROQ_API_KEYS or os.getenv("GROQ_API_KEY")) or not remaining_questions:
         return None
 
     prompt = _build_next_question_prompt(
