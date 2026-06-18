@@ -58,8 +58,8 @@ def _cache_get(key: str) -> Optional[dict]:
 
 # ── structured output schema ──────────────────────────────────────────────────
 class FeedbackOutput(BaseModel):
-    feedback: str = Field(description="8-12 sentences giving a thorough conversational evaluation addressing EVERY part of the question. For each part: state whether the candidate covered it or missed it, explain what was expected, and guide them on what a strong answer looks like. Be specific with concepts, terms, and reasoning. Include what they said that was correct, what was wrong or missing, and exactly what they should have said instead. Speak naturally like a real interviewer talking face-to-face. 250-300 words. Use plain ASCII text only, no special unicode dashes.")
-    tip: str = Field(description="A concrete actionable tip: tell them exactly what to say or include next time, with a mini example structure. 40-60 words. Use plain ASCII text only.")
+    feedback: str = Field(description="IMPORTANT: Write AT LEAST 200 words. Give 10-12 sentences of detailed conversational evaluation covering: (1) what they said correctly and why, (2) each specific concept they missed with explanation, (3) what the complete answer should include, (4) why the missing pieces matter in interviews. Be thorough and specific. Plain ASCII only.")
+    tip: str = Field(description="A concrete actionable tip showing exactly how to structure a better answer next time, with a specific example sentence they could use. 50-80 words. Plain ASCII only.")
 
 
 # ── few-shot examples (pre-loaded into memory) ───────────────────────────────
@@ -174,7 +174,7 @@ def _build_chain(api_key: str, model: str):
         api_key=api_key,
         model=model,
         temperature=0.35,
-        max_tokens=2000 if is_reasoning else 450,
+        max_tokens=1200 if is_reasoning else 500,
     )
     if is_reasoning:
         kwargs["reasoning_effort"] = "medium"
@@ -191,7 +191,7 @@ def _build_chain(api_key: str, model: str):
         )))
 
     prompt = ChatPromptTemplate.from_messages([
-        SystemMessage(content=_SYSTEM_PROMPT + "\n\nRespond in EXACTLY this format:\nFEEDBACK: <8-12 sentences, 250-300 words, conversational tone, covering EVERY part of the question thoroughly, plain ASCII only>\nTIP: <your actionable tip, 40-60 words, plain ASCII>"),
+        SystemMessage(content=_SYSTEM_PROMPT + "\n\nRespond in EXACTLY this format:\nFEEDBACK: <10-12 sentences, MINIMUM 200 words, detailed and conversational, plain ASCII only>\nTIP: <actionable tip with example sentence, 50-80 words, plain ASCII>"),
         *few_shot_messages,
         MessagesPlaceholder(variable_name="history", optional=True),
         ("human", "{input}"),
@@ -379,20 +379,37 @@ REFERENCE ANSWER:
 
 # ── sync call (runs in thread pool) ──────────────────────────────────────────
 def _parse_llm_response(raw: str) -> Optional[dict]:
-    """Parse FEEDBACK/TIP from plain text LLM response."""
-    feedback = ""
-    tip = ""
-    for line in raw.splitlines():
+    """Parse FEEDBACK/TIP from plain text LLM response. Handles multi-line feedback."""
+    lines = raw.splitlines()
+    feedback_lines = []
+    tip_lines = []
+    current = None
+
+    for line in lines:
         stripped = line.strip()
         upper = stripped.upper()
         if upper.startswith("FEEDBACK:"):
-            feedback = stripped.split(":", 1)[1].strip()
+            current = "feedback"
+            rest = stripped.split(":", 1)[1].strip()
+            if rest:
+                feedback_lines.append(rest)
         elif upper.startswith("TIP:"):
-            tip = stripped.split(":", 1)[1].strip()
+            current = "tip"
+            rest = stripped.split(":", 1)[1].strip()
+            if rest:
+                tip_lines.append(rest)
+        elif current == "feedback" and stripped:
+            feedback_lines.append(stripped)
+        elif current == "tip" and stripped:
+            tip_lines.append(stripped)
+
+    feedback = " ".join(feedback_lines).strip().strip('"')
+    tip = " ".join(tip_lines).strip().strip('"')
+
     if feedback:
         return {
-            "feedback": feedback.strip('"'),
-            "tip": tip.strip('"'),
+            "feedback": feedback,
+            "tip": tip,
             "tts_feedback": "",
         }
     return None
@@ -585,9 +602,9 @@ def _call_summary_rewrite_sync(human_input: str) -> Optional[dict]:
     for attempt in range(2):
         try:
             is_reasoning = "oss" in GROQ_MODEL or "reasoning" in GROQ_MODEL
-            kwargs = dict(api_key=_get_current_key(), model=GROQ_MODEL, temperature=0.4, max_tokens=2000 if is_reasoning else 400)
+            kwargs = dict(api_key=_get_current_key(), model=GROQ_MODEL, temperature=0.4, max_tokens=1000 if is_reasoning else 400)
             if is_reasoning:
-                kwargs["reasoning_effort"] = "medium"
+                kwargs["reasoning_effort"] = "low"
             llm = ChatGroq(**kwargs)
             messages = [SystemMessage(content=_SESSION_SUMMARY_SYSTEM), HumanMessage(content=human_input)]
             output = llm.invoke(messages)
