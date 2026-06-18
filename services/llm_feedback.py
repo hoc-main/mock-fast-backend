@@ -25,8 +25,10 @@ from sqlalchemy import select, desc, asc, func
 logger = logging.getLogger(__name__)
 
 # ── config ────────────────────────────────────────────────────────────────────
-GROQ_API_KEY: str = ""
+GROQ_API_KEYS: list = []  # Multiple keys for rotation
+_current_key_index: int = 0
 GROQ_MODEL:   str = "openai/gpt-oss-20b"
+GROQ_FALLBACK_MODEL: str = "llama-3.3-70b-versatile"
 GROQ_TIMEOUT: int = 15
 llm_available: bool = False
 _chain = None
@@ -116,53 +118,86 @@ RULES:
 - Use plain ASCII text only, no special unicode characters or dashes."""
 
 
+def _get_current_key() -> str:
+    """Get current API key from rotation pool."""
+    if not GROQ_API_KEYS:
+        return ""
+    return GROQ_API_KEYS[_current_key_index % len(GROQ_API_KEYS)]
+
+
+def _rotate_key() -> str:
+    """Rotate to next API key when rate limited. Returns new key."""
+    global _current_key_index
+    if len(GROQ_API_KEYS) <= 1:
+        return _get_current_key()
+    _current_key_index = (_current_key_index + 1) % len(GROQ_API_KEYS)
+    logger.info(f"Rotated to API key #{_current_key_index + 1}/{len(GROQ_API_KEYS)}")
+    return GROQ_API_KEYS[_current_key_index]
+
+
 def check_llm_available() -> bool:
-    global llm_available, _chain, GROQ_API_KEY, GROQ_MODEL, GROQ_TIMEOUT
-    GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-    GROQ_MODEL   = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b")
+    global llm_available, _chain, GROQ_API_KEYS, GROQ_MODEL, GROQ_FALLBACK_MODEL, GROQ_TIMEOUT
+    # Support multiple keys: GROQ_API_KEY (single) or GROQ_API_KEYS (comma-separated)
+    keys_str = os.getenv("GROQ_API_KEYS", "")
+    single_key = os.getenv("GROQ_API_KEY", "")
+    if keys_str:
+        GROQ_API_KEYS = [k.strip() for k in keys_str.split(",") if k.strip()]
+    elif single_key:
+        GROQ_API_KEYS = [single_key]
+    else:
+        GROQ_API_KEYS = []
+
+    GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b")
+    GROQ_FALLBACK_MODEL = os.getenv("GROQ_FALLBACK_MODEL", "llama-3.3-70b-versatile")
     GROQ_TIMEOUT = int(os.getenv("GROQ_TIMEOUT", "15"))
-    if not GROQ_API_KEY:
+
+    if not GROQ_API_KEYS:
         llm_available = False
-        logger.warning("GROQ_API_KEY not set — LLM feedback disabled, rule-based fallback active")
+        logger.warning("GROQ_API_KEY(S) not set — LLM feedback disabled, rule-based fallback active")
         return False
     try:
-        is_reasoning = "oss" in GROQ_MODEL or "reasoning" in GROQ_MODEL
-        kwargs = dict(
-            api_key=GROQ_API_KEY,
-            model=GROQ_MODEL,
-            temperature=0.35,
-            max_tokens=2000 if is_reasoning else 450,
-        )
-        if is_reasoning:
-            kwargs["reasoning_effort"] = "medium"
-
-        llm = ChatGroq(**kwargs)
-
-        # Build few-shot messages for memory buffer
-        few_shot_messages = []
-        for ex in _FEW_SHOT_EXAMPLES:
-            few_shot_messages.append(HumanMessage(content=ex["human"]))
-            ai_obj = ex["ai"]
-            few_shot_messages.append(AIMessage(content=(
-                f"FEEDBACK: {ai_obj.feedback}\n"
-                f"TIP: {ai_obj.tip}"
-            )))
-
-        prompt = ChatPromptTemplate.from_messages([
-            SystemMessage(content=_SYSTEM_PROMPT + "\n\nRespond in EXACTLY this format:\nFEEDBACK: <8-12 sentences, 250-300 words, conversational tone, covering EVERY part of the question thoroughly, plain ASCII only>\nTIP: <your actionable tip, 40-60 words, plain ASCII>"),
-            *few_shot_messages,
-            MessagesPlaceholder(variable_name="history", optional=True),
-            ("human", "{input}"),
-        ])
-
-        _chain = prompt | llm
+        _build_chain(_get_current_key(), GROQ_MODEL)
         llm_available = True
-        logger.info(f"LangChain+Groq initialized — LLM feedback enabled ({GROQ_MODEL})")
+        logger.info(f"LangChain+Groq initialized — LLM feedback enabled ({GROQ_MODEL}, {len(GROQ_API_KEYS)} keys)")
         return True
     except Exception as exc:
         llm_available = False
         logger.warning(f"LangChain init failed — LLM feedback disabled. ({exc})")
         return False
+
+
+def _build_chain(api_key: str, model: str):
+    """Build/rebuild the LangChain chain with given key and model."""
+    global _chain
+    is_reasoning = "oss" in model or "reasoning" in model
+    kwargs = dict(
+        api_key=api_key,
+        model=model,
+        temperature=0.35,
+        max_tokens=2000 if is_reasoning else 450,
+    )
+    if is_reasoning:
+        kwargs["reasoning_effort"] = "medium"
+
+    llm = ChatGroq(**kwargs)
+
+    few_shot_messages = []
+    for ex in _FEW_SHOT_EXAMPLES:
+        few_shot_messages.append(HumanMessage(content=ex["human"]))
+        ai_obj = ex["ai"]
+        few_shot_messages.append(AIMessage(content=(
+            f"FEEDBACK: {ai_obj.feedback}\n"
+            f"TIP: {ai_obj.tip}"
+        )))
+
+    prompt = ChatPromptTemplate.from_messages([
+        SystemMessage(content=_SYSTEM_PROMPT + "\n\nRespond in EXACTLY this format:\nFEEDBACK: <8-12 sentences, 250-300 words, conversational tone, covering EVERY part of the question thoroughly, plain ASCII only>\nTIP: <your actionable tip, 40-60 words, plain ASCII>"),
+        *few_shot_messages,
+        MessagesPlaceholder(variable_name="history", optional=True),
+        ("human", "{input}"),
+    ])
+
+    _chain = prompt | llm
 
 
 # ── conversation history buffers (separated: DB knowledge vs live session) ───
@@ -386,7 +421,52 @@ def _call_chain_sync(human_input: str, cache_key: str) -> Optional[dict]:
         logger.info(f"LLM feedback OK ({len(result['feedback'])} chars)")
         return result
     except Exception as exc:
-        logger.warning(f"LangChain call failed: {exc}")
+        exc_str = str(exc).lower()
+        # Rate limit hit — rotate key and retry once
+        if "rate_limit" in exc_str or "429" in exc_str or "too many" in exc_str:
+            logger.warning(f"Rate limited on key #{_current_key_index + 1}, rotating...")
+            new_key = _rotate_key()
+            if new_key:
+                try:
+                    _build_chain(new_key, GROQ_MODEL)
+                    output = _chain.invoke({"input": human_input, "history": _get_full_history()})
+                    raw = output.content if hasattr(output, 'content') else str(output)
+                    if not raw and hasattr(output, 'additional_kwargs'):
+                        raw = output.additional_kwargs.get('reasoning_content', '')
+                    result = _parse_llm_response(raw)
+                    if result:
+                        _add_to_history(human_input, result)
+                        _cache_put(cache_key, result)
+                        logger.info(f"LLM feedback OK after key rotation ({len(result['feedback'])} chars)")
+                        return result
+                except Exception as retry_exc:
+                    logger.warning(f"Retry after rotation also failed: {retry_exc}")
+            # Try fallback model as last resort
+            if GROQ_FALLBACK_MODEL and GROQ_FALLBACK_MODEL != GROQ_MODEL:
+                try:
+                    logger.info(f"Trying fallback model: {GROQ_FALLBACK_MODEL}")
+                    _build_chain(_get_current_key(), GROQ_FALLBACK_MODEL)
+                    output = _chain.invoke({"input": human_input, "history": _get_full_history()})
+                    raw = output.content if hasattr(output, 'content') else str(output)
+                    if not raw and hasattr(output, 'additional_kwargs'):
+                        raw = output.additional_kwargs.get('reasoning_content', '')
+                    result = _parse_llm_response(raw)
+                    if result:
+                        _add_to_history(human_input, result)
+                        _cache_put(cache_key, result)
+                        logger.info(f"LLM feedback OK via fallback model ({len(result['feedback'])} chars)")
+                        return result
+                except Exception as fb_exc:
+                    logger.warning(f"Fallback model also failed: {fb_exc}")
+                finally:
+                    # Restore primary model for next call
+                    try:
+                        _build_chain(_get_current_key(), GROQ_MODEL)
+                    except Exception:
+                        pass
+        else:
+            logger.warning(f"LangChain call failed: {exc}")
+
         cached = _cache_get(cache_key)
         if cached:
             logger.info(f"Serving cached response for: {cache_key[:60]}")
@@ -436,12 +516,13 @@ async def generate_llm_feedback(
 
 def _clean_transcript_sync(raw_transcript: str, question: str) -> Optional[str]:
     """Clean up garbled STT transcript using LLM."""
-    if not GROQ_API_KEY or len(raw_transcript.split()) < 5:
+    if not GROQ_API_KEYS:
         return None
     try:
-        llm = ChatGroq(
-            api_key=GROQ_API_KEY,
-            model=os.getenv("GROQ_MODEL_FAST", "llama-3.3-70b-versatile"),
+        is_reasoning = "oss" in GROQ_MODEL or "reasoning" in GROQ_MODEL
+        kwargs = dict(
+            api_key=_get_current_key(),
+            model=GROQ_MODEL,
             temperature=0.1,
             max_tokens=300,
         )
@@ -514,12 +595,12 @@ IMPROVEMENTS: <bullet1> | <bullet2> | <bullet3>"""
 
 def _call_summary_rewrite_sync(human_input: str) -> Optional[dict]:
     """Sync LLM call for session summary rewriting."""
-    if not GROQ_API_KEY:
+    if not GROQ_API_KEYS:
         return None
     try:
         is_reasoning = "oss" in GROQ_MODEL or "reasoning" in GROQ_MODEL
         kwargs = dict(
-            api_key=GROQ_API_KEY,
+            api_key=_get_current_key(),
             model=GROQ_MODEL,
             temperature=0.4,
             max_tokens=2000 if is_reasoning else 400,
