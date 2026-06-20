@@ -148,6 +148,7 @@ class ModuleOut(BaseModel):
     job_roles: List[str] = []
     question_count: int = 0
     is_attempted: bool = False
+    is_active: bool = False
     is_purchased: bool = False
 
 class SubdomainOut(BaseModel):
