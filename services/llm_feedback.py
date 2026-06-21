@@ -58,8 +58,8 @@ def _cache_get(key: str) -> Optional[dict]:
 
 # ── structured output schema ──────────────────────────────────────────────────
 class FeedbackOutput(BaseModel):
-    feedback: str = Field(description="IMPORTANT: Write AT LEAST 200 words. Give 10-12 sentences of detailed conversational evaluation covering: (1) what they said correctly and why, (2) each specific concept they missed with explanation, (3) what the complete answer should include, (4) why the missing pieces matter in interviews. Be thorough and specific. Plain ASCII only.")
-    tip: str = Field(description="A concrete actionable tip showing exactly how to structure a better answer next time, with a specific example sentence they could use. 50-80 words. Plain ASCII only.")
+    feedback: str = Field(description="IMPORTANT: Write 250-300 words. Give 12-15 sentences of detailed conversational evaluation covering: (1) what they said correctly and why it matters, (2) each specific concept they missed with explanation of why it matters, (3) what the complete answer should include with specific examples, (4) why the missing pieces matter in interviews, (5) how their answer compares to what an interviewer expects. Be thorough, specific, and conversational. Plain ASCII only.")
+    tip: str = Field(description="A concrete actionable tip showing exactly how to structure a better answer next time, with a specific example sentence they could use. 60-100 words. Plain ASCII only.")
 
 
 # ── few-shot examples (pre-loaded into memory) ───────────────────────────────
@@ -174,7 +174,7 @@ def _build_chain(api_key: str, model: str):
         api_key=api_key,
         model=model,
         temperature=0.35,
-        max_tokens=1200 if is_reasoning else 500,
+        max_tokens=1500 if is_reasoning else 700,
     )
     if is_reasoning:
         kwargs["reasoning_effort"] = "medium"
@@ -191,7 +191,7 @@ def _build_chain(api_key: str, model: str):
         )))
 
     prompt = ChatPromptTemplate.from_messages([
-        SystemMessage(content=_SYSTEM_PROMPT + "\n\nRespond in EXACTLY this format:\nFEEDBACK: <10-12 sentences, MINIMUM 200 words, detailed and conversational, plain ASCII only>\nTIP: <actionable tip with example sentence, 50-80 words, plain ASCII>"),
+        SystemMessage(content=_SYSTEM_PROMPT + "\n\nRespond in EXACTLY this format:\nFEEDBACK: <12-15 sentences, 250-300 words, detailed and conversational, plain ASCII only>\nTIP: <actionable tip with example sentence, 60-100 words, plain ASCII>"),
         *few_shot_messages,
         MessagesPlaceholder(variable_name="history", optional=True),
         ("human", "{input}"),
@@ -433,10 +433,10 @@ def _parse_llm_response(raw: str) -> Optional[dict]:
     feedback = _strip_markdown(feedback)
     tip = _strip_markdown(tip)
 
-    # Cap tip at ~120 words to prevent excessively long tips
+    # Cap tip at ~150 words to prevent excessively long tips
     tip_words = tip.split()
-    if len(tip_words) > 120:
-        tip = " ".join(tip_words[:120]).rstrip(".,;:") + "."
+    if len(tip_words) > 150:
+        tip = " ".join(tip_words[:150]).rstrip(".,;:") + "."
 
     if feedback:
         return {

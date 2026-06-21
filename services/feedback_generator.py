@@ -326,7 +326,8 @@ def _build_narrative(
     seed: int = 0,
 ) -> str:
     """
-    Builds a specific feedback paragraph that references actual content.
+    Builds a detailed feedback paragraph that references actual content.
+    Produces 6-8 sentences for meaningful feedback even without LLM.
     """
     sentences: List[str] = []
 
@@ -338,48 +339,83 @@ def _build_narrative(
     all_present = present_kw.get("critical", []) + present_kw.get("supporting", [])
     all_missing = missing_kw.get("critical", []) + missing_kw.get("supporting", [])
 
+    # Opening assessment
     if tier in ("strong", "good"):
         if all_present:
-            kw_list = ", ".join(all_present[:3])
-            sentences.append(f"You correctly covered key concepts like {kw_list}, showing solid understanding.")
+            kw_list = ", ".join(all_present[:4])
+            sentences.append(f"You correctly covered key concepts like {kw_list}, showing solid understanding of the topic.")
         elif covered:
-            sentences.append(f"You addressed the core idea around '{covered[0]}' effectively.")
+            sentences.append(f"You addressed the core idea around '{covered[0]}' effectively, demonstrating you understand the fundamentals.")
         else:
             sentences.append("Your answer was generally on track and relevant to what was asked.")
     elif tier == "partial":
         if all_present:
-            sentences.append(f"You mentioned {', '.join(all_present[:2])}, which is a good start.")
+            sentences.append(f"You mentioned {', '.join(all_present[:2])}, which shows you have some familiarity with the topic.")
         else:
-            sentences.append("Your answer touched on the topic but didn't go deep enough.")
+            sentences.append("Your answer touched on the topic but stayed at a surface level without going into the specifics the question was looking for.")
     else:
-        sentences.append("Your answer didn't sufficiently address the question that was asked.")
+        sentences.append("Your answer didn't sufficiently address what the question was asking for.")
 
-    # What they missed
+    # What they missed — be specific
     if all_missing and tier != "strong":
-        missed_str = ", ".join(all_missing[:3])
-        sentences.append(f"You missed important concepts: {missed_str}.")
+        if len(all_missing) >= 3:
+            missed_str = ", ".join(all_missing[:4])
+            sentences.append(f"You missed several important concepts that were expected: {missed_str}.")
+            sentences.append(f"The question specifically required you to explain {all_missing[0]} and how it relates to {all_missing[1]}, but these were absent from your response.")
+        elif len(all_missing) >= 1:
+            missed_str = ", ".join(all_missing[:2])
+            sentences.append(f"You missed important concepts: {missed_str}.")
+            sentences.append(f"Including {all_missing[0]} in your answer would have demonstrated deeper understanding.")
     elif missing and tier != "strong":
-        sentences.append(f"You didn't cover the point about '{missing[0]}'.")
+        sentences.append(f"You didn't cover the point about '{missing[0]}', which was a key part of what the question expected.")
 
+    # Specificity about what a good answer would include
+    if tier in ("weak", "partial") and expected_answer:
+        first_point = expected_answer.split(".")[0].strip()
+        second_point = expected_answer.split(".")[1].strip() if len(expected_answer.split(".")) > 1 else ""
+        if first_point and len(first_point) > 20:
+            sentences.append(f"A complete answer would start by explaining: '{first_point[:100]}'.")
+        if second_point and len(second_point) > 20:
+            sentences.append(f"It should then go on to cover: '{second_point[:100]}'.")
+        sentences.append("In an interview setting, the interviewer wants to see that you can break down the concept into its component parts and explain each one clearly.")
+    elif tier == "good" and expected_answer:
+        # Still show what would make it excellent
+        missing_points = expected_answer.split(".")
+        if len(missing_points) > 2:
+            sentences.append(f"To make this answer excellent, you could also have mentioned: '{missing_points[1].strip()[:80]}'.")
     # Grammar/delivery note only if severe
     if grammar["severity"] in ("moderate", "heavy") and grammar["filler_words_found"]:
-        fillers = ", ".join(grammar["filler_words_found"][:2])
-        sentences.append(f"Your delivery had noticeable filler words ({fillers}) that reduced clarity.")
+        fillers = ", ".join(grammar["filler_words_found"][:3])
+        sentences.append(f"Your delivery had noticeable filler words ({fillers}) that reduced clarity and made your answer harder to follow.")
 
-    # Closing
+    # Semantic score context
+    sem_score = metrics.get("semantic_score", 0)
+    kw_score = metrics.get("keyword_score", 0)
+    if sem_score >= 0.7 and kw_score < 0.3:
+        sentences.append("You spoke about the right topic area, but didn't use the specific technical terms and concepts that demonstrate expertise.")
+    elif sem_score < 0.5:
+        sentences.append("Your answer diverged significantly from what the question was asking, which suggests you may have misunderstood the question.")
+
+    # Closing with actionable direction
     if tier == "strong":
-        sentences.append("Overall a strong response that would leave a positive impression.")
+        sentences.append("Overall a strong response that demonstrates clear understanding and would leave a positive impression in an interview.")
+        sentences.append("You structured your explanation well and hit the key points the interviewer would be looking for.")
     elif tier == "good":
         if all_missing:
-            sentences.append(f"Adding {all_missing[0]} would take this from good to excellent.")
+            sentences.append(f"Adding a mention of {all_missing[0]} would take this from good to excellent.")
         else:
-            sentences.append("A bit more detail would elevate this to a top-tier answer.")
+            sentences.append("A bit more depth and specific examples would elevate this to a top-tier answer.")
+        sentences.append("You're clearly familiar with the material, but interviewers reward completeness and precision in technical answers.")
     elif tier == "partial":
-        sentences.append("Focus on covering the key points more completely next time.")
+        sentences.append("Focus on covering the key points more completely next time — identify the 3-4 core concepts each question expects and make sure you address each one.")
+        sentences.append("A useful practice is to mentally list the main components before you start speaking, then address them one by one.")
+        sentences.append("This ensures you don't miss critical parts that the interviewer is specifically listening for.")
     else:
-        sentences.append("Review the core concepts for this topic and practice explaining them step by step.")
+        sentences.append("Review the core concepts for this topic and practice explaining them step by step, starting with definitions before moving to applications.")
+        sentences.append("When you encounter a question like this in an interview, start with the most basic definition and build from there — even a partial structured answer scores better than a vague one.")
+        sentences.append("Consider studying this topic again and practicing your explanation out loud until you can cover the main points without hesitation.")
 
-    return " ".join(sentences[:4])
+    return " ".join(sentences[:12])
 
 
 # ── Improvement Tips Builder ───────────────────────────────────────────────────

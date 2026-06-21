@@ -287,6 +287,36 @@ async def transcribe_websocket(
                 model_path=(session.module.model_pkl_path if session.module else None),
             )
 
+            # ── Get LLM feedback BEFORE saving to DB ──────────────────────
+            eval_feedback = evaluation["feedback"]
+            eval_tip = evaluation["tip"]
+            tts_feedback = ""
+
+            if _llm.llm_available:
+                try:
+                    llm_result = await asyncio.wait_for(
+                        _llm.generate_llm_feedback(
+                            question=current_question.question_text,
+                            candidate_answer=full_transcript,
+                            expected_answer=current_question.expected_answer,
+                            metrics=evaluation,
+                            missing_keywords=evaluation.get("missing_keywords", []),
+                            module_id=session.module_id,
+                        ),
+                        timeout=15.0,
+                    )
+                    if llm_result and llm_result.get("feedback"):
+                        eval_feedback = llm_result["feedback"]
+                        eval_tip = llm_result.get("tip") or eval_tip
+                        tts_feedback = llm_result.get("tts_feedback", "")
+                        # Update evaluation dict so DB save has LLM feedback
+                        evaluation["feedback"] = eval_feedback
+                        evaluation["tip"] = eval_tip
+                        logger.info(f"[session={session_id}] LLM feedback used")
+                except (asyncio.TimeoutError, Exception) as exc:
+                    logger.warning(f"[session={session_id}] LLM feedback timeout/error, using rule-based: {exc}")
+
+            # ── Save to DB (now contains LLM feedback if available) ────────
             await _upsert_answer(session, current_question, full_transcript, evaluation, db)
             logger.info(f"[session={session_id}] saved. score={evaluation['final_score']}")
 
@@ -304,45 +334,6 @@ async def transcribe_websocket(
                 asked.append(current_question.id)
                 session.asked_question_ids = asked
             await db.commit()
-
-            # ── Wait for LLM feedback, fallback to rule-based ─────────────
-            eval_feedback = evaluation["feedback"]
-            eval_tip = evaluation["tip"]
-            tts_feedback = ""
-
-            if _llm.llm_available:
-                try:
-                    llm_result = await asyncio.wait_for(
-                        _llm.generate_llm_feedback(
-                            question=current_question.question_text,
-                            candidate_answer=full_transcript,
-                            expected_answer=current_question.expected_answer,
-                            metrics=evaluation,
-                            missing_keywords=evaluation.get("missing_keywords", []),
-                            module_id=session.module_id,
-                        ),
-                        timeout=12.0,
-                    )
-                    if llm_result and llm_result.get("feedback"):
-                        eval_feedback = llm_result["feedback"]
-                        eval_tip = llm_result.get("tip") or eval_tip
-                        tts_feedback = llm_result.get("tts_feedback", "")
-                        # Update DB with LLM feedback
-                        async with AsyncSessionLocal() as db2:
-                            result2 = await db2.execute(
-                                select(InterviewAnswer).where(
-                                    InterviewAnswer.session_id == session.id,
-                                    InterviewAnswer.question_id == current_question.id,
-                                )
-                            )
-                            ans_row = result2.scalar_one_or_none()
-                            if ans_row:
-                                ans_row.feedback = eval_feedback
-                                ans_row.tip = eval_tip
-                                await db2.commit()
-                        logger.info(f"[session={session_id}] LLM feedback used")
-                except (asyncio.TimeoutError, Exception) as exc:
-                    logger.warning(f"[session={session_id}] LLM feedback timeout/error, using rule-based: {exc}")
 
             await websocket.send_text(json.dumps({
                 "type":       "evaluation",

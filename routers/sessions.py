@@ -146,13 +146,19 @@ def _serialize_answer(answer: InterviewAnswer, question: Question, fb: dict) -> 
     score = float(answer.final_score or 0.0)
     # Convert 0-1 to 0-100 percentage
     score_pct = round(score * 100, 1) if score <= 1.0 else round(score, 1)
+
+    # Always prefer the DB-stored feedback (same as what was spoken to the user)
+    # Only fall back to regenerated template if DB has nothing
+    feedback_text = answer.feedback or fb.get("narrative", "")
+    tip_text = answer.tip or (fb.get("improvement_tips", [""])[0] if fb.get("improvement_tips") else "")
+
     return {
         "question_id":        question.id,
         "question_text":      question.question_text,
         "transcript":         answer.transcript or "",
         "final_score":        score_pct,
-        "feedback":           answer.feedback or fb.get("narrative", ""),
-        "tip":                answer.tip      or "",
+        "feedback":           feedback_text,
+        "tip":                tip_text,
         "score_tier":          fb.get("score_tier", ""),
         "improvement_bullets": fb.get("improvement_tips", []),
         "missing_keywords":    list(answer.missing_keywords or []),
