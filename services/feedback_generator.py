@@ -38,6 +38,7 @@ Session summary output
 
 import re
 from collections import Counter
+from difflib import SequenceMatcher
 from typing import Any, Dict, List, Optional, Tuple
 
 # ── Constants ──────────────────────────────────────────────────────────────────
@@ -212,11 +213,48 @@ def analyse_content(transcript: str, question_data: Dict[str, Any],
         supporting = [k.lower() for k in (raw_kw or [])]
         bonus      = []
 
+    def _stem_simple(word: str) -> str:
+        for suffix in ("tion", "sion", "ing", "ment", "ness", "ity", "ies", "es", "ed", "ly", "s"):
+            if word.endswith(suffix) and len(word) - len(suffix) >= 3:
+                return word[:-len(suffix)]
+        return word
+
+    def _fuzzy_kw_present(kw: str) -> bool:
+        kw_lower = kw.lower().strip()
+        # Exact substring (with hyphen normalization)
+        if kw_lower in norm_transcript:
+            return True
+        kw_dehyphen = kw_lower.replace("-", " ")
+        trans_dehyphen = norm_transcript.replace("-", " ")
+        if kw_dehyphen in trans_dehyphen:
+            return True
+        # Token containment (all tokens present)
+        kw_toks = [t for t in kw_lower.split() if len(t) > 2]
+        if kw_toks and all(t in cand_tokens for t in kw_toks):
+            return True
+        # Stem-based match
+        if kw_toks:
+            cand_stems = {_stem_simple(t) for t in cand_tokens}
+            kw_stems = {_stem_simple(t) for t in kw_toks}
+            if kw_stems.issubset(cand_stems):
+                return True
+            if len(kw_stems) >= 3:
+                hits = sum(1 for s in kw_stems if s in cand_stems)
+                if hits >= len(kw_stems) - 1:
+                    return True
+        # Fuzzy sliding window for multi-word keywords
+        if len(kw_toks) >= 2:
+            kw_len = len(kw_lower)
+            for i in range(max(0, len(norm_transcript) - kw_len - 5)):
+                window = norm_transcript[i:i + kw_len + 5]
+                if SequenceMatcher(None, kw_lower, window[:kw_len + 2]).ratio() >= 0.82:
+                    return True
+        return False
+
     def _check_kw(kw_list: List[str]) -> Tuple[List[str], List[str]]:
         present, absent = [], []
         for kw in kw_list:
-            # Check either as a phrase or as individual tokens
-            if kw in norm_transcript or all(t in cand_tokens for t in kw.split()):
+            if _fuzzy_kw_present(kw):
                 present.append(kw)
             else:
                 absent.append(kw)

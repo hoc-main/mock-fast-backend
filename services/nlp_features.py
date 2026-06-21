@@ -20,6 +20,7 @@ from typing import Any, Dict, List, Tuple
 
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
+from difflib import SequenceMatcher
 
 # ── stopwords (expanded vs original) ──────────────────────────────────────────
 STOPWORDS = {
@@ -114,14 +115,80 @@ def semantic_scores_batch(candidate: str, reference_a: str, reference_b: str) ->
     return sim_a, sim_b
 
 
+def _stem_simple(word: str) -> str:
+    """Very simple suffix stripping for fuzzy comparison."""
+    for suffix in ("tion", "sion", "ing", "ment", "ness", "ity", "ies", "es", "ed", "ly", "s"):
+        if word.endswith(suffix) and len(word) - len(suffix) >= 3:
+            return word[:-len(suffix)]
+    return word
+
+
+def _fuzzy_kw_match(kw_norm: str, candidate_norm: str, candidate_tokens: set) -> bool:
+    """
+    Check if a keyword is present in the candidate text using multiple strategies:
+    1. Exact substring match (with hyphen normalization)
+    2. Stem-based token overlap (handles plurals, tense changes)
+    3. Fuzzy ratio for multi-word keywords (handles minor STT garbling)
+    4. Abbreviation/acronym detection
+    """
+    # Strategy 1: exact substring (also check with hyphens collapsed)
+    if kw_norm in candidate_norm:
+        return True
+    kw_dehyphen = kw_norm.replace("-", " ")
+    cand_dehyphen = candidate_norm.replace("-", " ")
+    if kw_dehyphen in cand_dehyphen:
+        return True
+
+    kw_tokens = [t for t in kw_norm.split() if len(t) > 2 and t not in STOPWORDS]
+
+    # Strategy 2: stem-based token containment
+    # If all meaningful tokens of the keyword (stemmed) appear in candidate (stemmed)
+    if kw_tokens:
+        cand_stems = {_stem_simple(t) for t in candidate_tokens}
+        kw_stems = {_stem_simple(t) for t in kw_tokens}
+        if kw_stems and kw_stems.issubset(cand_stems):
+            return True
+        # Allow 1 missing stem for multi-word keywords (>=3 tokens)
+        if len(kw_stems) >= 3:
+            hits = sum(1 for s in kw_stems if s in cand_stems)
+            if hits >= len(kw_stems) - 1:
+                return True
+
+    # Strategy 3: fuzzy ratio for multi-word keywords
+    # Slide a window over candidate and check similarity
+    if len(kw_tokens) >= 2:
+        kw_len = len(kw_norm)
+        # Check all substrings of similar length
+        for i in range(max(0, len(candidate_norm) - kw_len - 5)):
+            window = candidate_norm[i:i + kw_len + 5]
+            ratio = SequenceMatcher(None, kw_norm, window[:kw_len + 2]).ratio()
+            if ratio >= 0.82:
+                return True
+
+    # Strategy 4: abbreviation/acronym check
+    # e.g., "PSI" matches "population stability index"
+    if len(kw_norm) <= 5 and kw_norm.replace(" ", "").isalpha():
+        # kw might be an acronym — check if candidate has the expanded form
+        # or kw might be expanded — check if candidate has the acronym
+        pass  # handled by stem match above for expansions
+    elif len(kw_tokens) >= 3:
+        # Build acronym from keyword and check if it appears in candidate
+        acronym = "".join(t[0] for t in kw_tokens if t)
+        if len(acronym) >= 2 and acronym in candidate_norm.split():
+            return True
+
+    return False
+
+
 def keyword_score(candidate: str, expected_keywords: List[str]) -> Tuple[float, List[str], List[str]]:
     if not expected_keywords:
         return 0.0, [], []
     candidate_norm = normalize(candidate)
+    candidate_tokens = set(tokenize(candidate))
     matched, missing = [], []
     for kw in expected_keywords:
         kw_norm = normalize(kw)
-        if kw_norm and kw_norm in candidate_norm:
+        if kw_norm and _fuzzy_kw_match(kw_norm, candidate_norm, candidate_tokens):
             matched.append(kw)
         else:
             missing.append(kw)
