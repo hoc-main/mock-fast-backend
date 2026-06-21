@@ -151,10 +151,10 @@ def evaluate_answer(
     else:
         final_score = heuristic_pred
 
-    # Floor boosts for clearly good answers
-    if meta["semantic_score"] >= 0.80 and meta["length_score"] >= 0.45:
-        final_score = max(final_score, 0.68)
-    if meta["semantic_score"] >= 0.86 and meta["length_score"] >= 0.55:
+    # Floor boosts only for genuinely strong answers (need both semantic AND keywords)
+    if meta["semantic_score"] >= 0.82 and meta["keyword_score"] >= 0.50 and meta["length_score"] >= 0.50:
+        final_score = max(final_score, 0.65)
+    if meta["semantic_score"] >= 0.88 and meta["keyword_score"] >= 0.60 and meta["length_score"] >= 0.55:
         final_score = max(final_score, 0.78)
 
     final_score = float(np.clip(final_score, 0.0, 1.0))

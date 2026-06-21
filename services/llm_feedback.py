@@ -378,6 +378,29 @@ REFERENCE ANSWER:
 
 
 # ── sync call (runs in thread pool) ──────────────────────────────────────────
+def _strip_markdown(text: str) -> str:
+    """Remove markdown formatting artifacts from LLM output for clean plain-text display."""
+    import re as _re
+    # Remove bold/italic markers
+    text = _re.sub(r'\*{1,3}([^*]+?)\*{1,3}', r'\1', text)
+    text = _re.sub(r'_{1,3}([^_]+?)_{1,3}', r'\1', text)
+    # Remove bullet markers at start of lines
+    text = _re.sub(r'^\s*[-*+]\s+', '', text, flags=_re.MULTILINE)
+    # Remove numbered list markers
+    text = _re.sub(r'^\s*\d+\.\s+', '', text, flags=_re.MULTILINE)
+    # Remove headers
+    text = _re.sub(r'^#{1,4}\s+', '', text, flags=_re.MULTILINE)
+    # Remove backtick code formatting
+    text = _re.sub(r'`([^`]+?)`', r'\1', text)
+    # Remove code blocks
+    text = _re.sub(r'```[\s\S]*?```', '', text)
+    # Collapse multiple newlines into single space
+    text = _re.sub(r'\n+', ' ', text)
+    # Collapse multiple spaces
+    text = _re.sub(r'\s{2,}', ' ', text)
+    return text.strip()
+
+
 def _parse_llm_response(raw: str) -> Optional[dict]:
     """Parse FEEDBACK/TIP from plain text LLM response. Handles multi-line feedback."""
     lines = raw.splitlines()
@@ -405,6 +428,15 @@ def _parse_llm_response(raw: str) -> Optional[dict]:
 
     feedback = " ".join(feedback_lines).strip().strip('"')
     tip = " ".join(tip_lines).strip().strip('"')
+
+    # Strip markdown artifacts and enforce length limits
+    feedback = _strip_markdown(feedback)
+    tip = _strip_markdown(tip)
+
+    # Cap tip at ~120 words to prevent excessively long tips
+    tip_words = tip.split()
+    if len(tip_words) > 120:
+        tip = " ".join(tip_words[:120]).rstrip(".,;:") + "."
 
     if feedback:
         return {

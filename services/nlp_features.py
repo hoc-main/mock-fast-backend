@@ -408,20 +408,23 @@ def soft_rule_score_enhanced(
     """
     blended_kw = max(k_score, overlap)
     score = (
-        0.55 * s_score
-        + 0.12 * q_relevance         # context: is the answer actually about the question?
-        + 0.15 * blended_kw
+        0.40 * s_score
+        + 0.10 * q_relevance         # context: is the answer actually about the question?
+        + 0.30 * blended_kw           # keyword/overlap heavily weighted — forces specificity
         + 0.08 * l_score
-        + 0.05 * disc
-        + 0.05 * lex_div
-        - min(penalty, 0.12)
+        + 0.06 * disc
+        + 0.06 * lex_div
+        - min(penalty, 0.15)
     )
-    # Floor boosts for clearly good answers
-    if s_score >= 0.72 and l_score >= 0.45:
-        score = max(score, 0.60)
-    if s_score >= 0.80 and l_score >= 0.55:
-        score = max(score, 0.72)
-    if s_score >= 0.88 and l_score >= 0.60:
-        score = max(score, 0.82)
+
+    # Penalize high semantic but low keyword (topic-adjacent waffle)
+    if s_score >= 0.60 and blended_kw < 0.20:
+        score *= 0.75  # can't get a good score by just talking about the topic
+
+    # Floor boosts ONLY for genuinely strong answers (high semantic AND keywords)
+    if s_score >= 0.82 and blended_kw >= 0.50 and l_score >= 0.50:
+        score = max(score, 0.65)
+    if s_score >= 0.88 and blended_kw >= 0.60 and l_score >= 0.55:
+        score = max(score, 0.78)
 
     return float(np.clip(score, 0.0, 1.0))

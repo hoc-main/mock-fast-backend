@@ -143,11 +143,14 @@ def _get_feedback_dict(answer: InterviewAnswer, question: Question) -> dict:
 
 def _serialize_answer(answer: InterviewAnswer, question: Question, fb: dict) -> dict:
     """Merge DB answer row + rich feedback dict into an API-ready dict."""
+    score = float(answer.final_score or 0.0)
+    # Convert 0-1 to 0-100 percentage
+    score_pct = round(score * 100, 1) if score <= 1.0 else round(score, 1)
     return {
         "question_id":        question.id,
         "question_text":      question.question_text,
         "transcript":         answer.transcript or "",
-        "final_score":        answer.final_score,
+        "final_score":        score_pct,
         "feedback":           answer.feedback or fb.get("narrative", ""),
         "tip":                answer.tip      or "",
         "score_tier":          fb.get("score_tier", ""),
@@ -546,12 +549,16 @@ async def get_session_detail(session_id: int, db: AsyncSession = Depends(get_db)
     results        = [_serialize_answer(a, q, fb) for (a, q), fb in zip(rows, feedback_dicts)]
     session_sum    = await _build_session_summary(feedback_dicts)
 
+    avg_score = avg_result.scalar() or 0.0
+    # Convert 0-1 score to 0-100 percentage for frontend display
+    total_score_pct = round(avg_score * 100, 1) if avg_score <= 1.0 else round(avg_score, 1)
+
     return {
         "session_id":        session_id,
         "created_at":        session.created_at,
         "module_name":       module.module_name if module else "Unknown",
         "subdomain_name":    module.subdomain.name if (module and module.subdomain) else "Unknown",
-        "total_score":       round(avg_result.scalar() or 0.0, 1),
+        "total_score":       total_score_pct,
         "summary_paragraph": session_sum.get("summary_paragraph", ""),
         "strengths":         session_sum.get("strengths", []),
         "improvement_areas": session_sum.get("improvement_areas", []),
@@ -585,12 +592,15 @@ async def get_user_sessions(user_id: int, db: AsyncSession = Depends(get_db)):
         )
         module = module_result.scalar_one_or_none()
 
+        avg_score = avg_result.scalar() or 0.0
+        total_score_pct = round(avg_score * 100, 1) if avg_score <= 1.0 else round(avg_score, 1)
+
         output.append({
             "id":             s.id,
             "created_at":     s.created_at,
             "module_name":    module.module_name if module else "Unknown",
             "subdomain_name":  module.subdomain.name if (module and module.subdomain) else "Unknown",
-            "total_score":    round(avg_result.scalar() or 0.0, 1),
+            "total_score":    total_score_pct,
             "question_count": count_result.scalar(),
         })
 
