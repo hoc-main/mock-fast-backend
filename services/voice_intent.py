@@ -287,11 +287,11 @@ def classify_voice_intent(transcript: str) -> IntentResult:
     # ── 4. skip question command ───────────────────────────────────────────────
     matched, pattern = _matches_any(norm, _SKIP_PATTERNS)
     if matched:
-        # "next" and "pass" are ambiguous when combined with answer text.
-        # Only classify as skip if the whole utterance is short (≤ 4 words)
-        # or the match is a multi-word skip phrase.
+        # "next", "pass", "skip" are ambiguous when combined with answer text.
+        # Only classify as skip if the whole utterance is VERY short (≤ 3 words)
+        # AND the transcript is ONLY the command (no substantive content around it).
         is_bare = pattern in ("skip", "pass", "next")
-        if not is_bare or word_count <= 4:
+        if not is_bare or word_count <= 3:
             return IntentResult(
                 intent="skip",
                 confidence=0.90 if not is_bare else 0.75,

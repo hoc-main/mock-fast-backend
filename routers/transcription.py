@@ -199,28 +199,13 @@ async def transcribe_websocket(
                 return
 
             if intent_result.intent == "skip":
-                total = await _question_count(session.module_id, db)
-                session.current_index += 1
-                await db.commit()
-                await db.refresh(session)
-                if session.current_index >= total:
-                    session.status = "completed"
-                    await db.commit()
-                    await websocket.send_text(json.dumps({
-                        "type": "skipped", "completed": True,
-                        "message": "Last question skipped. Interview complete.",
-                    }))
-                else:
-                    next_q = await _get_current_question(session, db)
-                    await websocket.send_text(json.dumps({
-                        "type": "skipped", "completed": False,
-                        "question_index": session.current_index,
-                        "total_questions": total,
-                        "next_question": {
-                            "id": next_q.id, "topic": next_q.topic or "",
-                            "question": next_q.question_text,
-                        },
-                    }))
+                # Don't advance current_index here — the frontend will call /next/
+                # which handles index advancement and LLM question selection.
+                # Just signal the frontend that this question was skipped.
+                await websocket.send_text(json.dumps({
+                    "type": "skipped", "completed": False,
+                    "message": "Question skipped.",
+                }))
                 return
 
             if intent_result.intent == "end":

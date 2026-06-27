@@ -319,7 +319,15 @@ async def next_question(session_id: int, db: AsyncSession = Depends(get_db)):
 
     total = await _question_count(session.module_id, db)
 
-    if session.current_index >= total:
+    # Use number of actually answered questions to determine completion,
+    # not current_index which may drift from actual progress when LLM picks questions
+    answered_count_result = await db.execute(
+        select(func.count()).select_from(InterviewAnswer)
+        .where(InterviewAnswer.session_id == session_id)
+    )
+    answered_count = answered_count_result.scalar() or 0
+
+    if answered_count >= total:
         session.status = "completed"
         await db.commit()
 
