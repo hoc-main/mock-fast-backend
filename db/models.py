@@ -29,6 +29,24 @@ class User(Base):
     sessions: Mapped[List["InterviewSession"]] = relationship(back_populates="user")
 
 
+class CorporateUser(Base):
+    __tablename__ = "corporate_users"
+
+    corp_user_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    corp_email: Mapped[str] = mapped_column(String(255), unique=True)
+    corp_first_name: Mapped[str] = mapped_column(String(255))
+    corp_last_name: Mapped[str] = mapped_column(String(255))
+    password: Mapped[str] = mapped_column(String(255))
+    corp_job_tile: Mapped[str] = mapped_column(String(255))
+    corp_corp_name: Mapped[str] = mapped_column(String(255))
+    corp_emp_size: Mapped[str] = mapped_column(String(255))
+    corp_phone_no: Mapped[str] = mapped_column(String(255))
+    corp_region: Mapped[str] = mapped_column(String(255))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), onupdate=func.now())
+
+
+
 class Domain(Base):
     __tablename__ = "domains"
 
@@ -226,3 +244,15 @@ class Purchase(Base):
         UniqueConstraint('order_id', name='_order_id_uc'),
         UniqueConstraint('razorpay_payment_id', name='_razorpay_payment_id_uc'),
     )
+
+
+# ── OTP ───────────────────────────────────────────────────────────────────────
+
+class CorporateOTP(Base):
+    __tablename__ = "corporate_otps"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    email: Mapped[str] = mapped_column(String(255), index=True)
+    otp: Mapped[str] = mapped_column(String(10))
+    expires_at: Mapped[datetime] = mapped_column(DateTime)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())

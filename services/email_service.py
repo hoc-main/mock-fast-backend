@@ -150,3 +150,100 @@ def send_application_confirmation_email(recipient_email: str, user_name: str, jo
     return False
 
 
+def send_otp_email(recipient_email: str, otp: str):
+    """
+    Sends a 6-digit OTP for corporate login.
+    """
+    smtp_host = os.getenv("SMTP_HOST")
+    smtp_port = int(os.getenv("SMTP_PORT", 587))
+    smtp_user = os.getenv("SMTP_USER")
+    smtp_password = os.getenv("SMTP_PASSWORD")
+    smtp_from_email = os.getenv("SMTP_FROM_EMAIL")
+    smtp_from_name = os.getenv("SMTP_FROM_NAME", "AI Hire Studio")
+
+    if not all([smtp_host, smtp_user, smtp_password, smtp_from_email]):
+        logger.warning("SMTP configuration is incomplete. OTP Email cannot be sent.")
+        return False
+
+    logger.info(f"Preparing to send OTP email to {recipient_email}")
+
+    subject = "Your Corporate Login OTP"
+
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            .container {{
+                font-family: Arial, sans-serif;
+                line-height: 1.6;
+                color: #333;
+                max-width: 600px;
+                margin: 0 auto;
+                padding: 20px;
+                border: 1px solid #ddd;
+                border-radius: 10px;
+            }}
+            .header {{
+                background-color: #f8f9fa;
+                padding: 10px;
+                text-align: center;
+                border-radius: 10px 10px 0 0;
+            }}
+            .otp-box {{
+                font-size: 24px;
+                font-weight: bold;
+                color: #32BAFF;
+                letter-spacing: 4px;
+                text-align: center;
+                margin: 20px 0;
+                padding: 15px;
+                background: #f0f8ff;
+                border-radius: 5px;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h2>AI Hire Studio - Corporate Login</h2>
+            </div>
+            <p>Hello,</p>
+            <p>You requested an OTP for logging into your corporate account. Please use the following One-Time Password:</p>
+            <div class="otp-box">{otp}</div>
+            <p>This OTP is valid for 10 minutes. Do not share it with anyone.</p>
+            <p>Best Regards,<br>AI Hire Studio Team</p>
+        </div>
+    </body>
+    </html>
+    """
+
+    message = MIMEMultipart("alternative")
+    message["Subject"] = subject
+    message["From"] = f"{smtp_from_name} <{smtp_from_email}>"
+    message["To"] = recipient_email
+
+    text_content = f"Your Corporate Login OTP is: {otp}\nThis is valid for 10 minutes."
+    part1 = MIMEText(text_content, "plain")
+    part2 = MIMEText(html_content, "html")
+    message.attach(part1)
+    message.attach(part2)
+
+    try:
+        if smtp_port == 465:
+            server = smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=10)
+        else:
+            server = smtplib.SMTP(smtp_host, smtp_port, timeout=10)
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
+            
+        server.login(smtp_user, smtp_password)
+        server.sendmail(smtp_from_email, recipient_email, message.as_string())
+        server.quit()
+        logger.info(f"OTP Email successfully sent to {recipient_email}")
+        return True
+
+    except Exception as e:
+        logger.exception(f"Unexpected error while sending OTP email to {recipient_email}: {e}")
+    return False

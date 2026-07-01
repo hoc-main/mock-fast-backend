@@ -33,7 +33,7 @@ load_dotenv(Path(__file__).resolve().parent / ".env")
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .routers import hierarchy, sessions, stats, transcription, feedback, tts, jobs, payments
+from .routers import hierarchy, sessions, stats, transcription, feedback, tts, jobs, payments, auth_corporate
 from .services.llm_feedback import check_llm_available
 from .db.database import engine, Base
 from .db import models  # noqa: ensure models are registered
@@ -65,6 +65,7 @@ app.include_router(feedback.router)       # /api/feedback/...
 app.include_router(tts.router)            # /api/tts/
 app.include_router(jobs.router)           # /api/jobs/
 app.include_router(payments.router)       # /api/payments/...
+app.include_router(auth_corporate.router) # /api/corporate/...
 
 
 @app.on_event("startup")
@@ -131,6 +132,15 @@ async def _auto_add_missing_columns(conn):
                     webhook_signature VARCHAR(255),
                     amount INTEGER NOT NULL,
                     currency VARCHAR(10) NOT NULL DEFAULT 'INR',
+                    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+                )
+            """))
+            await conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS corporate_otps (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    email VARCHAR(255) NOT NULL,
+                    otp VARCHAR(10) NOT NULL,
+                    expires_at TIMESTAMP NOT NULL,
                     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
                 )
             """))
