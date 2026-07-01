@@ -4,4 +4,4 @@ Backend API for **AI Hire Studio**, an AI-powered recruitment platform that auto
 
 ## Live Application
 
-- **Frontend:** https://ai.aihirestudio.com/home
+https://ai.aihirestudio.com/home
