@@ -21,3 +21,4 @@ langchain-groq
 sentencepiece>=0.2.0
 accelerate>=0.30.0
 razorpay
+PyJWT>=2.8.0
