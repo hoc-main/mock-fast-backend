@@ -44,6 +44,7 @@ class StartInterviewResponse(BaseModel):
     domain_id: Optional[int] = None
     subdomain_id: Optional[int] = None
     module_id: Optional[int] = None
+    intro_phase: bool = False
 
 
 class NextQuestionResponse(BaseModel):
@@ -54,6 +55,18 @@ class NextQuestionResponse(BaseModel):
     total_questions: Optional[int] = None
     transition: Optional[str] = None  # Conversational transition from LLM
     summary: Optional[Any] = None
+
+
+class SubmitIntroRequest(BaseModel):
+    introduction: str
+
+
+class SubmitIntroResponse(BaseModel):
+    session_id: int
+    question: QuestionOut
+    question_index: int
+    total_questions: int
+    transition: Optional[str] = None  # Conversational bridge from intro to first question
 
 
 # ── Transcription WebSocket messages ─────────────────────────────────────────

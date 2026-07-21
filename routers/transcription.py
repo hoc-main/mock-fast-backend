@@ -151,13 +151,20 @@ async def transcribe_websocket(
             await websocket.close()
             return
 
-        current_question = await _get_current_question(session, db)
-        if not current_question:
-            await websocket.send_text(json.dumps({"type": "error", "message": "No question at current index"}))
-            await websocket.close()
-            return
+        is_intro_phase = getattr(session, "intro_phase", False)
 
-        logger.info(f"[session={session_id}] Q#{session.current_index}: {current_question.question_text[:60]}...")
+        current_question = None
+        if not is_intro_phase:
+            current_question = await _get_current_question(session, db)
+            if not current_question:
+                await websocket.send_text(json.dumps({"type": "error", "message": "No question at current index"}))
+                await websocket.close()
+                return
+
+        if is_intro_phase:
+            logger.info(f"[session={session_id}] INTRO PHASE — capturing self-introduction")
+        else:
+            logger.info(f"[session={session_id}] Q#{session.current_index}: {current_question.question_text[:60]}...")
 
         final_transcript: str = ""
         last_partial:     str = ""
@@ -174,6 +181,24 @@ async def transcribe_websocket(
                 return
 
             current = (raw_transcript or last_partial).strip()
+
+            # ── Intro phase: just accumulate, no intent classification ────────
+            if is_intro_phase:
+                if current:
+                    state["accumulated"].append(current)
+                accumulated_text = " ".join(state["accumulated"]).strip()
+                full_so_far = (
+                    f"{prior.strip()} {accumulated_text}".strip()
+                    if prior.strip() else accumulated_text
+                )
+                logger.info(f"[session={session_id}] intro turn ({len(state['accumulated'])}): {full_so_far[:80]}")
+                await websocket.send_text(json.dumps({
+                    "type":            "turn_finished",
+                    "transcript":      full_so_far,
+                    "turn_transcript": current,
+                    "turn_count":      len(state["accumulated"]),
+                }))
+                return
 
             # classify intent
             intent_result = classify_voice_intent(current)
@@ -253,6 +278,15 @@ async def transcribe_websocket(
                 await websocket.send_text(json.dumps({
                     "type": "silence",
                     "message": "No answer recorded.",
+                }))
+                return
+
+            # ── Intro phase: return transcript only, no evaluation ────────────
+            if is_intro_phase:
+                logger.info(f"[session={session_id}] intro complete: {full_transcript[:80]}")
+                await websocket.send_text(json.dumps({
+                    "type":       "intro_complete",
+                    "transcript": full_transcript,
                 }))
                 return
 

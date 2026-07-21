@@ -68,7 +68,13 @@ def _build_next_question_prompt(
     remaining_questions: List[Dict[str, Any]],
     conversation_history: List[Dict[str, Any]],
     module_topic: str,
+    introduction: str = "",
 ) -> str:
+    # Format candidate introduction context
+    intro_text = ""
+    if introduction:
+        intro_text = f"\nCANDIDATE BACKGROUND (from their self-introduction):\n  \"{introduction[:400]}\"\n"
+
     # Format conversation history with actual answer content
     history_text = ""
     if conversation_history:
@@ -96,7 +102,7 @@ def _build_next_question_prompt(
 
     return f"""You are an expert interview conductor for a {module_topic} interview.
 The candidate just answered a question and has ALREADY received detailed feedback about their gaps. Now you need to pick the next question and write a conversational transition to it.
-
+{intro_text}
 INTERVIEW HISTORY:
 {history_text}
 REMAINING QUESTIONS (pick one by ID):
@@ -109,6 +115,7 @@ RULES FOR PICKING THE QUESTION:
 RULES FOR THE TRANSITION:
 - Write a natural, conversational transition (2-4 sentences) that connects the feedback they just received to the next question
 - Explain WHY you're asking the next question — connect it to their gaps or strengths
+- If the candidate mentioned relevant experience in their introduction, reference it (e.g. "Since you mentioned working with X...")
 - Make it sound like a real interviewer guiding the conversation, not reading from a script
 - Good examples:
   "So we talked about how overfitting happens when your model is too complex. One of the most common tools we use to fight that is regularization — it basically penalizes the model for being too complex. So tell me, what do you know about regularization and why we use it in machine learning?"
@@ -221,6 +228,7 @@ async def pick_next_question(
     remaining_questions: List[Dict[str, Any]],
     conversation_history: List[Dict[str, Any]],
     module_topic: str = "technical",
+    introduction: str = "",
 ) -> Optional[NextQuestionDecision]:
     """
     Ask the LLM to pick the next question and generate a transition.
@@ -229,6 +237,7 @@ async def pick_next_question(
         remaining_questions: List of {id, question, topic} dicts for unanswered questions
         conversation_history: List of {question, answer, score, gaps} for answered questions
         module_topic: The module/domain name for context
+        introduction: The candidate's self-introduction for context
 
     Returns:
         NextQuestionDecision or None (caller falls back to sequential)
@@ -238,7 +247,7 @@ async def pick_next_question(
         return None
 
     prompt = _build_next_question_prompt(
-        remaining_questions, conversation_history, module_topic
+        remaining_questions, conversation_history, module_topic, introduction
     )
 
     loop = asyncio.get_event_loop()

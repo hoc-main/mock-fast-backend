@@ -88,6 +88,8 @@ async def _auto_add_missing_columns(conn):
         ("interview_interviewsession", "current_question_id", "INTEGER NULL"),
         ("interview_interviewsession", "conversation_history", "JSONB DEFAULT '[]'::jsonb" if is_pg else "TEXT DEFAULT '[]'"),
         ("interview_interviewsession", "asked_question_ids", "JSONB DEFAULT '[]'::jsonb" if is_pg else "TEXT DEFAULT '[]'"),
+        ("interview_interviewsession", "intro_phase", "BOOLEAN DEFAULT TRUE" if is_pg else "BOOLEAN DEFAULT 1"),
+        ("interview_interviewsession", "introduction", "TEXT NULL"),
     ]
     for table, column, col_def in migrations:
         try:

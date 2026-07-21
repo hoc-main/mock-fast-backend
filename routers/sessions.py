@@ -23,13 +23,14 @@ from sqlalchemy.orm import selectinload
 
 from ..db.database import get_db
 from ..db.models import InterviewAnswer, InterviewSession, Module, Question, Subdomain, User, Purchase
-from ..schemas import EvaluationRequest, EvaluationResponse, EvaluationOut, NextQuestionResponse, QuestionOut, StartInterviewRequest, StartInterviewResponse
+from ..schemas import EvaluationRequest, EvaluationResponse, EvaluationOut, NextQuestionResponse, QuestionOut, StartInterviewRequest, StartInterviewResponse, SubmitIntroRequest, SubmitIntroResponse
 from ..services.evaluation import evaluate_answer
 from ..services.feedback_generator import generate_question_feedback, generate_session_summary
 from ..services.nlp_features import tokenize
 from ..services import llm_feedback as _llm
 from ..services.llm_feedback import rewrite_session_summary
 from ..services.conversation_agent import pick_next_question
+from ..services.intro_interview_agent import generate_first_question, generate_followup_question
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/interview", tags=["Sessions"])
@@ -290,6 +291,24 @@ async def start_interview(body: StartInterviewRequest, db: AsyncSession = Depend
     session.current_question_id = current_q.id
     await db.commit()
 
+    # If intro phase, return the intro question first
+    if session.intro_phase:
+        return StartInterviewResponse(
+            session_id=session.id,
+            question=QuestionOut(
+                id=0,
+                topic="introduction",
+                question="Tell me about yourself — your experience, skills, and any projects you've worked on.",
+                answer="",
+            ),
+            question_index=0,
+            total_questions=total + 1,  # +1 for intro
+            domain_id=module.subdomain.domain_id if module and module.subdomain else None,
+            subdomain_id=module.subdomain_id if module else None,
+            module_id=module.id if module else None,
+            intro_phase=True,
+        )
+
     return StartInterviewResponse(
         session_id=session.id,
         question=QuestionOut(
@@ -303,7 +322,157 @@ async def start_interview(body: StartInterviewRequest, db: AsyncSession = Depend
         domain_id=module.subdomain.domain_id if module and module.subdomain else None,
         subdomain_id=module.subdomain_id if module else None,
         module_id=module.id if module else None,
+        intro_phase=False,
     )
+
+
+@router.post("/{session_id}/submit-intro/", response_model=SubmitIntroResponse)
+async def submit_intro(session_id: int, body: SubmitIntroRequest, db: AsyncSession = Depends(get_db)):
+    """User submits their self-introduction. LLM generates a cross-question based on it."""
+    result = await db.execute(select(InterviewSession).where(InterviewSession.id == session_id))
+    session = result.scalar_one_or_none()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    if not session.intro_phase:
+        raise HTTPException(status_code=400, detail="Intro already submitted")
+
+    # Store introduction, end intro phase
+    session.introduction = body.introduction
+    session.intro_phase = False
+    await db.commit()
+
+    # Get module name for context
+    module_result = await db.execute(select(Module).where(Module.id == session.module_id))
+    module = module_result.scalar_one_or_none()
+    module_topic = module.module_name if module else "technical"
+
+    total = await _question_count(session.module_id, db)
+
+    # Generate first cross-question from the introduction
+    cross_question = await generate_first_question(body.introduction, module_topic)
+
+    if not cross_question:
+        # Fallback: use first module question if LLM fails
+        current_q = await _get_question_at(session, db)
+        if not current_q:
+            raise HTTPException(status_code=500, detail="No questions available")
+        return SubmitIntroResponse(
+            session_id=session_id,
+            question=QuestionOut(
+                id=current_q.id,
+                topic=current_q.topic,
+                question=current_q.question_text,
+                answer=current_q.expected_answer,
+            ),
+            question_index=0,
+            total_questions=total,
+            transition=None,
+        )
+
+    # Return the dynamically generated cross-question
+    # Store in conversation history so cross-answer knows what was asked
+    history = list(session.conversation_history or [])
+    history.append({"question": cross_question, "answer": "", "score": None, "gaps": ""})
+    session.conversation_history = history
+    await db.commit()
+
+    return SubmitIntroResponse(
+        session_id=session_id,
+        question=QuestionOut(
+            id=0,
+            topic="cross-question",
+            question=cross_question,
+            answer="",
+        ),
+        question_index=0,
+        total_questions=total,
+        transition=cross_question,  # The question IS the transition
+    )
+
+
+MAX_CROSS_QUESTIONS = 5
+
+
+@router.post("/{session_id}/cross-answer/")
+async def submit_cross_answer(session_id: int, body: SubmitIntroRequest, db: AsyncSession = Depends(get_db)):
+    """
+    User answers a cross-question. LLM generates the next cross-question based on their answer.
+    Max 5 cross-questions, then transitions to module questions.
+    """
+    result = await db.execute(select(InterviewSession).where(InterviewSession.id == session_id))
+    session = result.scalar_one_or_none()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    # Append answer to conversation history
+    history = list(session.conversation_history or [])
+    if history and not history[-1].get("answer"):
+        history[-1]["answer"] = body.introduction
+    else:
+        history.append({"question": "cross-question", "answer": body.introduction, "score": None, "gaps": ""})
+    session.conversation_history = history
+    await db.commit()
+
+    # Count how many cross-questions have been answered
+    answered_cross = len([h for h in history if h.get("answer")])
+
+    # Get module info
+    module_result = await db.execute(select(Module).where(Module.id == session.module_id))
+    module = module_result.scalar_one_or_none()
+    module_topic = module.module_name if module else "technical"
+    total = await _question_count(session.module_id, db)
+
+    # If max cross-questions reached, transition to module questions
+    if answered_cross >= MAX_CROSS_QUESTIONS:
+        current_q = await _get_question_at(session, db)
+        if not current_q:
+            return {"session_id": session_id, "completed": True}
+        return {
+            "session_id": session_id,
+            "completed": False,
+            "question": {"id": current_q.id, "topic": current_q.topic, "question": current_q.question_text, "answer": current_q.expected_answer},
+            "question_index": 0,
+            "total_questions": total,
+            "transition": "Thanks for your answers. Now we will move on to the mock interview. Let's get started.",
+            "cross_question": False,
+        }
+
+    # Generate next cross-question
+    next_cross_q = await generate_followup_question(
+        introduction=session.introduction or "",
+        conversation=history,
+        module_topic=module_topic,
+    )
+
+    if not next_cross_q:
+        # LLM failed — transition to module questions
+        current_q = await _get_question_at(session, db)
+        if not current_q:
+            return {"session_id": session_id, "completed": True}
+        return {
+            "session_id": session_id,
+            "completed": False,
+            "question": {"id": current_q.id, "topic": current_q.topic, "question": current_q.question_text, "answer": current_q.expected_answer},
+            "question_index": 0,
+            "total_questions": total,
+            "transition": "Thanks for your answers. Now we will move on to the mock interview. Let's get started.",
+            "cross_question": False,
+        }
+
+    # Store the new question in history
+    history.append({"question": next_cross_q, "answer": "", "score": None, "gaps": ""})
+    session.conversation_history = history
+    await db.commit()
+
+    return {
+        "session_id": session_id,
+        "completed": False,
+        "question": {"id": 0, "topic": "cross-question", "question": next_cross_q, "answer": ""},
+        "question_index": answered_cross + 1,
+        "total_questions": total,
+        "transition": next_cross_q,
+        "cross_question": True,
+    }
 
 
 @router.post("/{session_id}/next/", response_model=NextQuestionResponse)
@@ -428,6 +597,7 @@ async def next_question(session_id: int, db: AsyncSession = Depends(get_db)):
                 remaining_questions=llm_pool,
                 conversation_history=list(session.conversation_history or []),
                 module_topic=module_topic,
+                introduction=session.introduction or "",
             )
             if decision:
                 # Load the chosen question
