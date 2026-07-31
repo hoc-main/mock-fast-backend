@@ -240,6 +240,7 @@ async def start_interview(body: StartInterviewRequest, db: AsyncSession = Depend
             module_id=body.module_id,
             current_index=0,
             status="active",
+            intro_phase=True,
         )
         db.add(session)
         await db.commit()
@@ -333,12 +334,9 @@ async def submit_intro(session_id: int, body: SubmitIntroRequest, db: AsyncSessi
     session = result.scalar_one_or_none()
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
-    if not session.intro_phase:
-        raise HTTPException(status_code=400, detail="Intro already submitted")
 
-    # Store introduction, end intro phase
+    # Store introduction
     session.introduction = body.introduction
-    session.intro_phase = False
     await db.commit()
 
     # Get module name for context
@@ -366,7 +364,7 @@ async def submit_intro(session_id: int, body: SubmitIntroRequest, db: AsyncSessi
             ),
             question_index=0,
             total_questions=total,
-            transition=None,
+            transition="Thanks for sharing. Let's move on to the interview questions.",
         )
 
     # Return the dynamically generated cross-question
