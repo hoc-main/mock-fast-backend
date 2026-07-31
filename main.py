@@ -91,6 +91,10 @@ async def _auto_add_missing_columns(conn):
         ("interview_interviewsession", "asked_question_ids", "JSONB DEFAULT '[]'::jsonb" if is_pg else "TEXT DEFAULT '[]'"),
         ("interview_interviewsession", "intro_phase", "BOOLEAN DEFAULT TRUE" if is_pg else "BOOLEAN DEFAULT 1"),
         ("interview_interviewsession", "introduction", "TEXT NULL"),
+        ("modules", "is_free", "BOOLEAN DEFAULT 1"),
+        ("modules", "companies", "TEXT DEFAULT '[]'"),
+        ("modules", "job_roles", "TEXT DEFAULT '[]'"),
+        ("modules", "dataset_json_path", "VARCHAR(500) NULL"),
     ]
     for table, column, col_def in migrations:
         try:

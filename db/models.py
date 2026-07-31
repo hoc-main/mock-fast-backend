@@ -9,7 +9,7 @@ from datetime import datetime
 from typing import List, Optional
 from sqlalchemy import (
     BigInteger, Boolean, Column, DateTime, Float, ForeignKey,
-    Integer, JSON, String, Text, func, Boolean, UniqueConstraint
+    Integer, JSON, String, Text, func, UniqueConstraint
 )
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from .database import Base
@@ -121,6 +121,8 @@ class InterviewSession(Base):
     current_index: Mapped[int] = mapped_column(Integer, default=0)
     current_question_id: Mapped[Optional[int]] = mapped_column(ForeignKey("interview_question.id"), nullable=True)
     status: Mapped[str] = mapped_column(String(20), default="active")
+    intro_phase: Mapped[bool] = mapped_column(Boolean, default=False)
+    introduction: Mapped[Optional[str]] = mapped_column(Text, nullable=True, default="")
     conversation_history: Mapped[list] = mapped_column(JSON, default=list)  # [{question, score, gaps}]
     asked_question_ids: Mapped[list] = mapped_column(JSON, default=list)    # [int] IDs already asked
 

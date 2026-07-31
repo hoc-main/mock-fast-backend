@@ -151,7 +151,7 @@ async def transcribe_websocket(
             await websocket.close()
             return
 
-        is_intro_phase = getattr(session, "intro_phase", False)
+        is_intro_phase = session.intro_phase
 
         current_question = None
         if not is_intro_phase:
@@ -284,6 +284,8 @@ async def transcribe_websocket(
             # ── Intro phase: return transcript only, no evaluation ────────────
             if is_intro_phase:
                 logger.info(f"[session={session_id}] intro complete: {full_transcript[:80]}")
+                session.intro_phase = False
+                await db.commit()
                 await websocket.send_text(json.dumps({
                     "type":       "intro_complete",
                     "transcript": full_transcript,
@@ -306,7 +308,26 @@ async def transcribe_websocket(
                 model_path=(session.module.model_pkl_path if session.module else None),
             )
 
-            # ── Get LLM feedback BEFORE saving to DB ──────────────────────
+            # ── Save to DB immediately (rule-based feedback) — non-blocking ──
+            await _upsert_answer(session, current_question, full_transcript, evaluation, db)
+            logger.info(f"[session={session_id}] saved. score={evaluation['final_score']}")
+
+            # ── Update conversation history for next question selection ────
+            history = list(session.conversation_history or [])
+            history.append({
+                "question": current_question.question_text,
+                "answer": full_transcript,
+                "score": evaluation["final_score"],
+                "gaps": ", ".join(evaluation.get("missing_keywords", [])[:3]) or "none",
+            })
+            session.conversation_history = history
+            asked = list(session.asked_question_ids or [])
+            if current_question.id not in asked:
+                asked.append(current_question.id)
+                session.asked_question_ids = asked
+            await db.commit()
+
+            # ── Get LLM feedback (with timeout), fallback to rule-based ────
             eval_feedback = evaluation["feedback"]
             eval_tip = evaluation["tip"]
             tts_feedback = ""
@@ -328,31 +349,21 @@ async def transcribe_websocket(
                         eval_feedback = llm_result["feedback"]
                         eval_tip = llm_result.get("tip") or eval_tip
                         tts_feedback = llm_result.get("tts_feedback", "")
-                        # Update evaluation dict so DB save has LLM feedback
-                        evaluation["feedback"] = eval_feedback
-                        evaluation["tip"] = eval_tip
-                        logger.info(f"[session={session_id}] LLM feedback used")
+                        # Update DB with LLM feedback using same session
+                        result2 = await db.execute(
+                            select(InterviewAnswer).where(
+                                InterviewAnswer.session_id == session.id,
+                                InterviewAnswer.question_id == current_question.id,
+                            )
+                        )
+                        ans_row = result2.scalar_one_or_none()
+                        if ans_row:
+                            ans_row.feedback = eval_feedback
+                            ans_row.tip = eval_tip
+                            await db.commit()
+                        logger.info(f"[session={session_id}] LLM feedback used and saved")
                 except (asyncio.TimeoutError, Exception) as exc:
                     logger.warning(f"[session={session_id}] LLM feedback timeout/error, using rule-based: {exc}")
-
-            # ── Save to DB (now contains LLM feedback if available) ────────
-            await _upsert_answer(session, current_question, full_transcript, evaluation, db)
-            logger.info(f"[session={session_id}] saved. score={evaluation['final_score']}")
-
-            # ── Update conversation history for next question selection ────
-            history = list(session.conversation_history or [])
-            history.append({
-                "question": current_question.question_text,
-                "answer": full_transcript,
-                "score": evaluation["final_score"],
-                "gaps": ", ".join(evaluation.get("missing_keywords", [])[:3]) or "none",
-            })
-            session.conversation_history = history
-            asked = list(session.asked_question_ids or [])
-            if current_question.id not in asked:
-                asked.append(current_question.id)
-                session.asked_question_ids = asked
-            await db.commit()
 
             await websocket.send_text(json.dumps({
                 "type":       "evaluation",
