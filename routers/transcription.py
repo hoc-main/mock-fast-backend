@@ -54,8 +54,8 @@ _dg_client = AsyncDeepgramClient(api_key=os.getenv("DEEPGRAM_API_KEY", "dummy"))
 async def _get_current_question(
     session: InterviewSession, db: AsyncSession
 ) -> Optional[Question]:
-    # Prefer explicit current_question_id (supports cross-module questions)
-    if session.current_question_id:
+    # Prefer explicit current_question_id (skip -1 which is the closing question)
+    if session.current_question_id and session.current_question_id > 0:
         result = await db.execute(
             select(Question).where(Question.id == session.current_question_id)
         )

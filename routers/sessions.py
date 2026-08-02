@@ -23,7 +23,7 @@ from sqlalchemy.orm import selectinload
 
 from ..db.database import get_db
 from ..db.models import InterviewAnswer, InterviewSession, Module, Question, Subdomain, User, Purchase
-from ..schemas import EvaluationRequest, EvaluationResponse, EvaluationOut, NextQuestionResponse, QuestionOut, StartInterviewRequest, StartInterviewResponse, SubmitIntroRequest, SubmitIntroResponse
+from ..schemas import EvaluationRequest, EvaluationResponse, EvaluationOut, NextQuestionResponse, QuestionOut, StartInterviewRequest, StartInterviewResponse
 from ..services.evaluation import evaluate_answer
 from ..services.feedback_generator import generate_question_feedback, generate_session_summary
 from ..services.nlp_features import tokenize
@@ -246,7 +246,7 @@ async def start_interview(body: StartInterviewRequest, db: AsyncSession = Depend
             module_id=body.module_id,
             current_index=0,
             status="active",
-            intro_phase=True,
+            intro_phase=False,  # no intro phase — Q1 is the fixed opening question
         )
         db.add(session)
         await db.commit()
@@ -442,6 +442,19 @@ async def next_question(session_id: int, db: AsyncSession = Depends(get_db)):
     # Fallback: sequential
     if not next_q:
         next_q = await _get_question_at(session, db)
+
+    # If still None (all questions exhausted), pick any question from module
+    if not next_q:
+        any_q_result = await db.execute(
+            select(Question)
+            .where(Question.module_id == session.module_id)
+            .order_by(Question.order)
+            .limit(1)
+        )
+        next_q = any_q_result.scalar_one_or_none()
+
+    if not next_q:
+        raise HTTPException(status_code=500, detail="No questions available")
 
     asked = list(session.asked_question_ids or [])
     if next_q.id not in asked:

@@ -79,17 +79,19 @@ def _build_next_question_prompt(
     history_text = ""
     if conversation_history:
         for i, entry in enumerate(conversation_history, 1):
-            score_label = "strong" if entry["score"] >= 0.7 else "partial" if entry["score"] >= 0.45 else "weak"
+            score = float(entry["score"]) if entry.get("score") is not None else 0.0
+            score_label = "strong" if score >= 0.7 else "partial" if score >= 0.45 else "weak"
             history_text += f"  Q{i}: {entry['question']}\n"
             # Include candidate's actual answer so LLM can probe deeper
-            if entry.get("answer"):
-                # Truncate long answers to keep prompt manageable
-                answer_snippet = entry["answer"][:300]
-                if len(entry["answer"]) > 300:
-                    answer_snippet += "..."
-                history_text += f"  Candidate said: \"{answer_snippet}\"\n"
+            if entry.get("answer") or entry.get("answer") == "":
+                answer_val = entry["answer"]
+                if answer_val:  # only show non-empty answers
+                    answer_snippet = answer_val[:300]
+                    if len(answer_val) > 300:
+                        answer_snippet += "..."
+                    history_text += f"  Candidate said: \"{answer_snippet}\"\n"
             history_text += (
-                f"  Answer quality: {score_label} ({entry['score']:.0%})\n"
+                f"  Answer quality: {score_label} ({score:.0%})\n"
                 f"  Key gaps: {entry.get('gaps', 'none')}\n\n"
             )
     else:
