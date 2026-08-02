@@ -115,7 +115,8 @@ RULES FOR PICKING THE QUESTION:
 - Do NOT repeat questions already asked
 
 RULES FOR THE TRANSITION:
-- Write a natural, conversational transition (2-4 sentences) that connects the feedback they just received to the next question
+- Write a natural, conversational transition (2-4 sentences) that connects the candidate's last answer to the next question
+- ALWAYS end the transition by asking the next question directly — the question must be part of the transition itself
 - Explain WHY you're asking the next question — connect it to their gaps or strengths
 - If the candidate mentioned relevant experience in their introduction, reference it (e.g. "Since you mentioned working with X...")
 - Make it sound like a real interviewer guiding the conversation, not reading from a script
@@ -123,7 +124,8 @@ RULES FOR THE TRANSITION:
   "So we talked about how overfitting happens when your model is too complex. One of the most common tools we use to fight that is regularization — it basically penalizes the model for being too complex. So tell me, what do you know about regularization and why we use it in machine learning?"
   "Alright, so you clearly understand the basics of how trees work, but what I want to dig into now is how we actually validate that our model generalizes. This is where cross-validation comes in. Can you walk me through how cross-validation works and why its important?"
 - Do NOT start with generic praise like "Good job" or "Great answer"
-- Make it feel like the interviewer is thinking out loud and naturally arriving at the next question
+- Do NOT just say the question alone — always provide context before asking it
+- The transition must END with the question — never put the question in the middle
 - Use plain ASCII text only
 
 Respond in EXACTLY this format:
