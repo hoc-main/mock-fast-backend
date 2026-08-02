@@ -152,17 +152,29 @@ async def transcribe_websocket(
             return
 
         is_intro_phase = session.intro_phase
+        is_closing_question = (session.current_question_id == -1)
 
         current_question = None
         if not is_intro_phase:
-            current_question = await _get_current_question(session, db)
-            if not current_question:
-                await websocket.send_text(json.dumps({"type": "error", "message": "No question at current index"}))
-                await websocket.close()
-                return
+            if is_closing_question:
+                from ..routers.sessions import CLOSING_QUESTION_TEXT, CLOSING_QUESTION_TOPIC
+                current_question = Question(
+                    id=-1, module_id=session.module_id,
+                    topic=CLOSING_QUESTION_TOPIC,
+                    question_text=CLOSING_QUESTION_TEXT,
+                    expected_answer="", order=9,
+                )
+            else:
+                current_question = await _get_current_question(session, db)
+                if not current_question:
+                    await websocket.send_text(json.dumps({"type": "error", "message": "No question at current index"}))
+                    await websocket.close()
+                    return
 
         if is_intro_phase:
             logger.info(f"[session={session_id}] INTRO PHASE — capturing self-introduction")
+        elif is_closing_question:
+            logger.info(f"[session={session_id}] CLOSING QUESTION (Q10)")
         else:
             logger.info(f"[session={session_id}] Q#{session.current_index}: {current_question.question_text[:60]}...")
 
@@ -294,6 +306,24 @@ async def transcribe_websocket(
 
             logger.info(f"[session={session_id}] final evaluate: {full_transcript[:80]}")
 
+            # ── Closing question (Q10): save transcript only, no NLP scoring ──
+            if is_closing_question:
+                db.add(InterviewAnswer(
+                    session_id=session.id, question_id=None, raw_segments=[],
+                    transcript=full_transcript,
+                    semantic_score=0.0, keyword_score=0.0, question_relevance=0.0,
+                    lexical_diversity=0.0, discourse_score=0.0, penalty=0.0,
+                    final_score=1.0, feedback="", tip="", missing_keywords=[],
+                ))
+                await db.commit()
+                logger.info(f"[session={session_id}] closing answer saved")
+                await websocket.send_text(json.dumps({
+                    "type": "evaluation", "transcript": full_transcript,
+                    "ws_source_event": ws_source_event,
+                    "evaluation": {"score": 1.0, "feedback": "", "tip": "", "tts_feedback": "", "missing_keywords": []},
+                }))
+                return
+
             # Clean up garbled STT transcript before evaluation
             full_transcript = await clean_transcript(full_transcript, current_question.question_text)
 
@@ -330,7 +360,6 @@ async def transcribe_websocket(
             # ── Get LLM feedback (with timeout), fallback to rule-based ────
             eval_feedback = evaluation["feedback"]
             eval_tip = evaluation["tip"]
-            tts_feedback = ""
 
             if _llm.llm_available:
                 try:
@@ -348,8 +377,6 @@ async def transcribe_websocket(
                     if llm_result and llm_result.get("feedback"):
                         eval_feedback = llm_result["feedback"]
                         eval_tip = llm_result.get("tip") or eval_tip
-                        tts_feedback = llm_result.get("tts_feedback", "")
-                        # Update DB with LLM feedback using same session
                         result2 = await db.execute(
                             select(InterviewAnswer).where(
                                 InterviewAnswer.session_id == session.id,
@@ -365,6 +392,7 @@ async def transcribe_websocket(
                 except (asyncio.TimeoutError, Exception) as exc:
                     logger.warning(f"[session={session_id}] LLM feedback timeout/error, using rule-based: {exc}")
 
+            # tts_feedback intentionally empty — no voice feedback mid-interview
             await websocket.send_text(json.dumps({
                 "type":       "evaluation",
                 "transcript": full_transcript,
@@ -373,7 +401,7 @@ async def transcribe_websocket(
                     "score":            evaluation["final_score"],
                     "feedback":         eval_feedback,
                     "tip":              eval_tip,
-                    "tts_feedback":     tts_feedback,
+                    "tts_feedback":     "",
                     "missing_keywords": evaluation["missing_keywords"],
                 },
             }))
