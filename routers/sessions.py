@@ -23,18 +23,24 @@ from sqlalchemy.orm import selectinload
 
 from ..db.database import get_db
 from ..db.models import InterviewAnswer, InterviewSession, Module, Question, Subdomain, User, Purchase
-from ..schemas import EvaluationRequest, EvaluationResponse, EvaluationOut, NextQuestionResponse, QuestionOut, StartInterviewRequest, StartInterviewResponse, SubmitIntroRequest, SubmitIntroResponse
+from ..schemas import EvaluationRequest, EvaluationResponse, EvaluationOut, NextQuestionResponse, QuestionOut, StartInterviewRequest, StartInterviewResponse
 from ..services.evaluation import evaluate_answer
 from ..services.feedback_generator import generate_question_feedback, generate_session_summary
 from ..services.nlp_features import tokenize
 from ..services import llm_feedback as _llm
 from ..services.llm_feedback import rewrite_session_summary
 from ..services.conversation_agent import pick_next_question
-from ..services.intro_interview_agent import generate_first_question, generate_followup_question
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/interview", tags=["Sessions"])
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
+# ── Interview constants ───────────────────────────────────────────────────────
+MAX_INTERVIEW_QUESTIONS = 10
+OPENING_QUESTION_TEXT = "Tell me about yourself such as your skills, experience, and any projects you have worked on."
+OPENING_QUESTION_TOPIC = "introduction"
+CLOSING_QUESTION_TEXT = "What would you like to focus on or improve in your next mock interview?"
+CLOSING_QUESTION_TOPIC = "closing"
 
 
 # ── question loading ───────────────────────────────────────────────────────────
@@ -240,7 +246,7 @@ async def start_interview(body: StartInterviewRequest, db: AsyncSession = Depend
             module_id=body.module_id,
             current_index=0,
             status="active",
-            intro_phase=True,
+            intro_phase=False,  # no intro phase — Q1 is the fixed opening question
         )
         db.add(session)
         await db.commit()
@@ -284,193 +290,27 @@ async def start_interview(body: StartInterviewRequest, db: AsyncSession = Depend
     if not current_q:
         raise HTTPException(status_code=500, detail="Could not load first question")
 
-    # Track first question as asked
-    asked = list(session.asked_question_ids or [])
-    if current_q.id not in asked:
-        asked.append(current_q.id)
-    session.asked_question_ids = asked
-    session.current_question_id = current_q.id
+    # Always start with the fixed opening question (Q1)
+    # No intro_phase complexity — Q1 IS the intro question
+    session.intro_phase = False
+    session.current_question_id = None
     await db.commit()
-
-    # If intro phase, return the intro question first
-    if session.intro_phase:
-        return StartInterviewResponse(
-            session_id=session.id,
-            question=QuestionOut(
-                id=0,
-                topic="introduction",
-                question="Tell me about yourself — your experience, skills, and any projects you've worked on.",
-                answer="",
-            ),
-            question_index=0,
-            total_questions=total + 1,  # +1 for intro
-            domain_id=module.subdomain.domain_id if module and module.subdomain else None,
-            subdomain_id=module.subdomain_id if module else None,
-            module_id=module.id if module else None,
-            intro_phase=True,
-        )
 
     return StartInterviewResponse(
         session_id=session.id,
         question=QuestionOut(
-            id=current_q.id,
-            topic=current_q.topic,
-            question=current_q.question_text,
-            answer=current_q.expected_answer,
+            id=0,
+            topic=OPENING_QUESTION_TOPIC,
+            question=OPENING_QUESTION_TEXT,
+            answer="",
         ),
-        question_index=session.current_index,
-        total_questions=total,
+        question_index=0,
+        total_questions=MAX_INTERVIEW_QUESTIONS,
         domain_id=module.subdomain.domain_id if module and module.subdomain else None,
         subdomain_id=module.subdomain_id if module else None,
         module_id=module.id if module else None,
         intro_phase=False,
     )
-
-
-@router.post("/{session_id}/submit-intro/", response_model=SubmitIntroResponse)
-async def submit_intro(session_id: int, body: SubmitIntroRequest, db: AsyncSession = Depends(get_db)):
-    """User submits their self-introduction. LLM generates a cross-question based on it."""
-    result = await db.execute(select(InterviewSession).where(InterviewSession.id == session_id))
-    session = result.scalar_one_or_none()
-    if not session:
-        raise HTTPException(status_code=404, detail="Session not found")
-
-    # Store introduction
-    session.introduction = body.introduction
-    await db.commit()
-
-    # Get module name for context
-    module_result = await db.execute(select(Module).where(Module.id == session.module_id))
-    module = module_result.scalar_one_or_none()
-    module_topic = module.module_name if module else "technical"
-
-    total = await _question_count(session.module_id, db)
-
-    # Generate first cross-question from the introduction
-    cross_question = await generate_first_question(body.introduction, module_topic)
-
-    if not cross_question:
-        # Fallback: use first module question if LLM fails
-        current_q = await _get_question_at(session, db)
-        if not current_q:
-            raise HTTPException(status_code=500, detail="No questions available")
-        return SubmitIntroResponse(
-            session_id=session_id,
-            question=QuestionOut(
-                id=current_q.id,
-                topic=current_q.topic,
-                question=current_q.question_text,
-                answer=current_q.expected_answer,
-            ),
-            question_index=0,
-            total_questions=total,
-            transition="Thanks for sharing. Let's move on to the interview questions.",
-        )
-
-    # Return the dynamically generated cross-question
-    # Store in conversation history so cross-answer knows what was asked
-    history = list(session.conversation_history or [])
-    history.append({"question": cross_question, "answer": "", "score": None, "gaps": ""})
-    session.conversation_history = history
-    await db.commit()
-
-    return SubmitIntroResponse(
-        session_id=session_id,
-        question=QuestionOut(
-            id=0,
-            topic="cross-question",
-            question=cross_question,
-            answer="",
-        ),
-        question_index=0,
-        total_questions=total,
-        transition=cross_question,  # The question IS the transition
-    )
-
-
-MAX_CROSS_QUESTIONS = 5
-
-
-@router.post("/{session_id}/cross-answer/")
-async def submit_cross_answer(session_id: int, body: SubmitIntroRequest, db: AsyncSession = Depends(get_db)):
-    """
-    User answers a cross-question. LLM generates the next cross-question based on their answer.
-    Max 5 cross-questions, then transitions to module questions.
-    """
-    result = await db.execute(select(InterviewSession).where(InterviewSession.id == session_id))
-    session = result.scalar_one_or_none()
-    if not session:
-        raise HTTPException(status_code=404, detail="Session not found")
-
-    # Append answer to conversation history
-    history = list(session.conversation_history or [])
-    if history and not history[-1].get("answer"):
-        history[-1]["answer"] = body.introduction
-    else:
-        history.append({"question": "cross-question", "answer": body.introduction, "score": None, "gaps": ""})
-    session.conversation_history = history
-    await db.commit()
-
-    # Count how many cross-questions have been answered
-    answered_cross = len([h for h in history if h.get("answer")])
-
-    # Get module info
-    module_result = await db.execute(select(Module).where(Module.id == session.module_id))
-    module = module_result.scalar_one_or_none()
-    module_topic = module.module_name if module else "technical"
-    total = await _question_count(session.module_id, db)
-
-    # If max cross-questions reached, transition to module questions
-    if answered_cross >= MAX_CROSS_QUESTIONS:
-        current_q = await _get_question_at(session, db)
-        if not current_q:
-            return {"session_id": session_id, "completed": True}
-        return {
-            "session_id": session_id,
-            "completed": False,
-            "question": {"id": current_q.id, "topic": current_q.topic, "question": current_q.question_text, "answer": current_q.expected_answer},
-            "question_index": 0,
-            "total_questions": total,
-            "transition": "Thanks for your answers. Now we will move on to the mock interview. Let's get started.",
-            "cross_question": False,
-        }
-
-    # Generate next cross-question
-    next_cross_q = await generate_followup_question(
-        introduction=session.introduction or "",
-        conversation=history,
-        module_topic=module_topic,
-    )
-
-    if not next_cross_q:
-        # LLM failed — transition to module questions
-        current_q = await _get_question_at(session, db)
-        if not current_q:
-            return {"session_id": session_id, "completed": True}
-        return {
-            "session_id": session_id,
-            "completed": False,
-            "question": {"id": current_q.id, "topic": current_q.topic, "question": current_q.question_text, "answer": current_q.expected_answer},
-            "question_index": 0,
-            "total_questions": total,
-            "transition": "Thanks for your answers. Now we will move on to the mock interview. Let's get started.",
-            "cross_question": False,
-        }
-
-    # Store the new question in history
-    history.append({"question": next_cross_q, "answer": "", "score": None, "gaps": ""})
-    session.conversation_history = history
-    await db.commit()
-
-    return {
-        "session_id": session_id,
-        "completed": False,
-        "question": {"id": 0, "topic": "cross-question", "question": next_cross_q, "answer": ""},
-        "question_index": answered_cross + 1,
-        "total_questions": total,
-        "transition": next_cross_q,
-        "cross_question": True,
-    }
 
 
 @router.post("/{session_id}/next/", response_model=NextQuestionResponse)
@@ -484,20 +324,36 @@ async def next_question(session_id: int, db: AsyncSession = Depends(get_db)):
     await db.commit()
     await db.refresh(session)
 
-    total = await _question_count(session.module_id, db)
-
-    # Use number of actually answered questions to determine completion,
-    # not current_index which may drift from actual progress when LLM picks questions
+    # Count actually answered questions (source of truth)
     answered_count_result = await db.execute(
         select(func.count()).select_from(InterviewAnswer)
         .where(InterviewAnswer.session_id == session_id)
     )
     answered_count = answered_count_result.scalar() or 0
 
-    if answered_count >= total:
+    # ── After 9 answered, serve fixed closing question (Q10) ─────────────────
+    if answered_count == MAX_INTERVIEW_QUESTIONS - 1:
+        logger.info(f"[session={session_id}] serving closing question (Q10)")
+        session.current_question_id = -1
+        await db.commit()
+        return NextQuestionResponse(
+            session_id=session_id,
+            completed=False,
+            question=QuestionOut(
+                id=-1,
+                topic=CLOSING_QUESTION_TOPIC,
+                question=CLOSING_QUESTION_TEXT,
+                answer="",
+            ),
+            question_index=answered_count,
+            total_questions=MAX_INTERVIEW_QUESTIONS,
+            transition="We are almost done. One last question before we wrap up.",
+        )
+
+    # ── After 10 answered, complete session ──────────────────────────────
+    if answered_count >= MAX_INTERVIEW_QUESTIONS:
         session.status = "completed"
         await db.commit()
-
         rows_result = await db.execute(
             select(InterviewAnswer, Question)
             .join(Question, InterviewAnswer.question_id == Question.id)
@@ -505,27 +361,21 @@ async def next_question(session_id: int, db: AsyncSession = Depends(get_db)):
             .order_by(Question.order)
         )
         rows = rows_result.all()
-
         feedback_dicts = [_get_feedback_dict(a, q) for a, q in rows]
         results        = [_serialize_answer(a, q, fb) for (a, q), fb in zip(rows, feedback_dicts)]
         session_sum    = await _build_session_summary(feedback_dicts)
-
         return NextQuestionResponse(
             session_id=session_id,
             completed=True,
             summary={"results": results, **session_sum},
         )
 
-    # ── Conversational: LLM picks next question ───────────────────────────────
+    # ── LLM picks next DB question most relevant to candidate's last response ──
     next_q = None
     transition = None
 
     if _llm.llm_available:
-        # Get all remaining (unanswered) questions — exclude this session + past sessions
         asked_ids = list(session.asked_question_ids or [])
-
-        # Exclude questions from ALL of this user's past sessions (any module)
-        # so the same user never gets the same question across different sessions
         if session.user_id:
             past_sessions_result = await db.execute(
                 select(InterviewSession).where(
@@ -536,15 +386,13 @@ async def next_question(session_id: int, db: AsyncSession = Depends(get_db)):
             )
             for past_session in past_sessions_result.scalars().all():
                 asked_ids.extend(past_session.asked_question_ids or [])
-            asked_ids = list(set(asked_ids))  # deduplicate
+            asked_ids = list(set(asked_ids))
 
-        # Get current module and its job_roles + subdomain
         module_result = await db.execute(select(Module).where(Module.id == session.module_id))
         module = module_result.scalar_one_or_none()
         module_topic = module.module_name if module else "technical"
         current_job_roles = set(module.job_roles or []) if module else set()
 
-        # Expand question pool: all modules in same subdomain sharing job roles
         sibling_module_ids = [session.module_id]
         if module and module.subdomain_id and current_job_roles:
             sibling_result = await db.execute(
@@ -554,19 +402,10 @@ async def next_question(session_id: int, db: AsyncSession = Depends(get_db)):
                 )
             )
             for sibling in sibling_result.scalars().all():
-                sibling_roles = set(sibling.job_roles or [])
-                if sibling_roles & current_job_roles:  # intersection
+                if set(sibling.job_roles or []) & current_job_roles:
                     sibling_module_ids.append(sibling.id)
-                    # Ensure sibling questions are loaded
                     await _ensure_questions_loaded(sibling, db)
 
-        logger.info(
-            f"[session={session_id}] cross-question pool: "
-            f"{len(sibling_module_ids)} modules (subdomain={module.subdomain_id}, "
-            f"roles={list(current_job_roles)[:3]})"
-        )
-
-        # Fetch questions from the expanded pool
         all_q_result = await db.execute(
             select(Question)
             .where(Question.module_id.in_(sibling_module_ids))
@@ -577,8 +416,6 @@ async def next_question(session_id: int, db: AsyncSession = Depends(get_db)):
             {"id": q.id, "question": q.question_text, "topic": q.topic or ""}
             for q in all_questions if q.id not in asked_ids
         ]
-
-        # If all questions exhausted across sessions, reset to current session only
         if not remaining:
             current_asked = list(session.asked_question_ids or [])
             remaining = [
@@ -586,34 +423,39 @@ async def next_question(session_id: int, db: AsyncSession = Depends(get_db)):
                 for q in all_questions if q.id not in current_asked
             ]
 
-        # Ask LLM to pick next question (cap at 20 to keep prompt manageable)
-        MAX_QUESTIONS_FOR_LLM = 20
         if remaining:
             import random
-            llm_pool = remaining if len(remaining) <= MAX_QUESTIONS_FOR_LLM else random.sample(remaining, MAX_QUESTIONS_FOR_LLM)
+            llm_pool = remaining if len(remaining) <= 20 else random.sample(remaining, 20)
             decision = await pick_next_question(
                 remaining_questions=llm_pool,
                 conversation_history=list(session.conversation_history or []),
                 module_topic=module_topic,
-                introduction=session.introduction or "",
             )
             if decision:
-                # Load the chosen question
                 q_result = await db.execute(
                     select(Question).where(Question.id == decision.question_id)
                 )
                 next_q = q_result.scalar_one_or_none()
                 transition = decision.transition
-                logger.info(
-                    f"[session={session_id}] LLM picked Q{decision.question_id}: "
-                    f"{decision.reasoning[:60]}"
-                )
+                logger.info(f"[session={session_id}] LLM picked Q{decision.question_id}: {decision.reasoning[:60]}")
 
-    # Fallback: sequential order
+    # Fallback: sequential
     if not next_q:
         next_q = await _get_question_at(session, db)
 
-    # Track asked question
+    # If still None (all questions exhausted), pick any question from module
+    if not next_q:
+        any_q_result = await db.execute(
+            select(Question)
+            .where(Question.module_id == session.module_id)
+            .order_by(Question.order)
+            .limit(1)
+        )
+        next_q = any_q_result.scalar_one_or_none()
+
+    if not next_q:
+        raise HTTPException(status_code=500, detail="No questions available")
+
     asked = list(session.asked_question_ids or [])
     if next_q.id not in asked:
         asked.append(next_q.id)
@@ -631,7 +473,7 @@ async def next_question(session_id: int, db: AsyncSession = Depends(get_db)):
             answer=next_q.expected_answer,
         ),
         question_index=session.current_index,
-        total_questions=total,
+        total_questions=MAX_INTERVIEW_QUESTIONS,
         transition=transition,
     )
 
