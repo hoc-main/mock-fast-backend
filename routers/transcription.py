@@ -153,6 +153,13 @@ async def transcribe_websocket(
 
         is_intro_phase = session.intro_phase
         is_closing_question = (session.current_question_id == -1)
+        # Opening question (Q1) has no DB question — current_question_id is None at index 0
+        is_opening_question = (
+            not is_intro_phase
+            and not is_closing_question
+            and session.current_question_id is None
+            and session.current_index == 0
+        )
 
         current_question = None
         if not is_intro_phase:
@@ -164,6 +171,14 @@ async def transcribe_websocket(
                     question_text=CLOSING_QUESTION_TEXT,
                     expected_answer="", order=9,
                 )
+            elif is_opening_question:
+                from ..routers.sessions import OPENING_QUESTION_TEXT, OPENING_QUESTION_TOPIC
+                current_question = Question(
+                    id=0, module_id=session.module_id,
+                    topic=OPENING_QUESTION_TOPIC,
+                    question_text=OPENING_QUESTION_TEXT,
+                    expected_answer="", order=0,
+                )
             else:
                 current_question = await _get_current_question(session, db)
                 if not current_question:
@@ -173,6 +188,8 @@ async def transcribe_websocket(
 
         if is_intro_phase:
             logger.info(f"[session={session_id}] INTRO PHASE — capturing self-introduction")
+        elif is_opening_question:
+            logger.info(f"[session={session_id}] OPENING QUESTION (Q1) — no NLP evaluation")
         elif is_closing_question:
             logger.info(f"[session={session_id}] CLOSING QUESTION (Q10)")
         else:
@@ -305,6 +322,27 @@ async def transcribe_websocket(
                 return
 
             logger.info(f"[session={session_id}] final evaluate: {full_transcript[:80]}")
+
+            # ── Opening question (Q1): save as context, no NLP scoring ───────────
+            if is_opening_question:
+                # Store in conversation history so LLM picks Q2 based on this
+                history = list(session.conversation_history or [])
+                history.append({
+                    "question": current_question.question_text,
+                    "answer": full_transcript,
+                    "score": None,  # no score for intro
+                    "gaps": "none",
+                })
+                session.conversation_history = history
+                session.introduction = full_transcript  # also store as introduction
+                await db.commit()
+                logger.info(f"[session={session_id}] opening answer saved as context")
+                await websocket.send_text(json.dumps({
+                    "type": "evaluation", "transcript": full_transcript,
+                    "ws_source_event": ws_source_event,
+                    "evaluation": {"score": 1.0, "feedback": "", "tip": "", "tts_feedback": "", "missing_keywords": []},
+                }))
+                return
 
             # ── Closing question (Q10): save transcript only, no NLP scoring ──
             if is_closing_question:
