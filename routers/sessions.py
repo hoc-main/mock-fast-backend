@@ -76,16 +76,27 @@ async def _ensure_questions_loaded(module: Module, db: AsyncSession) -> None:
     seen_texts = set()
     for item in data:
         q_data = item.get("question_data", item)
-        text = q_data.get("question", q_data.get("Interview Question", "")).strip()
+        # Support both key formats: "question" and "question_text"
+        text = (
+            q_data.get("question")
+            or q_data.get("question_text")
+            or q_data.get("Interview Question", "")
+        ).strip()
         if not text or text in seen_texts:
             continue
         seen_texts.add(text)
+        # Support both answer key formats
+        answer = (
+            q_data.get("answer")
+            or q_data.get("expected_answer")
+            or q_data.get("Answer", "")
+        )
         questions.append(Question(
             module_id=module.id,
             topic=q_data.get("topic"),
             question_text=text,
-            expected_answer=q_data.get("answer", q_data.get("Answer", "")),
-            order=len(questions),
+            expected_answer=answer,
+            order=q_data.get("order", len(questions)),
         ))
 
     db.add_all(questions)
@@ -391,25 +402,13 @@ async def next_question(session_id: int, db: AsyncSession = Depends(get_db)):
         module_result = await db.execute(select(Module).where(Module.id == session.module_id))
         module = module_result.scalar_one_or_none()
         module_topic = module.module_name if module else "technical"
-        current_job_roles = set(module.job_roles or []) if module else set()
 
-        sibling_module_ids = [session.module_id]
-        if module and module.subdomain_id and current_job_roles:
-            sibling_result = await db.execute(
-                select(Module).where(
-                    Module.subdomain_id == module.subdomain_id,
-                    Module.id != module.id,
-                )
-            )
-            for sibling in sibling_result.scalars().all():
-                if set(sibling.job_roles or []) & current_job_roles:
-                    sibling_module_ids.append(sibling.id)
-                    await _ensure_questions_loaded(sibling, db)
-
+        # Only pull questions from the current module — no cross-module expansion
+        # to ensure questions stay on topic (e.g. AI/ML module only gets AI/ML questions)
         all_q_result = await db.execute(
             select(Question)
-            .where(Question.module_id.in_(sibling_module_ids))
-            .order_by(Question.module_id, Question.order)
+            .where(Question.module_id == session.module_id)
+            .order_by(Question.order)
         )
         all_questions = all_q_result.scalars().all()
         remaining = [

@@ -102,7 +102,7 @@ def _build_next_question_prompt(
     for q in remaining_questions:
         questions_text += f"  [{q['id']}] {q['question']}\n"
 
-    return f"""You are an expert interview conductor for a {module_topic} interview.
+    return f"""You are an expert interview conductor for a {module_topic} interview. You must ONLY pick questions relevant to {module_topic} — do not go off-topic.
 The candidate just answered a question and has ALREADY received detailed feedback about their gaps. Now you need to pick the next question and write a conversational transition to it.
 {intro_text}
 INTERVIEW HISTORY:
