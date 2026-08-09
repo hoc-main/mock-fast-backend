@@ -29,17 +29,21 @@ async def get_domains(user_id: Optional[int] = None, db: AsyncSession = Depends(
     domains = result.scalars().all()
 
     attempted_module_ids = set()
+    completed_session_ids = {}
     active_module_ids = set()
     purchased_module_ids = set()
     if user_id:
         sessions_result = await db.execute(
-            select(InterviewSession.module_id, InterviewSession.status)
+            select(InterviewSession.module_id, InterviewSession.status, InterviewSession.id)
             .where(InterviewSession.user_id == user_id)
+            .order_by(InterviewSession.id.desc())
         )
-        for mid, status in sessions_result.all():
+        for mid, status, session_id in sessions_result.all():
             if mid is not None:
                 if status == "completed":
                     attempted_module_ids.add(mid)
+                    if mid not in completed_session_ids:
+                        completed_session_ids[mid] = session_id
                 elif status == "active":
                     active_module_ids.add(mid)
         
@@ -53,6 +57,7 @@ async def get_domains(user_id: Optional[int] = None, db: AsyncSession = Depends(
         for subdomain in domain.subdomains:
             for module in subdomain.modules:
                 module.is_attempted = module.id in attempted_module_ids
+                module.attempted_session_id = completed_session_ids.get(module.id)
                 module.is_active = module.id in active_module_ids
                 module.is_purchased = module.id in purchased_module_ids
 
@@ -103,21 +108,25 @@ async def get_module_detail(module_id: int, user_id: Optional[int] = None, db: A
     module_obj, subdomain_name, domain_name, question_count = row
     
     is_attempted = False
+    attempted_session_id = None
     is_active = False
     is_purchased = False
     
     if user_id:
         # Check if attempted or active
         sessions_result = await db.execute(
-            select(InterviewSession.status)
+            select(InterviewSession.id, InterviewSession.status)
             .where(
                 InterviewSession.user_id == user_id,
                 InterviewSession.module_id == module_id
             )
+            .order_by(InterviewSession.id.desc())
         )
-        for status in sessions_result.scalars().all():
+        for session_id, status in sessions_result.all():
             if status == "completed":
                 is_attempted = True
+                if attempted_session_id is None:
+                    attempted_session_id = session_id
             elif status == "active":
                 is_active = True
         
@@ -140,6 +149,7 @@ async def get_module_detail(module_id: int, user_id: Optional[int] = None, db: A
         subdomain_name=subdomain_name,
         question_count=question_count,
         is_attempted=is_attempted,
+        attempted_session_id=attempted_session_id,
         is_active=is_active,
         is_purchased=is_purchased
     )
