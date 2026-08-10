@@ -367,11 +367,11 @@ async def next_question(session_id: int, db: AsyncSession = Depends(get_db)):
         await db.commit()
         rows_result = await db.execute(
             select(InterviewAnswer, Question)
-            .join(Question, InterviewAnswer.question_id == Question.id)
+            .outerjoin(Question, InterviewAnswer.question_id == Question.id)
             .where(InterviewAnswer.session_id == session_id)
             .order_by(Question.order)
         )
-        rows = rows_result.all()
+        rows = [(a, q) for a, q in rows_result.all() if q is not None]
         feedback_dicts = [_get_feedback_dict(a, q) for a, q in rows]
         results        = [_serialize_answer(a, q, fb) for (a, q), fb in zip(rows, feedback_dicts)]
         session_sum    = await _build_session_summary(feedback_dicts)
@@ -489,11 +489,11 @@ async def terminate_session(session_id: int, db: AsyncSession = Depends(get_db))
 
     rows_result = await db.execute(
         select(InterviewAnswer, Question)
-        .join(Question, InterviewAnswer.question_id == Question.id)
+        .outerjoin(Question, InterviewAnswer.question_id == Question.id)
         .where(InterviewAnswer.session_id == session_id)
         .order_by(Question.order)
     )
-    rows = rows_result.all()
+    rows = [(a, q) for a, q in rows_result.all() if q is not None]
 
     feedback_dicts = [_get_feedback_dict(a, q) for a, q in rows]
     results        = [_serialize_answer(a, q, fb) for (a, q), fb in zip(rows, feedback_dicts)]
@@ -516,11 +516,11 @@ async def get_summary(session_id: int, db: AsyncSession = Depends(get_db)):
 
     rows_result = await db.execute(
         select(InterviewAnswer, Question)
-        .join(Question, InterviewAnswer.question_id == Question.id)
+        .outerjoin(Question, InterviewAnswer.question_id == Question.id)
         .where(InterviewAnswer.session_id == session_id)
         .order_by(Question.order)
     )
-    rows = rows_result.all()
+    rows = [(a, q) for a, q in rows_result.all() if q is not None]
 
     total_result = await db.execute(
         select(func.count()).select_from(Question).where(Question.module_id == session.module_id)
@@ -550,11 +550,11 @@ async def get_session_detail(session_id: int, db: AsyncSession = Depends(get_db)
 
     rows_result = await db.execute(
         select(InterviewAnswer, Question)
-        .join(Question, InterviewAnswer.question_id == Question.id)
+        .outerjoin(Question, InterviewAnswer.question_id == Question.id)
         .where(InterviewAnswer.session_id == session_id)
         .order_by(Question.order)
     )
-    rows = rows_result.all()
+    rows = [(a, q) for a, q in rows_result.all() if q is not None]
 
     avg_result = await db.execute(
         select(func.avg(InterviewAnswer.final_score))

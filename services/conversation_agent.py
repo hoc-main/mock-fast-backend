@@ -110,9 +110,12 @@ INTERVIEW HISTORY:
 REMAINING QUESTIONS (pick one by ID):
 {questions_text}
 RULES FOR PICKING THE QUESTION:
-- If candidate was weak on a topic, pick a question that probes deeper into what they missed
-- If candidate was strong, escalate to a harder or related topic
+- Look at the candidate's last answer quality score carefully:
+  * WEAK (below 45%): pick an EASIER, more fundamental question on the same topic to build their confidence and understanding
+  * PARTIAL (45-70%): pick a question at the same difficulty level that probes the gaps they showed
+  * STRONG (above 70%): escalate to a HARDER or more advanced question on a related topic
 - Do NOT repeat questions already asked
+- Stay strictly within {module_topic} topics
 
 RULES FOR THE TRANSITION:
 - Write a natural, conversational transition (2-4 sentences) that connects the candidate's last answer to the next question
